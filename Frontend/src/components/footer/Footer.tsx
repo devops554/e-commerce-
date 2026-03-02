@@ -26,8 +26,8 @@ export const Footer = () => {
     return (
         <>
             <TopFooter />
-            <footer className="bg-[#0B0F1A] text-slate-400 pt-24 pb-12 relative overflow-hidden border-t border-slate-800/50">
-                {/* Neon Glow Accent */}
+            <footer className="bg-white text-slate-600 pt-24 pb-12 relative overflow-hidden border-t border-slate-100">
+                {/* Soft Pink Glow Accent */}
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#FF3269]/5 rounded-full blur-[100px] -z-10 translate-x-1/2 -translate-y-1/2" />
 
                 <motion.div
@@ -44,12 +44,12 @@ export const Footer = () => {
                             <Link href="/">
                                 <motion.h2
                                     whileHover={{ scale: 1.02 }}
-                                    className="text-4xl font-black tracking-tighter text-white"
+                                    className="text-4xl font-black tracking-tighter text-slate-900"
                                 >
                                     Bivha<span className="text-[#FF3269]">.</span>
                                 </motion.h2>
                             </Link>
-                            <p className="text-base leading-relaxed max-w-sm text-slate-400">
+                            <p className="text-base leading-relaxed max-w-sm text-slate-500">
                                 Freshness delivered in 10 minutes. Join the revolution of instant, premium grocery shopping designed for your busy life.
                             </p>
 
@@ -61,11 +61,11 @@ export const Footer = () => {
 
                         {/* Quick Links */}
                         <motion.div variants={itemVariants} className="lg:col-span-2">
-                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Shop</h4>
+                            <h4 className="text-slate-900 font-black uppercase tracking-[0.2em] text-[10px] mb-8">Shop</h4>
                             <ul className="space-y-4">
                                 {['Fresh Produce', 'Dairy & Eggs', 'Beverages', 'Snacks', 'Household'].map((item) => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm font-bold hover:text-white transition-colors hover:pl-1 duration-300 block">
+                                        <Link href="#" className="text-sm font-bold hover:text-[#FF3269] transition-all hover:pl-1 duration-300 block text-slate-600">
                                             {item}
                                         </Link>
                                     </li>
@@ -75,7 +75,7 @@ export const Footer = () => {
 
                         {/* Contact Info */}
                         <motion.div variants={itemVariants} className="lg:col-span-3">
-                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Contact</h4>
+                            <h4 className="text-slate-900 font-black uppercase tracking-[0.2em] text-[10px] mb-8">Contact</h4>
                             <div className="space-y-6">
                                 <ContactItem icon={<Phone size={18} />} label="Call Us" value="+91 800 123 4567" />
                                 <ContactItem icon={<Mail size={18} />} label="Email" value="support@bivha.com" />
@@ -84,14 +84,14 @@ export const Footer = () => {
 
                         {/* Newsletter */}
                         <motion.div variants={itemVariants} className="lg:col-span-3 space-y-6">
-                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Stay in Loop</h4>
-                            <p className="text-sm">Get secret deals and early access to new launches.</p>
+                            <h4 className="text-slate-900 font-black uppercase tracking-[0.2em] text-[10px] mb-8">Stay in Loop</h4>
+                            <p className="text-sm text-slate-500">Get secret deals and early access to new launches.</p>
                             <div className="relative">
                                 <Input
                                     placeholder="email@example.com"
-                                    className="h-14 bg-slate-900/50 border-slate-800 rounded-2xl pl-5 pr-14 text-white focus:ring-[#FF3269]/20"
+                                    className="h-14 bg-slate-50 border-slate-200 rounded-2xl pl-5 pr-14 text-slate-900 placeholder:text-slate-400 focus:ring-[#FF3269]/20 focus:border-[#FF3269]/30"
                                 />
-                                <Button size="icon" className="absolute right-1.5 top-1.5 h-11 w-11 rounded-xl bg-[#FF3269] hover:bg-[#E62E5F] transition-all">
+                                <Button size="icon" className="absolute right-1.5 top-1.5 h-11 w-11 rounded-xl bg-[#FF3269] hover:bg-[#E62E5F] text-white transition-all shadow-md shadow-[#FF3269]/20">
                                     <ArrowRight size={20} />
                                 </Button>
                             </div>
@@ -101,7 +101,7 @@ export const Footer = () => {
                                         key={i}
                                         href="#"
                                         whileHover={{ y: -3, color: '#FF3269' }}
-                                        className="text-slate-500 transition-colors"
+                                        className="text-slate-400 transition-colors"
                                     >
                                         <Icon size={20} />
                                     </motion.a>
@@ -113,14 +113,14 @@ export const Footer = () => {
                     {/* Footer Bottom */}
                     <motion.div
                         variants={itemVariants}
-                        className="pt-10 border-t border-slate-800/60 flex flex-col md:flex-row justify-between items-center gap-6"
+                        className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6"
                     >
-                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             © 2026 BIVHA TECHNOLOGY. ALL RIGHTS RESERVED.
                         </p>
                         <div className="flex gap-8">
                             {['Privacy', 'Terms', 'Security'].map((link) => (
-                                <Link key={link} href="#" className="text-[10px] font-bold text-slate-600 hover:text-white transition-colors uppercase tracking-widest">
+                                <Link key={link} href="#" className="text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest">
                                     {link}
                                 </Link>
                             ))}
@@ -132,29 +132,29 @@ export const Footer = () => {
     );
 };
 
-// Helper Components for Cleaner Code
+// Helper Components
 const AppDownloadButton = ({ icon, platform, label }: any) => (
     <motion.button
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.05, backgroundColor: '#f8fafc' }}
         whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl transition-colors hover:border-slate-700"
+        className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl transition-all hover:border-slate-300 shadow-sm"
     >
         <div className="text-[#FF3269]">{icon}</div>
         <div className="text-left">
-            <p className="text-[9px] uppercase font-bold text-slate-500 leading-none">{label}</p>
-            <p className="text-sm font-bold text-white">{platform}</p>
+            <p className="text-[9px] uppercase font-bold text-slate-400 leading-none">{label}</p>
+            <p className="text-sm font-bold text-slate-900">{platform}</p>
         </div>
     </motion.button>
 );
 
 const ContactItem = ({ icon, label, value }: any) => (
     <div className="flex gap-4 group cursor-pointer">
-        <div className="h-10 w-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center group-hover:text-[#FF3269] group-hover:border-[#FF3269]/50 transition-all">
+        <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:text-[#FF3269] group-hover:border-[#FF3269]/20 group-hover:bg-[#FF3269]/5 transition-all">
             {icon}
         </div>
         <div>
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">{label}</p>
-            <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{value}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{label}</p>
+            <p className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors">{value}</p>
         </div>
     </div>
 );

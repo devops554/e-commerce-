@@ -58,6 +58,7 @@ export const ProductCard = ({
         toast.success(`Added to cart`);
     };
 
+
     const primaryAttribute = attributes.find(a =>
         ['net volume', 'net weight', 'pack size', 'volume', 'weight', 'size', 'pcs', 'tabs'].includes(a.name.toLowerCase())
     );

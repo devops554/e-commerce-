@@ -72,22 +72,22 @@ export const ProductCategoryRow = ({ category }: ProductCategoryRowProps) => {
                                     slug={product.slug}
                                     title={product.title}
                                     brand={product.brand}
-                                    tag={product.tags}
+                                    // tag={product.tags}
                                     price={price}
                                     discountPrice={discountPrice}
                                     attributes={firstVariant?.attributes}
                                     stock={firstVariant?.stock}
                                     image={product.thumbnail?.url || ''}
-                                    images={[
-                                        product.thumbnail?.url,
-                                        ...(product.images?.map((img: any) => img.url) || []),
-                                        ...(product.variants?.flatMap((v: any) =>
-                                            v.images?.map((img: any) => img.url) || []
-                                        ) || [])
-                                    ].filter(Boolean)}
-                                    weight={product.shortDescription || ''}
-                                    rating={product.ratingsAverage || 0}
-                                    reviewCount={product.ratingsCount || 0}
+                                // images={[
+                                //     product.thumbnail?.url,
+                                //     ...(product.images?.map((img: any) => img.url) || []),
+                                //     ...(product.variants?.flatMap((v: any) =>
+                                //         v.images?.map((img: any) => img.url) || []
+                                //     ) || [])
+                                // ].filter(Boolean)}
+                                // weight={product.shortDescription || ''}
+                                // rating={product.ratingsAverage || 0}
+                                // reviewCount={product.ratingsCount || 0}
                                 />
                             </CarouselItem>
                         )

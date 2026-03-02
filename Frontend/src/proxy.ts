@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 const publicRoutes = ['/', '/login', '/register', '/product(.*)', '/api/webhooks(.*)', '/product-type(.*)', '/search(.*)'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { nextUrl } = request;
     const token = request.cookies.get('token')?.value;
 

@@ -1,12 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
-    outputFileTracingRoot: undefined,
-  },
+  output: "standalone",
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "upload.wikimedia.org" },
@@ -42,12 +37,7 @@ const nextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],
     unoptimized: true,
-
   },
 };
 
 export default nextConfig;
-
-
-
-// Force rebuild

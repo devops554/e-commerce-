@@ -14,7 +14,7 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-
+import { useRouter } from 'next/navigation'
 import { CategoryRowSkeleton } from './CategoryRowSkeleton'
 
 interface ProductCategoryRowProps {
@@ -22,6 +22,7 @@ interface ProductCategoryRowProps {
 }
 
 export const ProductCategoryRow = ({ category }: ProductCategoryRowProps) => {
+    const router = useRouter()
     const { data, isLoading } = useProducts({
         category: category._id,
         limit: 10,
@@ -45,7 +46,7 @@ export const ProductCategoryRow = ({ category }: ProductCategoryRowProps) => {
                         <p className="text-sm text-slate-500 font-medium">{category.description}</p>
                     )} */}
                 </div>
-                <Button variant="ghost" className="text-green-700 font-bold hover:text-green-800 hover:bg-green-50 rounded-xl">
+                <Button onClick={() => router.push(`/category/${category.slug}`)} variant="ghost" className="text-green-700 font-bold hover:text-green-800 hover:bg-green-50 rounded-xl">
                     See All <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </div>

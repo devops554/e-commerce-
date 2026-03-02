@@ -1,104 +1,160 @@
-"use client"
+"use client";
 
-import React from 'react'
-import Link from 'next/link'
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, ArrowRight } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import TopFooter from './TopFooter'
+import React from 'react';
+import Link from 'next/link';
+import { motion, Variants } from 'framer-motion';
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, ArrowRight, AppWindow, Play } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import TopFooter from './TopFooter';
+
+// Animation Variants
+const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+    }
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
 
 export const Footer = () => {
     return (
         <>
             <TopFooter />
-            <footer className="bg-slate-900 text-slate-300 pt-20 pb-10">
-                <div className="container mx-auto px-4 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                        {/* Brand Section */}
-                        <div className="space-y-6">
-                            <Link href="/" className="inline-block transform transition-transform hover:scale-105">
-                                <h2 className="text-3xl font-black tracking-tighter text-white">
-                                    Bivha<span className="text-primary">.</span>
-                                </h2>
+            <footer className="bg-[#0B0F1A] text-slate-400 pt-24 pb-12 relative overflow-hidden border-t border-slate-800/50">
+                {/* Neon Glow Accent */}
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#FF3269]/5 rounded-full blur-[100px] -z-10 translate-x-1/2 -translate-y-1/2" />
+
+                <motion.div
+                    className="container mx-auto px-4 lg:px-12"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-20">
+
+                        {/* Brand & App Section */}
+                        <motion.div variants={itemVariants} className="lg:col-span-4 space-y-8">
+                            <Link href="/">
+                                <motion.h2
+                                    whileHover={{ scale: 1.02 }}
+                                    className="text-4xl font-black tracking-tighter text-white"
+                                >
+                                    Bivha<span className="text-[#FF3269]">.</span>
+                                </motion.h2>
                             </Link>
-                            <p className="text-sm font-medium leading-relaxed text-slate-400">
-                                Experience the future of grocery shopping. 10-minute delivery, premium products, and a seamless shopping experience designed for your lifestyle.
+                            <p className="text-base leading-relaxed max-w-sm text-slate-400">
+                                Freshness delivered in 10 minutes. Join the revolution of instant, premium grocery shopping designed for your busy life.
                             </p>
-                            <div className="flex gap-4">
-                                {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                                    <Link key={i} href="#" className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1">
-                                        <Icon className="h-5 w-5" />
-                                    </Link>
-                                ))}
+
+                            <div className="flex flex-wrap gap-3">
+                                <AppDownloadButton icon={<AppWindow size={20} />} platform="App Store" label="Download on" />
+                                <AppDownloadButton icon={<Play size={20} fill="currentColor" />} platform="Google Play" label="Get it on" />
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Quick Links */}
-                        <div>
-                            <h4 className="text-white font-black uppercase tracking-widest text-sm mb-8">Department</h4>
+                        <motion.div variants={itemVariants} className="lg:col-span-2">
+                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Shop</h4>
                             <ul className="space-y-4">
                                 {['Fresh Produce', 'Dairy & Eggs', 'Beverages', 'Snacks', 'Household'].map((item) => (
                                     <li key={item}>
-                                        <Link href="#" className="text-sm font-bold hover:text-white transition-colors flex items-center gap-2 group">
-                                            <div className="h-1 w-1 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Link href="#" className="text-sm font-bold hover:text-white transition-colors hover:pl-1 duration-300 block">
                                             {item}
                                         </Link>
                                     </li>
                                 ))}
                             </ul>
-                        </div>
+                        </motion.div>
 
-                        {/* Support */}
-                        <div>
-                            <h4 className="text-white font-black uppercase tracking-widest text-sm mb-8">Support</h4>
-                            <ul className="space-y-4">
-                                {[
-                                    { icon: Phone, text: '+91 800 123 4567' },
-                                    { icon: Mail, text: 'support@bivha.com' },
-                                    { icon: MapPin, text: 'Silicon Valley, Bangalore, KA' }
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-sm font-bold hover:text-white transition-colors cursor-pointer group">
-                                        <div className="p-2 rounded-lg bg-slate-800 group-hover:bg-primary transition-colors">
-                                            <item.icon className="h-4 w-4" />
-                                        </div>
-                                        {item.text}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {/* Contact Info */}
+                        <motion.div variants={itemVariants} className="lg:col-span-3">
+                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Contact</h4>
+                            <div className="space-y-6">
+                                <ContactItem icon={<Phone size={18} />} label="Call Us" value="+91 800 123 4567" />
+                                <ContactItem icon={<Mail size={18} />} label="Email" value="support@bivha.com" />
+                            </div>
+                        </motion.div>
 
                         {/* Newsletter */}
-                        <div className="space-y-6">
-                            <h4 className="text-white font-black uppercase tracking-widest text-sm mb-8">Stay Updated</h4>
-                            <p className="text-sm font-medium text-slate-400">
-                                Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.
-                            </p>
-                            <div className="relative group">
+                        <motion.div variants={itemVariants} className="lg:col-span-3 space-y-6">
+                            <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-8">Stay in Loop</h4>
+                            <p className="text-sm">Get secret deals and early access to new launches.</p>
+                            <div className="relative">
                                 <Input
-                                    placeholder="Enter your email"
-                                    className="h-12 bg-slate-800 border-none rounded-xl pl-4 pr-12 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-primary/20 transition-all"
+                                    placeholder="email@example.com"
+                                    className="h-14 bg-slate-900/50 border-slate-800 rounded-2xl pl-5 pr-14 text-white focus:ring-[#FF3269]/20"
                                 />
-                                <Button size="icon" className="absolute right-1 top-1 h-10 w-10 rounded-lg bg-primary hover:bg-[#E62E5F] text-white">
-                                    <ArrowRight className="h-5 w-5" />
+                                <Button size="icon" className="absolute right-1.5 top-1.5 h-11 w-11 rounded-xl bg-[#FF3269] hover:bg-[#E62E5F] transition-all">
+                                    <ArrowRight size={20} />
                                 </Button>
                             </div>
-                        </div>
+                            <div className="flex gap-4">
+                                {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
+                                    <motion.a
+                                        key={i}
+                                        href="#"
+                                        whileHover={{ y: -3, color: '#FF3269' }}
+                                        className="text-slate-500 transition-colors"
+                                    >
+                                        <Icon size={20} />
+                                    </motion.a>
+                                ))}
+                            </div>
+                        </motion.div>
                     </div>
 
-                    <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                            © 2026 BIVHA SHOP. ALL RIGHTS RESERVED.
+                    {/* Footer Bottom */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="pt-10 border-t border-slate-800/60 flex flex-col md:flex-row justify-between items-center gap-6"
+                    >
+                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                            © 2026 BIVHA TECHNOLOGY. ALL RIGHTS RESERVED.
                         </p>
                         <div className="flex gap-8">
-                            {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
-                                <Link key={item} href="#" className="text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors">
-                                    {item}
+                            {['Privacy', 'Terms', 'Security'].map((link) => (
+                                <Link key={link} href="#" className="text-[10px] font-bold text-slate-600 hover:text-white transition-colors uppercase tracking-widest">
+                                    {link}
                                 </Link>
                             ))}
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </footer>
         </>
-    )
-}
+    );
+};
+
+// Helper Components for Cleaner Code
+const AppDownloadButton = ({ icon, platform, label }: any) => (
+    <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex items-center gap-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl transition-colors hover:border-slate-700"
+    >
+        <div className="text-[#FF3269]">{icon}</div>
+        <div className="text-left">
+            <p className="text-[9px] uppercase font-bold text-slate-500 leading-none">{label}</p>
+            <p className="text-sm font-bold text-white">{platform}</p>
+        </div>
+    </motion.button>
+);
+
+const ContactItem = ({ icon, label, value }: any) => (
+    <div className="flex gap-4 group cursor-pointer">
+        <div className="h-10 w-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center group-hover:text-[#FF3269] group-hover:border-[#FF3269]/50 transition-all">
+            {icon}
+        </div>
+        <div>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">{label}</p>
+            <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{value}</p>
+        </div>
+    </div>
+);

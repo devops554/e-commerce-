@@ -63,31 +63,22 @@ export const DynamicBanner = ({ type }: { type: BannerType }) => {
 
     return (
         <section className="relative w-full bg-white py-10 group/section select-none">
-            {/* SEO Schema */}
-            <Script
-                id={`banner-schema-${type}`}
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(bannerSchema) }}
-            />
-
             <div className="container mx-auto px-4 relative">
 
-                {/* Navigation Buttons */}
-                {banners.length > 3 && (
+                {/* Navigation Buttons - Show if more than 2 banners */}
+                {banners.length > 2 && (
                     <>
                         <button
                             onClick={scrollPrev}
-                            aria-label="Previous Slide"
-                            className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white rounded-full shadow-xl border border-slate-100 hover:bg-slate-50 transition-all active:scale-95 focus:ring-2 focus:ring-blue-500"
+                            className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white rounded-full shadow-lg border hover:bg-slate-50 transition-all opacity-0 group-hover/section:opacity-100 hidden md:flex"
                         >
-                            <ChevronLeft className="text-slate-700" size={24} />
+                            <ChevronLeft size={20} />
                         </button>
                         <button
                             onClick={scrollNext}
-                            aria-label="Next Slide"
-                            className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white rounded-full shadow-xl border border-slate-100 hover:bg-slate-50 transition-all active:scale-95 focus:ring-2 focus:ring-blue-500"
+                            className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 p-2 bg-white rounded-full shadow-lg border hover:bg-slate-50 transition-all opacity-0 group-hover/section:opacity-100 hidden md:flex"
                         >
-                            <ChevronRight className="text-slate-700" size={24} />
+                            <ChevronRight size={20} />
                         </button>
                     </>
                 )}
@@ -95,7 +86,12 @@ export const DynamicBanner = ({ type }: { type: BannerType }) => {
                 <div className="overflow-hidden" ref={emblaRef}>
                     <div className="flex -ml-4">
                         {banners.map((banner: Banner, idx: number) => (
-                            <div key={banner._id} className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.33%] min-w-0 pl-4">
+                            <div
+                                key={banner._id}
+                                // MOBILE: 100% (1 card)
+                                // TABLET/DESKTOP: 50% (2 cards)
+                                className="flex-[0_0_100%] md:flex-[0_0_50%] min-w-0 pl-4"
+                            >
                                 <BannerCard
                                     banner={banner}
                                     colorClass={CARD_COLORS[idx % CARD_COLORS.length]}

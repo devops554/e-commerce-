@@ -26,11 +26,11 @@ export function proxy(request: NextRequest) {
 
     // 🔐 Not logged in → redirect to login
     if (!token && !isPublicRoute) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
     // 🔁 Already logged in & going to login/register
-    if (token && (nextUrl.pathname === '/login' || nextUrl.pathname === '/register')) {
+    if (token && (nextUrl.pathname === '/auth/login' || nextUrl.pathname === '/auth/register')) {
 
         if (role === 'ADMIN' || role === 'SUBADMIN') {
             return NextResponse.redirect(new URL('/admin', request.url));

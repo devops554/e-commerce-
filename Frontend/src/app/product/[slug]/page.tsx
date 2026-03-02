@@ -166,7 +166,7 @@ export default function ProductPage() {
                             attributes={selectedVariant?.attributes || product.attributes}
                         />
 
-                        <hr className="border-slate-100" />
+
 
                         <ProductPricing variant={selectedVariant} />
 
@@ -193,10 +193,6 @@ export default function ProductPage() {
                             shortDescription={product.shortDescription}
                             description={product.description}
                         />
-                    </section>
-
-                    {/* Footer Info: Manufacturer */}
-                    <section className="mt-4">
                         <ProductManufacturer
                             manufacturerInfo={product.manufacturerInfo}
                             warranty={product.warranty}
@@ -204,6 +200,8 @@ export default function ProductPage() {
                             customerCareDetails={product.customerCareDetails}
                         />
                     </section>
+
+
                 </div>
             </div>
 
@@ -229,9 +227,8 @@ export default function ProductPage() {
                                         attributes={fv?.attributes}
                                         stock={fv?.stock}
                                         image={p.thumbnail?.url || ''}
-                                        weight={p.shortDescription || ''}
-                                        rating={p.ratingsAverage || 0}
-                                        reviewCount={p.ratingsCount || 0}
+                                    // rating={p.ratingsAverage || 0}
+                                    // reviewCount={p.ratingsCount || 0}
                                     />
                                 )
                             })}
@@ -265,9 +262,8 @@ export default function ProductPage() {
                                     attributes={p.attributes}
                                     stock={p.stock}
                                     image={p.image || ''}
-                                    weight={p.shortDescription || ''}
-                                    rating={p.ratingsAverage || 0}
-                                    reviewCount={p.ratingsCount || 0}
+                                // rating={p.ratingsAverage || 0}
+                                // reviewCount={p.ratingsCount || 0}
                                 />
                             ))}
                         </div>

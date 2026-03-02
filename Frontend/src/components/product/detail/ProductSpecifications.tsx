@@ -23,7 +23,7 @@ export function ProductSpecifications({ specifications, attributes }: Props) {
     if (!hasSpecs && !hasAttrs) return null
 
     return (
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 space-y-3">
+        <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <BarChart2 className="h-4 w-4 text-slate-400" />
                 <h3 className="text-lg font-black text-slate-900 tracking-tight">Specifications</h3>

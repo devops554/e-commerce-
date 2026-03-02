@@ -304,14 +304,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                             </svg>
                             <span>Google</span>
                         </Button>
-                        <Button
-                            variant="outline"
-                            className="h-12 rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 font-bold flex items-center gap-2 transition-all active:scale-95"
-                            disabled={loading}
-                        >
-                            <Github className="h-5 w-5" />
-                            <span>Github</span>
-                        </Button>
+
                     </div>
 
                     <p className="mt-8 text-center text-xs text-slate-400 font-medium">

@@ -11,7 +11,7 @@ export function ProductDescription({ shortDescription, description }: Props) {
     const [expanded, setExpanded] = useState(false)
 
     return (
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 space-y-4">
+        <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
             <h3 className="text-lg font-black text-slate-900 tracking-tight">Product Description</h3>
 
             {shortDescription && (

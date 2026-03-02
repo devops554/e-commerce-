@@ -1,162 +1,116 @@
-"use client"
+"use client";
 
-import React from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Skeleton } from "@/components/ui/skeleton"
-import { useCategories } from '@/hooks/useCategories'
-
-interface Category {
-    _id: string;
-    name: string;
-    slug: string;
-    image?: string;
-    productType?: {
-        image?: string;
-    };
-}
+import React, { useRef } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCategories } from '@/hooks/useCategories';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CategoryRowSkeleton } from '../product/CategoryRowSkeleton';
 
 export const CategoryScroller = () => {
-    const { data, isLoading } = useCategories({ isActive: true, parentId: null, limit: 50 })
-    const categories = data?.categories || []
+    const { data, isLoading } = useCategories({ isActive: true, parentId: null, limit: 50 });
+    const categories = data?.categories || [];
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    if (isLoading) return <CategorySkeleton />
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, clientWidth } = scrollContainerRef.current;
+            const moveAmount = clientWidth * 0.8;
+            scrollContainerRef.current.scrollTo({
+                left: direction === 'left' ? scrollLeft - moveAmount : scrollLeft + moveAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    if (isLoading) return <CategoryRowSkeleton />;
 
     return (
-        <section className="w-full py-6 px-4">
-            {/* Mobile: 4-row grid with horizontal scroll */}
-            <div className="md:hidden overflow-x-auto scrollbar-hide">
-                <div
-                    className="grid gap-3"
-                    style={{
-                        gridTemplateRows: 'repeat(4, auto)',
-                        gridAutoFlow: 'column',
-                        gridAutoColumns: 'min-content',
-                    }}
-                >
-                    {categories.map((cat: Category) => {
-                        const displayImage = cat.image || cat.productType?.image;
-                        return (
-                            <Link
-                                key={cat._id}
-                                href={`/category/${cat.slug}`}
-                                className="group flex flex-col items-center gap-2 text-center w-[80px]"
-                            >
-                                <div className="h-[72px] w-[72px] rounded-2xl bg-[#F3F4F6] overflow-hidden transition-transform group-hover:scale-105 duration-300 shadow-sm flex-shrink-0">
-                                    {displayImage ? (
-                                        <div className="relative h-full w-full">
-                                            <Image
-                                                src={displayImage}
-                                                alt={cat.name}
-                                                fill
-                                                sizes="72px"
-                                                className="object-cover rounded-2xl"
-                                                priority={false}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm font-medium">
-                                            {cat.name.charAt(0)}
-                                        </div>
-                                    )}
-                                </div>
-                                <span className="text-xs font-medium leading-tight text-slate-800 line-clamp-2 w-full">
-                                    {cat.name}
-                                </span>
-                            </Link>
-                        );
-                    })}
+        <section className="relative w-full py-8 px-4 group/container overflow-hidden">
+            {/* Header Area */}
+            <div className="flex items-center justify-between mb-6 px-2">
+                <h2 className="text-xl font-black tracking-tight text-slate-900">
+                    Browse Categories<span className="text-[#FF3269]">.</span>
+                </h2>
+                <div className="flex m gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => scroll('left')}
+                        className="rounded-full h-8 w-8 border-slate-200 hover:bg-[#FF3269] hover:text-white transition-colors"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => scroll('right')}
+                        className="rounded-full h-8 w-8 border-slate-200 hover:bg-[#FF3269] hover:text-white transition-colors"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
-            {/* Desktop: 2-row grid with horizontal scroll */}
-            <div className="hidden md:block overflow-x-auto scrollbar-hide">
+            {/* Scroll Container with Fade Mask */}
+            <div className="relative">
+                {/* Optional: Gradient Fades for Premium Look */}
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-white to-transparent z-10 pointer-events-none opacity-0 group-hover/container:opacity-100 transition-opacity" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-white to-transparent z-10 pointer-events-none opacity-0 group-hover/container:opacity-100 transition-opacity" />
+
                 <div
-                    className="grid gap-4"
-                    style={{
-                        gridTemplateRows: 'repeat(2, auto)',
-                        gridAutoFlow: 'column',
-                        gridAutoColumns: 'min-content',
-                    }}
+                    ref={scrollContainerRef}
+                    className="overflow-x-auto scrollbar-hide scroll-smooth"
                 >
-                    {categories.map((cat: Category) => {
-                        const displayImage = cat.image || cat.productType?.image;
-                        return (
-                            <Link
-                                key={cat._id}
-                                href={`/category/${cat.slug}`}
-                                className="group flex flex-col items-center gap-3 text-center w-[110px]"
-                            >
-                                <div className="h-28 w-28 rounded-2xl bg-[#F3F4F6] overflow-hidden transition-transform group-hover:scale-105 duration-300 shadow-sm flex-shrink-0">
-                                    {displayImage ? (
-                                        <div className="relative h-full w-full">
+                    <div
+                        className="grid gap-x-4 gap-y-6 md:gap-x-6 md:gap-y-8"
+                        style={{
+                            gridAutoFlow: 'column',
+                            gridAutoColumns: 'min-content',
+                            // Logic: 4 rows on small screens, 2 rows on md+
+                            gridTemplateRows: 'repeat(var(--row-count, 4), auto)',
+                        } as React.CSSProperties}
+                    >
+                        {/* CSS Variable Hack for Responsive Rows */}
+                        <style jsx>{`
+                            div { --row-count: 4; }
+                            @media (min-width: 768px) { div { --row-count: 2; } }
+                        `}</style>
+
+                        {categories.map((cat: any) => {
+                            const displayImage = cat.image || cat.productType?.image;
+                            return (
+                                <Link
+                                    key={cat._id}
+                                    href={`/category/${cat.slug}`}
+                                    className="flex flex-col items-center gap-2 text-center w-[85px] md:w-[120px] group"
+                                >
+                                    <div className="relative h-[72px] w-[72px] md:h-28 md:w-28 rounded-3xl bg-slate-50 overflow-hidden border border-slate-100 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-[#FF3269]/10 group-hover:-translate-y-1">
+                                        {displayImage ? (
                                             <Image
                                                 src={displayImage}
                                                 alt={cat.name}
                                                 fill
-                                                sizes="112px"
-                                                className="object-cover rounded-2xl"
-                                                priority={false}
+                                                className="object-cover p-1 rounded-3xl"
+                                                sizes="(max-width: 768px) 72px, 112px"
                                             />
-                                        </div>
-                                    ) : (
-                                        <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm font-medium">
-                                            {cat.name.charAt(0)}
-                                        </div>
-                                    )}
-                                </div>
-                                <span className="text-sm font-medium leading-tight text-slate-800 line-clamp-2 max-w-[100px]">
-                                    {cat.name}
-                                </span>
-                            </Link>
-                        );
-                    })}
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center text-[#FF3269] font-bold bg-[#FF3269]/5">
+                                                {cat.name.charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[11px] md:text-sm font-bold text-slate-700 line-clamp-1 group-hover:text-[#FF3269] transition-colors">
+                                        {cat.name}
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </section>
-    )
-}
-
-const CategorySkeleton = () => {
-    return (
-        <div className="w-full py-6 px-4">
-            {/* Mobile skeleton: 4 rows */}
-            <div className="md:hidden overflow-x-auto scrollbar-hide">
-                <div
-                    className="grid gap-3"
-                    style={{
-                        gridTemplateRows: 'repeat(4, auto)',
-                        gridAutoFlow: 'column',
-                        gridAutoColumns: 'min-content',
-                    }}
-                >
-                    {[...Array(20)].map((_, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 w-[80px]">
-                            <Skeleton className="h-[72px] w-[72px] rounded-2xl bg-slate-100" />
-                            <Skeleton className="h-3 w-14 rounded-full bg-slate-100" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Desktop skeleton: 2 rows */}
-            <div className="hidden md:block overflow-x-auto scrollbar-hide">
-                <div
-                    className="grid gap-4"
-                    style={{
-                        gridTemplateRows: 'repeat(2, auto)',
-                        gridAutoFlow: 'column',
-                        gridAutoColumns: 'min-content',
-                    }}
-                >
-                    {[...Array(16)].map((_, i) => (
-                        <div key={i} className="flex flex-col items-center gap-3 w-[110px]">
-                            <Skeleton className="h-28 w-28 rounded-2xl bg-slate-100" />
-                            <Skeleton className="h-4 w-16 rounded-full bg-slate-100" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    )
-}
+    );
+};

@@ -31,10 +31,10 @@ export function ProductManufacturer({ manufacturerInfo, warranty, disclaimer, cu
     if (!hasInfo) return null
 
     return (
-        <div className=" space-y-6">
+        <div className="space-y-6">
 
             {(hasMfg || warranty) && (
-                <div className="space-y-3 border-slate-100 bg-white p-6 rounded-2xl">
+                <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                         <Truck className="h-4 w-4 text-slate-400" />
                         <h3 className="text-lg font-black text-slate-900 tracking-tight">Manufacturer Info</h3>
@@ -84,7 +84,7 @@ export function ProductManufacturer({ manufacturerInfo, warranty, disclaimer, cu
             )}
 
             {hasCare && (
-                <div className="space-y-3 border-slate-100 bg-white p-6 rounded-2xl">
+                <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                         <ShieldCheck className="h-4 w-4 text-slate-400" />
                         <h3 className="text-sm font-black text-slate-900 tracking-tight">Customer Care</h3>

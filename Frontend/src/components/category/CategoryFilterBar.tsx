@@ -101,7 +101,7 @@ export const CategoryFilterBar = ({
                 </Dialog>
 
                 {/* HORIZONTAL BRAND SCROLLER */}
-                <div className="flex-1 overflow-hidden relative group/scroller">
+                <div className="flex-1 md:flex hidden overflow-hidden relative group/scroller">
                     <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
                         {availableBrands.map((brand) => (
                             <Button

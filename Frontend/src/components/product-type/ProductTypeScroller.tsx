@@ -77,8 +77,8 @@ export const ProductTypeScroller = () => {
                         ))}
                     </CarouselContent>
                     {/* Navigation Controls */}
-                    <CarouselPrevious className="hidden md:flex -left-4 bg-white shadow-md border-gray-200 hover:bg-gray-50 text-gray-600 w-8 h-8" />
-                    <CarouselNext className="hidden md:flex -right-4 bg-white shadow-md border-gray-200 hover:bg-gray-50 text-gray-600 w-8 h-8" />
+                    <CarouselPrevious className="flex -left-4 bg-white shadow-md border-gray-200 hover:bg-gray-50 text-gray-600 w-8 h-8" />
+                    <CarouselNext className="flex -right-4 bg-white shadow-md border-gray-200 hover:bg-gray-50 text-gray-600 w-8 h-8" />
                 </Carousel>
             </div>
         </section>

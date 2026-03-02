@@ -2,6 +2,8 @@
 
 import { Suspense } from "react"
 import { SearchResults } from "./SearchResults"
+import { DynamicBanner } from "@/components/banner/Banners"
+import { BANNER_TYPE } from "@/services/banner.service"
 
 export default function SearchPage() {
     return (
@@ -15,6 +17,7 @@ export default function SearchPage() {
                 </div>
             }
         >
+            <DynamicBanner type={BANNER_TYPE.SEARCH_PAGE} />
             <SearchResults />
         </Suspense>
     )

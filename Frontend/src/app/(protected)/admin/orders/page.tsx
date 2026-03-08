@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAllOrders } from "@/hooks/useOrders"
+import { useOrders } from "@/hooks/useOrders"
 import { orderService, Order, OrderStatus } from "@/services/order.service"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -30,23 +30,31 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
     created: { label: "Placed", variant: "secondary" },
     pending: { label: "Pending", variant: "outline" },
     confirmed: { label: "Confirmed", variant: "default" },
+    packed: { label: "Packed", variant: "default" },
     shipped: { label: "Shipped", variant: "default" },
+    out_for_delivery: { label: "Out For Delivery", variant: "default" },
     delivered: { label: "Delivered", variant: "default" },
     failed: { label: "Failed", variant: "destructive" },
     cancelled: { label: "Cancelled", variant: "destructive" },
+    returned: { label: "Returned", variant: "outline" },
+    failed_delivery: { label: "Delivery Failed", variant: "destructive" },
 }
 
 const STATUS_COLOR: Record<string, string> = {
     created: "bg-slate-100 text-slate-700",
     pending: "bg-yellow-100 text-yellow-800",
     confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-indigo-100 text-indigo-800",
+    packed: "bg-indigo-100 text-indigo-800",
+    shipped: "bg-violet-100 text-violet-800",
+    out_for_delivery: "bg-orange-100 text-orange-800",
     delivered: "bg-green-100 text-green-800",
     failed: "bg-red-100 text-red-800",
     cancelled: "bg-gray-100 text-gray-600",
+    returned: "bg-stone-100 text-stone-600",
+    failed_delivery: "bg-red-50 text-red-600",
 }
 
-const ALL_STATUSES: OrderStatus[] = ["created", "pending", "confirmed", "shipped", "delivered", "failed", "cancelled"]
+const ALL_STATUSES: OrderStatus[] = ["created", "pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered", "failed", "cancelled", "returned", "failed_delivery"]
 
 import { useBreadcrumb } from "@/providers/BreadcrumbContext"
 
@@ -70,7 +78,7 @@ export default function AdminOrdersPage() {
         setBreadcrumbs([{ label: "Orders", href: "/admin/orders" }])
     }, [setBreadcrumbs])
 
-    const { data, isLoading } = useAllOrders({
+    const { data, isLoading } = useOrders({
         page,
         limit: 15,
         status: status === "all" ? undefined : status,
@@ -211,16 +219,48 @@ export default function AdminOrdersPage() {
                                                     Confirm
                                                 </Button>
                                             )}
-
                                             {order.orderStatus === 'confirmed' && (
                                                 <Button
                                                     size="sm"
                                                     className="h-8 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-[10px] font-black uppercase tracking-wider"
+                                                    onClick={() => updateStatusMutation.mutate({ id: order._id, status: 'packed' })}
+                                                    disabled={updateStatusMutation.isPending}
+                                                >
+                                                    <Package className="w-3 h-3 mr-1" />
+                                                    Pack
+                                                </Button>
+                                            )}
+                                            {order.orderStatus === 'packed' && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-8 rounded-lg bg-violet-500 hover:bg-violet-600 text-[10px] font-black uppercase tracking-wider"
                                                     onClick={() => updateStatusMutation.mutate({ id: order._id, status: 'shipped' })}
                                                     disabled={updateStatusMutation.isPending}
                                                 >
                                                     <Truck className="w-3 h-3 mr-1" />
                                                     Ship
+                                                </Button>
+                                            )}
+                                            {order.orderStatus === 'shipped' && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-[10px] font-black uppercase tracking-wider"
+                                                    onClick={() => updateStatusMutation.mutate({ id: order._id, status: 'out_for_delivery' })}
+                                                    disabled={updateStatusMutation.isPending}
+                                                >
+                                                    <Truck className="w-3 h-3 mr-1" />
+                                                    Deliver
+                                                </Button>
+                                            )}
+                                            {order.orderStatus === 'out_for_delivery' && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-[10px] font-black uppercase tracking-wider"
+                                                    onClick={() => updateStatusMutation.mutate({ id: order._id, status: 'delivered' })}
+                                                    disabled={updateStatusMutation.isPending}
+                                                >
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                    Complete
                                                 </Button>
                                             )}
 

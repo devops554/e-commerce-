@@ -238,10 +238,6 @@ export class ProductVariant extends Document {
         value: string;
     }[];
 
-    // ===== STOCK =====
-    @Prop({ required: true, min: 0 })
-    stock: number;
-
     @Prop({ type: [String], default: [] })
     isFeatured: string[];
 

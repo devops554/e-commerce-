@@ -15,8 +15,8 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    token: string | null;
-    login: (token: string, user: User) => void;
+    accessToken: string | null;
+    login: (accessToken: string, refreshToken: string, user: User, redirectTo?: string) => void;
     logout: () => void;
     isLoaded: boolean;
 }
@@ -25,16 +25,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        const storedToken = Cookies.get('token');
+        const storedToken = Cookies.get('accessToken');
         const storedUser = localStorage.getItem('user');
 
         if (storedToken && storedUser) {
-            setToken(storedToken);
+            setAccessToken(storedToken);
             setUser(JSON.parse(storedUser));
 
             // Set default auth header for axios
@@ -43,11 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoaded(true);
     }, []);
 
-    const login = async (newToken: string, newUser: User) => {
-        // 1. Set token and auth header immediately
-        setToken(newToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-        Cookies.set('token', newToken, { expires: 7 });
+    const login = async (newAccessToken: string, newRefreshToken: string, newUser: User, redirectTo: string = '/') => {
+        // 1. Set tokens and auth header immediately
+        setAccessToken(newAccessToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        Cookies.set('accessToken', newAccessToken, { expires: 7 });
+        Cookies.set('refreshToken', newRefreshToken, { expires: 7 });
 
         // 2. Sync cart while still "guest-ish" in state but authorized in headers
         const savedCartStr = localStorage.getItem('cart');
@@ -77,20 +78,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 3. Finally update user state and finish login
         setUser(newUser);
         localStorage.setItem('user', JSON.stringify(newUser));
-        router.push('/');
+        router.push(redirectTo);
     };
 
     const logout = () => {
-        setToken(null);
+        setAccessToken(null);
         setUser(null);
-        Cookies.remove('token');
+        Cookies.remove('accessToken');
+        Cookies.remove('refreshToken');
         localStorage.removeItem('user');
         delete axios.defaults.headers.common['Authorization'];
-        router.push('/login');
+        router.push('/auth/login');
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoaded }}>
+        <AuthContext.Provider value={{ user, accessToken, login, logout, isLoaded }}>
             {children}
         </AuthContext.Provider>
     );

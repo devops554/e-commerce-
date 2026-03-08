@@ -5,7 +5,7 @@ import { User } from './user.service';
 // --- Types ---
 
 export type PaymentMethod = 'razorpay' | 'cod';
-export type OrderStatus = 'created' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'failed' | 'cancelled';
+export type OrderStatus = 'created' | 'pending' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'failed' | 'cancelled' | 'returned' | 'failed_delivery';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface ShippingAddress {
@@ -17,6 +17,8 @@ export interface ShippingAddress {
     state: string;
     postalCode: string;
     country: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface OrderItem {
@@ -28,6 +30,7 @@ export interface OrderItem {
     title?: string;
     status?: OrderStatus;
     cancelReason?: string;
+    warehouse?: any;
 }
 
 // Fully-populated item returned by GET /orders/:id
@@ -40,6 +43,16 @@ export interface OrderItemDetail {
     title?: string;
     status?: OrderStatus;
     cancelReason?: string;
+    warehouse?: any;
+}
+
+export interface OrderHistory {
+    actor: User | string;
+    actorRole: string;
+    action: string;
+    status: OrderStatus;
+    note?: string;
+    timestamp: string;
 }
 
 // Fully-populated order returned by GET /orders/:id
@@ -49,6 +62,7 @@ export interface OrderDetail extends Omit<Order, 'items'> {
     cancelBy?: string;
     cancelAt?: string;
     isDeleted?: boolean;
+    history?: OrderHistory[];
 }
 
 export interface Order {
@@ -70,6 +84,7 @@ export interface Order {
     isDeleted?: boolean;
     createdAt: string;
     updatedAt: string;
+    history?: OrderHistory[];
 }
 
 export interface CreateOrderDto {
@@ -132,4 +147,13 @@ export const orderService = {
         const response = await axiosClient.get<OrderDetail>(`/orders/${id}`);
         return response.data;
     },
+
+    getWarehouseOrders: async (warehouseId: string): Promise<Order[]> => {
+        const response = await axiosClient.get<Order[]>(`/orders/warehouse/${warehouseId}`);
+        return response.data;
+    },
+
+    dispatchItem: (orderId: string, variantId: string, warehouseId: string) =>
+        axiosClient.post(`/orders/${orderId}/dispatch`, { variantId, warehouseId }),
 };
+

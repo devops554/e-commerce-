@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "SwiftDeliver",
+    "slug": "delivery-partner-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bivha.swift-deliver-partner"
+    },
+    "android": {
+      "package": "com.bivha.swiftdeliver.partner",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-location"
+    ],
+    "newArchEnabled": true,
+    "scheme": "swift-deliver-partner"
+  }
+}

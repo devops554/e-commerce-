@@ -12,7 +12,11 @@ import axios from 'axios';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User as UserIcon, Phone, ShieldCheck, Github, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Phone, ShieldCheck, Github, ArrowRight, Loader2, EyeOff, Eye } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
+import { ForgotPasswordDialog } from './ForgotPasswordDialog';
+import { getErrorMessage } from '@/utils/error-handler';
+
 
 export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -20,6 +24,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
     const [otpLoading, setOtpLoading] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
     const [activeTab, setActiveTab] = useState('login');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Form fields
     const [email, setEmail] = useState('');
@@ -39,7 +44,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
             setOtpSent(true);
             toast.success('OTP sent to your email');
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to send OTP');
+            toast.error(getErrorMessage(error));
         } finally {
             setOtpLoading(false);
         }
@@ -50,11 +55,12 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
         setLoading(true);
         try {
             const response = await axios.post(`${apiUrl}/auth/login`, { email, password });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Logged in successfully!');
             setIsOpen(false);
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Login failed');
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -65,11 +71,12 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
         setLoading(true);
         try {
             const response = await axios.post(`${apiUrl}/auth/register`, { email, password, name, phone, otp });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Account created and logged in!');
             setIsOpen(false);
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Registration failed');
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -81,15 +88,20 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
             const result = await signInWithPopup(auth, googleProvider);
             const idToken = await result.user.getIdToken();
             const response = await axios.post(`${apiUrl}/auth/google`, { idToken });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Google login successful!');
             setIsOpen(false);
         } catch (error: any) {
-            toast.error('Google login failed');
+            toast.error(getErrorMessage(error));
             console.error(error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     return (
@@ -100,7 +112,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
             <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none bg-white/80 backdrop-blur-xl shadow-2xl">
                 <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-white/50 to-blue-500/5 -z-10" />
 
-                <div className="p-8">
+                <ScrollArea className="p-8 overflow-y-auto max-h-[80vh]">
                     <DialogHeader className="mb-8 items-center text-center">
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
@@ -163,15 +175,24 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                                             <div className="relative">
                                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#FF3269] transition-colors" />
                                                 <Input
-                                                    type="password"
+                                                    type={showPassword ? 'text' : 'password'}
                                                     placeholder="••••••••"
                                                     className="h-12 bg-slate-50 border-none rounded-xl pl-11 focus:ring-2 focus:ring-[#FF3269]/10 transition-all font-medium"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
                                                     required
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={togglePasswordVisibility}
+                                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
                                             </div>
-                                            <button type="button" className="text-[10px] font-bold text-[#FF3269] uppercase tracking-wider hover:underline ml-1">Forgot Password?</button>
+                                            <ForgotPasswordDialog trigger={
+                                                <button type="button" className="text-[10px] font-bold text-[#FF3269] uppercase tracking-wider hover:underline ml-1">Forgot Password?</button>
+                                            } />
                                         </div>
                                         <Button className="w-full h-12 bg-[#FF3269] hover:bg-[#E62E5F] text-white font-bold rounded-xl shadow-lg shadow-[#FF3269]/20 transition-all active:scale-[0.98] group" disabled={loading}>
                                             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
@@ -257,17 +278,24 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                                         </div>
 
                                         <div className="space-y-2 group">
-                                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Set Password</Label>
+                                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</Label>
                                             <div className="relative">
                                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                                 <Input
-                                                    type="password"
+                                                    type={showPassword ? 'text' : 'password'}
                                                     placeholder="••••••••"
                                                     className="h-12 bg-slate-50 border-none rounded-xl pl-11 focus:ring-2 focus:ring-[#FF3269]/10 font-medium"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
                                                     required
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={togglePasswordVisibility}
+                                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
                                             </div>
                                         </div>
 
@@ -289,7 +317,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                         <Button
                             variant="outline"
                             onClick={handleGoogleLogin}
@@ -310,7 +338,7 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                     <p className="mt-8 text-center text-xs text-slate-400 font-medium">
                         By continuing, you agree to our <button className="text-slate-900 border-b border-slate-300 hover:border-slate-900 transition-colors">Terms of Service</button>
                     </p>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
     );

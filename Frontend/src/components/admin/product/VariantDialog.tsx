@@ -29,7 +29,6 @@ interface VariantDialogProps {
 export default function VariantDialog({ isOpen, onClose, onSave, initialData, isLoading, availableImages = [], productAttributes = [] }: VariantDialogProps) {
     const [formData, setFormData] = React.useState<any>(initialData || {
         price: 0,
-        stock: 0,
         isActive: true,
         isFeatured: [],
         attributes: productAttributes.length > 0 ? productAttributes.map(a => ({ name: a.name, value: '' })) : [],
@@ -41,7 +40,7 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
             setFormData({ ...initialData, isFeatured: initialData.isFeatured || [], attributes: initialData.attributes || [] })
         } else {
             setFormData({
-                price: 0, stock: 0, isActive: true, isFeatured: [],
+                price: 0, isActive: true, isFeatured: [],
                 attributes: productAttributes.length > 0 ? productAttributes.map(a => ({ name: a.name, value: '' })) : [],
                 images: []
             })
@@ -162,13 +161,12 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="font-bold text-xs uppercase text-slate-500">Stock</Label>
-                            <Input
-                                type="number"
-                                value={formData.stock}
-                                onChange={(e) => handleChange('stock', +e.target.value)}
-                                className="rounded-xl border-slate-200"
-                            />
+                            <Label className="font-bold text-xs uppercase text-slate-400">Total Stock (All Warehouses)</Label>
+                            <div className="h-10 px-4 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                                <span className="font-black text-slate-900">{formData.stock || 0}</span>
+                                <Badge variant="outline" className="text-[9px] font-black h-5 uppercase tracking-tight">Read Only</Badge>
+                            </div>
+                            <p className="text-[9px] text-slate-400 italic">Managed via Warehouse Inventory</p>
                         </div>
                         <div className="space-y-2">
                             <Label className="font-bold text-xs uppercase text-slate-500">SKU Code</Label>

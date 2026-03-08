@@ -1,6 +1,6 @@
 import { Controller, Post, Body, UseGuards, Get, Req, Logger, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RegisterSubAdminDto } from './dto/auth.dto';
+import { ForgotPasswordDto, LoginDto, RegisterDto, RegisterSubAdminDto, RegisterManagerDto, ResetPasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
@@ -31,10 +31,27 @@ export class AuthController {
         return this.authService.login(loginDto);
     }
 
+    @Post('refresh')
+    async refresh(@Body('refreshToken') refreshToken: string) {
+        return this.authService.refreshToken(refreshToken);
+    }
+
     @Post('google')
     async googleLogin(@Body('idToken') idToken: string) {
         this.logger.log('Google login attempt');
         return this.authService.googleLogin(idToken);
+    }
+
+    @Post('forgot-password')
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        this.logger.log(`Forgot password request for: ${forgotPasswordDto.email}`);
+        return this.authService.forgotPassword(forgotPasswordDto);
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+        this.logger.log(`Password reset request for: ${resetPasswordDto.email}`);
+        return this.authService.resetPassword(resetPasswordDto);
     }
 
     @Post('register-subadmin')
@@ -43,6 +60,14 @@ export class AuthController {
     async registerSubAdmin(@Body() registerDto: RegisterSubAdminDto) {
         this.logger.log(`Sub-admin registration by admin: ${registerDto.email}`);
         return this.authService.registerSubAdmin(registerDto);
+    }
+
+    @Post('register-manager')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    async registerManager(@Body() registerDto: RegisterManagerDto) {
+        this.logger.log(`Manager registration by admin: ${registerDto.email}`);
+        return this.authService.registerManager(registerDto);
     }
 
     @UseGuards(JwtAuthGuard)

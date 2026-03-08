@@ -5,6 +5,7 @@ export enum UserRole {
     ADMIN = 'admin',
     SUB_ADMIN = 'subadmin',
     SELLER = 'seller',
+    MANAGER = 'manager',
     CUSTOMER = 'customer',
 }
 
@@ -52,6 +53,8 @@ export class Address {
 }
 
 export const AddressSchema = SchemaFactory.createForClass(Address);
+
+export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User extends Document {

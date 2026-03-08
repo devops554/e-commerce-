@@ -67,3 +67,14 @@ export const useUpdateStatus = () => {
         },
     });
 };
+
+export const useRegisterManager = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (managerData: any) => userService.registerManager(managerData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['all-users'] });
+        },
+    });
+};

@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, ConflictException, BadRequestExcepti
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto, RegisterSubAdminDto } from './dto/auth.dto';
+import { ForgotPasswordDto, LoginDto, RegisterDto, RegisterSubAdminDto, RegisterManagerDto, ResetPasswordDto } from './dto/auth.dto';
 import { EmailService } from './email.service';
 import { GoogleOAuthService } from './google-oauth.service';
 import { RedisService } from '../redis/redis.service';
@@ -41,8 +41,8 @@ export class AuthService {
         try {
             const cachedOtp = await this.redisService.get(`otp:${email}`);
 
-            if (!cachedOtp || cachedOtp !== otp) {
-                this.logger.warn(`Invalid OTP attempt for ${email}`);
+            if (!cachedOtp || String(cachedOtp) !== String(otp)) {
+                this.logger.warn(`Invalid OTP attempt for ${email}. Expected: ${cachedOtp}, Received: ${otp}`);
                 throw new BadRequestException('Invalid or expired OTP');
             }
 
@@ -127,6 +127,42 @@ export class AuthService {
         }
     }
 
+    async registerManager(registerDto: RegisterManagerDto) {
+        try {
+            const { email, password, name, phone } = registerDto;
+
+            const existingUser = await this.usersService.findByEmail(email);
+            if (existingUser) {
+                throw new ConflictException('Email already exists');
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const user = await this.usersService.create({
+                email,
+                password: hashedPassword,
+                name,
+                phone,
+                role: require('../users/schemas/user.schema').UserRole.MANAGER,
+            });
+
+            this.logger.log(`New manager registered: ${email}`);
+            return {
+                message: 'Manager registered successfully',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                },
+            };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            this.logger.error(`Manager registration failed for ${registerDto.email}: ${error.message}`, error.stack);
+            throw new InternalServerErrorException('Manager registration failed');
+        }
+    }
+
     async login(loginDto: LoginDto) {
         try {
             const { email, password } = loginDto;
@@ -179,19 +215,79 @@ export class AuthService {
         }
     }
 
+    // ─── FORGOT PASSWORD ───
+
+    async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+        const { email } = forgotPasswordDto;
+        const user = await this.usersService.findByEmail(email);
+
+        if (!user) {
+            // Don't reveal user existence for security, but also don't send OTP
+            this.logger.warn(`Forgot password requested for non-existent email: ${email}`);
+            return { message: 'If this email exists, an OTP has been sent' };
+        }
+
+        await this.requestOtp(email);
+        this.logger.log(`Password reset OTP requested for ${email}`);
+        return { message: 'Password reset OTP sent to email' };
+    }
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto) {
+        try {
+            const { email, otp, password } = resetPasswordDto;
+
+            // Verify OTP
+            await this.verifyOtp(email, otp);
+
+            const user = await this.usersService.findByEmail(email);
+            if (!user) {
+                throw new BadRequestException('User not found');
+            }
+
+            // Update password
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await this.usersService.update(user._id.toString(), { password: hashedPassword });
+
+            this.logger.log(`Password successfully reset for ${email}`);
+            return { message: 'Password reset successful' };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            this.logger.error(`Password reset failed for ${resetPasswordDto.email}: ${error.message}`);
+            throw new InternalServerErrorException('Reset password failed');
+        }
+    }
+
     // ─── TOKEN GENERATION ───
 
     private generateToken(user: any) {
         const payload = { sub: user._id, email: user.email, role: user.role };
         return {
-            access_token: this.jwtService.sign(payload),
+            accessToken: this.jwtService.sign(payload),
+            refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
             user: {
                 id: user._id,
+                _id: user._id.toString(),
                 email: user.email,
                 name: user.name,
                 role: user.role,
                 avatar: user.avatar,
             },
         };
+    }
+
+    async refreshToken(token: string) {
+        try {
+            const payload = this.jwtService.verify(token);
+            // Remove iat and exp to prevent signing issues
+            const { iat, exp, ...newPayload } = payload;
+
+            return {
+                accessToken: this.jwtService.sign(newPayload),
+                refreshToken: this.jwtService.sign(newPayload, { expiresIn: '7d' }),
+            };
+        } catch (error) {
+            this.logger.warn(`Token refresh failed: ${error.message}`);
+            throw new UnauthorizedException('Invalid or expired refresh token');
+        }
     }
 }

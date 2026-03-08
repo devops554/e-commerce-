@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService, Product, ProductVariant } from '../services/product.service';
-import { toast } from 'sonner';
+import { useAuth } from '../providers/AuthContext';
+import { productService } from '../services/product.service';
+import { toast } from 'react-hot-toast';
 
 export const useProducts = (params: {
     page?: number;
@@ -14,10 +15,19 @@ export const useProducts = (params: {
     minPrice?: number;
     maxPrice?: number;
     sort?: string;
+    createdBy?: string;
 }, enabled: boolean = true) => {
+    const { user } = useAuth();
+
+    // Auto-inject createdBy if seller
+    const effectiveParams = { ...params };
+    if (user?.role === 'seller') {
+        effectiveParams.createdBy = user.id;
+    }
+
     return useQuery({
-        queryKey: ['products', params],
-        queryFn: () => productService.getAll(params),
+        queryKey: ['products', effectiveParams],
+        queryFn: () => productService.getAll(effectiveParams),
         enabled
     });
 };

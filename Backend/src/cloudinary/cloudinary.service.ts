@@ -1,6 +1,17 @@
 import { Injectable, Logger, InternalServerErrorException, BadRequestException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import 'multer';
+
+// Define a local interface to replace Express.Multer.File which often has namespace issues in newer NestJS/Express setups
+interface MulterFile {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+}
 
 @Injectable()
 export class CloudinaryService {
@@ -25,7 +36,7 @@ export class CloudinaryService {
     // ─── UPLOAD OPERATIONS ───
 
     async uploadImage(
-        file: Express.Multer.File,
+        file: MulterFile,
         folder: string,
     ): Promise<UploadApiResponse> {
         try {

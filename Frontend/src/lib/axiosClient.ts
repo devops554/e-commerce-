@@ -11,7 +11,7 @@ const axiosClient = axios.create({
 // Add a request interceptor to include the auth token
 axiosClient.interceptors.request.use(
     (config) => {
-        const token = Cookies.get('token');
+        const token = Cookies.get('accessToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -29,19 +29,46 @@ axiosClient.interceptors.response.use(
     (response) => {
         return response;
     },
-    (error) => {
+    async (error) => {
+        const originalRequest = error.config;
         const errorMessage = error.response?.data?.message || error.message || 'Something went wrong';
 
-        if (error.response?.status === 401) {
-            // Handle unauthorized - maybe clear cookies and redirect
-            Cookies.remove('token');
-            if (typeof window !== 'undefined') {
-                window.location.href = '/';
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                const refreshToken = Cookies.get('refreshToken');
+                if (!refreshToken) throw new Error('No refresh token available');
+
+                // Use a fresh axios instance to avoid infinite loops with interceptors
+                const response = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
+                    { refreshToken }
+                );
+
+                const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
+                Cookies.set('accessToken', newAccessToken, { expires: 7 });
+                Cookies.set('refreshToken', newRefreshToken, { expires: 7 });
+
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return axiosClient(originalRequest);
+            } catch (refreshError) {
+                Cookies.remove('accessToken');
+                Cookies.remove('refreshToken');
+                localStorage.removeItem('user');
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/auth/login';
+                }
+                return Promise.reject(refreshError);
             }
         } else if (error.response?.status === 403) {
             toast.error("Access Denied: You don't have permission to perform this action.");
         } else {
-            toast.error(errorMessage);
+            // Avoid double toasting if it's a 401 that we're trying to refresh
+            if (error.response?.status !== 401) {
+                toast.error(errorMessage);
+            }
         }
 
         return Promise.reject(error);

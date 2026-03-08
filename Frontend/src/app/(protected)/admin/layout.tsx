@@ -31,6 +31,8 @@ import { BreadcrumbProvider } from '@/providers/BreadcrumbContext'
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UserRole } from '@/services/user.service'
+import { useSocket } from '@/hooks/useSocket'
+import { toast } from 'sonner'
 
 interface AdminLayoutProps {
     children: React.ReactNode
@@ -46,6 +48,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             router.push('/')
         }
     }, [user, isLoaded, router])
+
+    useSocket('order.created', (order) => {
+        toast.success(`New order received: ${order.orderId}`, {
+            description: `Total amount: ₹${order.totalAmount}`,
+            duration: 5000,
+        });
+    });
+
+    useSocket('stock.updated', (data) => {
+        toast.info(`Stock indicator updated`, {
+            description: `Variant ID: ${data.variantId} now has ${data.stock} units left.`,
+            duration: 5000,
+        });
+    });
 
     if (!isLoaded || (!user || (user.role !== 'admin' && user.role !== 'subadmin'))) {
         return (

@@ -58,7 +58,28 @@ const STATUS_CONFIG: Record<
         dot: "bg-gray-300",
         pill: "bg-gray-100 text-gray-500 border border-gray-200",
     },
+    packed: {
+        label: "Packed",
+        dot: "bg-indigo-400",
+        pill: "bg-indigo-50 text-indigo-700 border border-indigo-200",
+    },
+    out_for_delivery: {
+        label: "Out For Delivery",
+        dot: "bg-orange-400",
+        pill: "bg-orange-50 text-orange-700 border border-orange-200",
+    },
+    returned: {
+        label: "Returned",
+        dot: "bg-stone-400",
+        pill: "bg-stone-50 text-stone-700 border border-stone-200",
+    },
+    failed_delivery: {
+        label: "Delivery Failed",
+        dot: "bg-red-400",
+        pill: "bg-red-50 text-red-700 border border-red-200",
+    },
 }
+
 
 function getNetVolume(
     attributes: { name: string; value: string }[] = []
@@ -126,6 +147,11 @@ export function OrderCard({ order }: { order: Order }) {
                         <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                         {status.label}
                     </span>
+                    {order.orderStatus === 'cancelled' && (order.cancelBy === 'admin' || order.cancelBy === 'subadmin' || order.cancelBy === 'seller') && (
+                        <span className="text-[9px] font-black text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded uppercase tracking-tighter mt-1">
+                            Cancelled by {order.cancelBy}
+                        </span>
+                    )}
                     <p className="text-lg font-black text-[#3b2e1e] tracking-tight">
                         &#8377;{order.totalAmount?.toLocaleString("en-IN")}
                     </p>
@@ -287,7 +313,7 @@ export function OrderCard({ order }: { order: Order }) {
                 )}
 
                 <Link
-                    href={`/my-orders/${order._id}/track`}
+                    href={`/my-orders/${order.orderId}/track`}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#3b2e1e] hover:bg-[#2a2010] text-[#f5f0e8] text-xs font-bold py-2.5 px-4 rounded-2xl transition-all duration-200 group/trace hover:gap-2.5"
                 >
                     <Truck className="w-3.5 h-3.5" />

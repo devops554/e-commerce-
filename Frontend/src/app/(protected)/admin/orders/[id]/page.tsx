@@ -15,6 +15,7 @@ import {
     Mail,
     ShieldCheck,
     Trash2,
+    MapPin,
 
 } from 'lucide-react'
 import { FaWhatsapp } from "react-icons/fa";
@@ -23,11 +24,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { orderService, OrderStatus } from '@/services/order.service'
 import { toast } from 'sonner'
 
-import { OrderStatusCard } from '@/app/my-orders/[id]/_component/OrderStatusCard'
-import { OrderItemCard } from '@/app/my-orders/[id]/_component/OrderItemCard'
-import { OrderShippingCard } from '@/app/my-orders/[id]/_component/OrderShippingCard'
-import { OrderPaymentCard } from '@/app/my-orders/[id]/_component/OrderPaymentCard'
-import { OrderMetaCard } from '@/app/my-orders/[id]/_component/OrderMetaCard'
+import { OrderStatusCard } from '@/components/order/OrderStatusCard'
+import { OrderItemCard } from '@/components/order/OrderItemCard'
+import { OrderShippingCard } from '@/components/order/OrderShippingCard'
+import { OrderPaymentCard } from '@/components/order/OrderPaymentCard'
+import { OrderMetaCard } from '@/components/order/OrderMetaCard'
+import { OrderHistoryCard } from '@/components/order/OrderHistoryCard'
 import {
     Select,
     SelectContent,
@@ -175,6 +177,7 @@ export default function AdminOrderDetailsPage() {
                         orderId={order.orderId}
                         cancelReason={order.cancelReason}
                         cancelAt={order.cancelAt}
+                        cancelBy={order.cancelBy}
                     />
 
                     <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
@@ -245,10 +248,7 @@ export default function AdminOrderDetailsPage() {
                             </div>
                             <Separator className="bg-slate-100" />
                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 text-slate-600">
-                                    <Phone className="w-4 h-4 text-slate-400" />
-                                    <span className="text-xs font-bold font-mono">{order.shippingAddress?.phone}</span>
-                                </div>
+
                                 <div className="flex items-center gap-3 text-slate-600">
                                     <Mail className="w-4 h-4 text-slate-400" />
                                     <span className="text-xs font-medium truncate">{(order.user as any)?.email ?? 'No email associated'}</span>
@@ -272,6 +272,8 @@ export default function AdminOrderDetailsPage() {
                         updatedAt={order.updatedAt}
                         isStockDeducted={order.isStockDeducted ?? false}
                     />
+
+                    <OrderHistoryCard history={order.history} />
 
                     {/* Dangerous zone */}
                     <Card className="rounded-3xl border-rose-100 bg-rose-50/30 overflow-hidden">

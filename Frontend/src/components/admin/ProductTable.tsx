@@ -56,10 +56,9 @@ export default function ProductTable({
                             <TableHead>Category</TableHead>
                             <TableHead>Brand</TableHead>
                             <TableHead>SKU</TableHead>
-                            <TableHead>Status</TableHead>
                             <TableHead>Display Order</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Created By</TableHead>
-
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>

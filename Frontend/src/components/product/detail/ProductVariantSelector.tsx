@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import { ProductVariant } from '@/services/product.service'
+import { useAuth } from '@/providers/AuthContext'
 
 interface Props {
     variants: ProductVariant[]
@@ -9,7 +10,11 @@ interface Props {
 }
 
 export function ProductVariantSelector({ variants, selectedVariant, onSelect }: Props) {
+    const { user } = useAuth()
+
     if (!variants || variants.length === 0) return null
+
+    const canSeeRealStock = user && ['admin', 'subadmin', 'manager', 'seller'].includes(user.role?.toLowerCase())
 
     return (
         <div className="space-y-3">
@@ -44,7 +49,9 @@ export function ProductVariantSelector({ variants, selectedVariant, onSelect }: 
                 <p className="text-xs text-slate-400 font-medium">
                     SKU: <span className="font-mono text-slate-600">{selectedVariant.sku}</span>
                     {selectedVariant.stock > 0 && (
-                        <span className="ml-3 text-green-600 font-bold">✓ {selectedVariant.stock} in stock</span>
+                        <span className="ml-3 text-green-600 font-bold">
+                            ✓ {canSeeRealStock ? `${selectedVariant.stock} in stock` : 'In Stock'}
+                        </span>
                     )}
                 </p>
             )}

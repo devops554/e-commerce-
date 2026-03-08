@@ -3,12 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import slugify from 'slugify';
 import { Product, ProductVariant } from './schemas/product.schema';
+import { Inventory } from '../warehouses/schemas/inventory.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateVariantDto } from './dto/create-variant.dto';
 import { UpdateVariantDto } from './dto/update-variant.dto';
 import { RedisService } from '../redis/redis.service';
 import { CategoriesService } from '../categories/categories.service';
+import { EventsGateway } from '../events/events.gateway';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class ProductsService implements OnModuleInit {
@@ -17,8 +20,10 @@ export class ProductsService implements OnModuleInit {
     constructor(
         @InjectModel(Product.name) private productModel: Model<Product>,
         @InjectModel(ProductVariant.name) private variantModel: Model<ProductVariant>,
+        @InjectModel(Inventory.name) private inventoryModel: Model<Inventory>,
         private readonly redisService: RedisService,
         private readonly categoriesService: CategoriesService,
+        private readonly eventsGateway: EventsGateway,
     ) { }
 
     // ─── INITIALIZATION ───
@@ -129,6 +134,19 @@ export class ProductsService implements OnModuleInit {
 
     // ─── SYNC KEYWORDS TO SEARCH ───
 
+    private async aggregateStock(variantIds: Types.ObjectId[]): Promise<Record<string, number>> {
+        const stocks = await this.inventoryModel.aggregate([
+            { $match: { variant: { $in: variantIds } } },
+            { $group: { _id: '$variant', total: { $sum: '$quantity' } } }
+        ]);
+
+        const stockMap: Record<string, number> = {};
+        stocks.forEach(s => {
+            stockMap[s._id.toString()] = s.total;
+        });
+        return stockMap;
+    }
+
     private syncKeywords(data: any) {
         // Ensure keywords are synced from SEO keywords for better search coverage
         if (data.seo?.keywords && Array.isArray(data.seo.keywords)) {
@@ -141,7 +159,7 @@ export class ProductsService implements OnModuleInit {
         }
     }
 
-    private async invalidateProductCache(productId: string, slug?: string) {
+    public async invalidateProductCache(productId: string, slug?: string) {
         try {
             const keys = [
                 `product:detail:${productId}`,
@@ -219,6 +237,7 @@ export class ProductsService implements OnModuleInit {
         minPrice?: number;
         maxPrice?: number;
         sort?: string;
+        createdBy?: string;
     }) {
         try {
             const {
@@ -329,6 +348,13 @@ export class ProductsService implements OnModuleInit {
                 andConditions.push({ productType: { $in: matchIds } });
             }
 
+            if (query.createdBy) {
+                const idStr = query.createdBy.toString();
+                if (Types.ObjectId.isValid(idStr)) {
+                    andConditions.push({ createdBy: new Types.ObjectId(idStr) });
+                }
+            }
+
             if (isActive !== undefined) {
                 andConditions.push({ isActive: String(isActive) === 'true' });
             }
@@ -384,11 +410,17 @@ export class ProductsService implements OnModuleInit {
                 .find({ product: { $in: productIds }, isActive: true })
                 .exec();
 
+            const variantIds = variants.map(v => v._id as Types.ObjectId);
+            const stockMap = await this.aggregateStock(variantIds);
+
             const variantsByProduct: Record<string, any[]> = {};
             for (const v of variants) {
                 const pid = v.product.toString();
                 if (!variantsByProduct[pid]) variantsByProduct[pid] = [];
-                variantsByProduct[pid].push(v);
+
+                const variantObj = v.toObject() as any;
+                variantObj.stock = stockMap[v._id.toString()] || 0;
+                variantsByProduct[pid].push(variantObj);
             }
 
             // Filter products that have no active variants if isActive: true is requested
@@ -450,10 +482,15 @@ export class ProductsService implements OnModuleInit {
             }
 
             const variants = await this.variantModel.find({ product: product._id, isActive: true }).exec();
+            const variantIds = variants.map(v => v._id as Types.ObjectId);
+            const stockMap = await this.aggregateStock(variantIds);
 
             const result = {
                 ...product.toObject(),
-                variants,
+                variants: variants.map(v => ({
+                    ...v.toObject(),
+                    stock: stockMap[v._id.toString()] || 0
+                } as any)),
             };
 
             this.redisService.set(cacheKey, result, 3600).catch(() => { });
@@ -561,20 +598,33 @@ export class ProductsService implements OnModuleInit {
         }
     }
 
-    async updateVariant(id: string, updateVariantDto: UpdateVariantDto): Promise<ProductVariant> {
+    async updateVariant(id: string, updateVariantDto: UpdateVariantDto, userId: string, userRole: string): Promise<ProductVariant> {
         try {
             this.validateObjectId(id, 'variant');
-            const variant = await this.variantModel.findByIdAndUpdate(id, updateVariantDto, { new: true }).exec();
+            const variant = await this.variantModel.findById(id).exec();
             if (!variant) {
                 throw new NotFoundException(`Variant ID ${id} not found`);
             }
 
             const productId = variant.product?.toString();
             if (productId) {
+                // Ownership check for SELLER
+                if (userRole === UserRole.SELLER) {
+                    const product = await this.productModel.findById(productId).exec();
+                    if (!product || product.createdBy.toString() !== userId) {
+                        throw new BadRequestException('You do not have permission to update this product variant');
+                    }
+                }
+
+                await this.variantModel.findByIdAndUpdate(id, updateVariantDto).exec();
                 this.invalidateProductCache(productId).catch(() => { });
             }
 
-            return variant;
+            const updatedVariant = await this.variantModel.findById(id).exec();
+            if (!updatedVariant) {
+                throw new InternalServerErrorException('Failed to retrieve updated variant');
+            }
+            return updatedVariant;
         } catch (error) {
             if (error instanceof HttpException) throw error;
             this.logger.error(`Failed to update variant ${id}: ${error.message}`, error.stack);
@@ -611,7 +661,9 @@ export class ProductsService implements OnModuleInit {
             const cached = await this.redisService.get(cacheKey);
             if (cached) return cached;
 
-            const variants = await this.variantModel.find({ product: productId }).exec();
+            const variants = await this.variantModel.find({ product: new Types.ObjectId(productId) }).exec();
+            this.logger.debug(`Fetched ${variants.length} variants for product ${productId}`);
+
             this.redisService.set(cacheKey, variants, 3600).catch(() => { });
             return variants;
         } catch (error) {

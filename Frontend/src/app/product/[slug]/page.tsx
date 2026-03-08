@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { productService, Product, ProductVariant } from '@/services/product.service'
 import { ChevronRight } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
+import { useSocket } from '@/hooks/useSocket'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -37,6 +38,23 @@ export default function ProductPage() {
         const recent = JSON.parse(localStorage.getItem('recent_products') || '[]')
         setRecentProducts(recent)
     }, [])
+
+    useSocket('stock.updated', (data) => {
+        if (!product || data.productId !== product._id) return
+
+        setProduct(prev => {
+            if (!prev) return prev
+            const newVariants = prev.variants.map(v =>
+                v._id === data.variantId ? { ...v, stock: data.stock } : v
+            )
+            return { ...prev, variants: newVariants }
+        })
+
+        setSelectedVariant(prev => {
+            if (!prev || prev._id !== data.variantId) return prev
+            return { ...prev, stock: data.stock }
+        })
+    })
 
     useEffect(() => {
         if (!slug) return

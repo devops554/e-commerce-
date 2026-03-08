@@ -59,7 +59,7 @@ export class EmailService {
               <div style="padding: 30px;">
                 <h2 style="color: ${this.colors.primary}; margin-top: 0;">Verify Your Email</h2>
                 <p>Hello,</p>
-                <p>Thank you for choosing ${this.companyName}. Use the following One-Time Password (OTP) to complete your verification. This code is valid for 5 minutes.</p>
+                <p>Thank you for choosing ${this.companyName}. Use the following One-Time Password (OTP) to complete your verification. This code is valid for 10 minutes.</p>
                 
                 <div style="background-color: #f0fdf4; border: 2px dashed ${this.colors.primary}; padding: 20px; text-align: center; margin: 30px 0;">
                   <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: ${this.colors.primary};">${otp}</span>

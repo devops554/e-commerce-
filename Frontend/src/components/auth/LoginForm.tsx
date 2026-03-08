@@ -9,12 +9,16 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { SocialLogin } from './SocialLogin';
+import { Eye, EyeOff } from 'lucide-react';
+import { ForgotPasswordDialog } from './ForgotPasswordDialog';
+import { getErrorMessage } from '@/utils/error-handler';
 
 export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login: setAuthData } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -22,14 +26,19 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
         setLoading(true);
         try {
             const response = await axios.post(`${apiUrl}/auth/login`, { email, password });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Logged in successfully!');
             onSuccess?.();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Login failed');
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     return (
@@ -49,19 +58,32 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
                         />
                     </div>
                 </div>
+
                 <div className="space-y-2 group">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Password</Label>
                     <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#FF3269] transition-colors" />
                         <Input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
                             className="h-12 bg-slate-50 border-none rounded-xl pl-11 focus:ring-2 focus:ring-[#FF3269]/10 transition-all font-medium"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={togglePasswordVisibility}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#FF3269] transition-colors"
+                        >
+                            {showPassword ? <EyeOff /> : <Eye />}
+                        </button>
                     </div>
+                </div>
+                <div className="flex items-center justify-end">
+                    <ForgotPasswordDialog trigger={
+                        <button type="button" className="text-[10px] font-bold text-[#FF3269] uppercase tracking-wider hover:underline ml-1">Forgot Password?</button>
+                    } />
                 </div>
                 <Button className="w-full h-12 bg-[#FF3269] hover:bg-[#E62E5F] text-white font-bold rounded-xl shadow-lg shadow-[#FF3269]/20 transition-all active:scale-[0.98] group" disabled={loading}>
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (

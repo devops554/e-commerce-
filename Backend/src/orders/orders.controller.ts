@@ -61,7 +61,7 @@ export class OrdersController {
 
         // For security, if not admin, we pass userId to check ownership in service
         this.logger.warn(`User ${req.user._id} requested cancellation for order: ${id}`);
-        return this.ordersService.cancelOrder(id, req.user._id, reason, isAdmin ? 'admin' : 'user');
+        return this.ordersService.cancelOrder(id, req.user._id, req.user.role, reason, isAdmin ? 'admin' : 'customer');
     }
 
     @Post(':id/cancel-item')
@@ -74,7 +74,7 @@ export class OrdersController {
     ) {
         const isAdmin = [UserRole.ADMIN, UserRole.SUB_ADMIN].includes(req.user.role);
         this.logger.warn(`User ${req.user._id} requested cancellation for item ${variantId} in order: ${id}`);
-        return this.ordersService.cancelOrderItem(id, variantId, reason, isAdmin ? 'admin' : 'user');
+        return this.ordersService.cancelOrderItem(id, variantId, req.user._id, req.user.role, reason, isAdmin ? 'admin' : 'customer');
     }
 
     @Get(':id')
@@ -113,9 +113,9 @@ export class OrdersController {
     @Patch(':id/status')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
-    updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus) {
+    updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus, @Req() req: any) {
         this.logger.log(`Admin updating status of order ${id} to ${status}`);
-        return this.ordersService.updateOrderStatus(id, status);
+        return this.ordersService.updateOrderStatus(id, status, req.user._id, req.user.role);
     }
 
     @Delete(':id')
@@ -125,4 +125,26 @@ export class OrdersController {
         this.logger.warn(`Admin deleting order: ${id}`);
         return this.ordersService.deleteOrder(id);
     }
+
+    // ─── WAREHOUSE MANAGER ROUTES ───
+
+    @Get('warehouse/:warehouseId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
+    getWarehouseOrders(@Param('warehouseId') warehouseId: string) {
+        return this.ordersService.getWarehouseOrders(warehouseId);
+    }
+
+    @Post(':id/dispatch')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
+    dispatchItem(
+        @Param('id') id: string,
+        @Body('variantId') variantId: string,
+        @Body('warehouseId') warehouseId: string,
+        @Req() req: any
+    ) {
+        return this.ordersService.confirmOrderItemDispatch(id, variantId, warehouseId, req.user._id, req.user.role);
+    }
 }
+

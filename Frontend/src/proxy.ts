@@ -2,7 +2,19 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const publicRoutes = ['/', '/login', '/register', '/product(.*)', '/api/webhooks(.*)', '/product-type(.*)', '/search(.*)'];
+const publicRoutes = ['/',
+    '/auth/login',
+    '/auth/register',
+    '/product(.*)',
+    '/api/webhooks(.*)',
+    '/product-type(.*)',
+    '/search(.*)',
+    '/partner-with-us(.*)',
+    '/seller/signup',
+    '/seller/login',
+    '/delivery/signup',
+    '/delivery/login',
+];
 
 export function proxy(request: NextRequest) {
     const { nextUrl } = request;

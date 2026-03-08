@@ -78,6 +78,13 @@ export class ProductsController {
         return this.productsService.getSuggestions(query);
     }
 
+    @Get(':id/variants')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.SELLER, UserRole.MANAGER)
+    getVariants(@Param('id') id: string) {
+        return this.productsService.getProductVariants(id);
+    }
+
     @Get(':idOrSlug')
     findOne(@Param('idOrSlug') idOrSlug: string) {
         return this.productsService.findOne(idOrSlug);
@@ -109,17 +116,12 @@ export class ProductsController {
         return this.productsService.createVariant(createVariantDto);
     }
 
-    @Get(':id/variants')
-    getVariants(@Param('id') id: string) {
-        return this.productsService.getProductVariants(id);
-    }
-
     @Patch('variants/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.SELLER)
-    updateVariant(@Param('id') id: string, @Body() updateVariantDto: UpdateVariantDto) {
-        this.logger.log(`Updating variant: ${id}`);
-        return this.productsService.updateVariant(id, updateVariantDto);
+    updateVariant(@Param('id') id: string, @Body() updateVariantDto: UpdateVariantDto, @Req() req: any) {
+        this.logger.log(`Updating variant: ${id} by user ${req.user._id}`);
+        return this.productsService.updateVariant(id, updateVariantDto, req.user._id, req.user.role);
     }
 
     @Delete('variants/:id')

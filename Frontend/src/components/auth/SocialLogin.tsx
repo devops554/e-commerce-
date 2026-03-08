@@ -8,6 +8,8 @@ import { useAuth } from '@/providers/AuthContext';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
+import { getErrorMessage } from '@/utils/error-handler';
+
 export function SocialLogin() {
     const [loading, setLoading] = useState(false);
     const { login: setAuthData } = useAuth();
@@ -19,10 +21,11 @@ export function SocialLogin() {
             const result = await signInWithPopup(auth, googleProvider);
             const idToken = await result.user.getIdToken();
             const response = await axios.post(`${apiUrl}/auth/google`, { idToken });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Google login successful!');
         } catch (error: any) {
-            toast.error('Google login failed');
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }

@@ -6,6 +6,7 @@ import { ProductDiscovery } from "@/components/product/ProductDiscovery"
 import { Banners } from "@/components/banner/Banners"
 import { Footer } from "@/components/footer/Footer"
 import { BANNER_TYPE } from "@/services/banner.service"
+import CallToPlaceOrder from "@/components/Calltoplaceorder"
 
 export default function Home() {
   return (
@@ -18,6 +19,9 @@ export default function Home() {
 
         {/* Quick Category access */}
         <CategoryScroller />
+        <div className="flex justify-center">
+          <CallToPlaceOrder />
+        </div>
         <Banners type={BANNER_TYPE.HOME} />
 
         <div className="pt-8">

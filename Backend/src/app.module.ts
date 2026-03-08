@@ -12,6 +12,11 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { RedisModule } from './redis/redis.module';
 import { CartsModule } from './carts/carts.module';
 import { BannerModule } from './banner/banner.module';
+import { EventsModule } from './events/events.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SellersModule } from './sellers/sellers.module';
+import { WarehousesModule } from './warehouses/warehouses.module';
+import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.module';
 
 @Module({
   imports: [
@@ -36,6 +41,11 @@ import { BannerModule } from './banner/banner.module';
     RedisModule,
     CartsModule,
     BannerModule,
+    EventsModule,
+    NotificationsModule,
+    SellersModule,
+    WarehousesModule,
+    DeliveryPartnersModule,
   ],
 })
 export class AppModule { }

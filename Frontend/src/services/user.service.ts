@@ -5,6 +5,7 @@ export enum UserRole {
     SUB_ADMIN = 'subadmin',
     SELLER = 'seller',
     CUSTOMER = 'customer',
+    MANAGER = 'manager',
 }
 
 export enum UserStatus {
@@ -52,7 +53,9 @@ export interface UserProfile {
     _id: string;
     name: string;
     email: string;
-    role: string;
+    role: UserRole;
+    profilePic?: string;
+    status: UserStatus;
     addresses: UserAddress[];
     createdAt: string;
     updatedAt: string;
@@ -91,6 +94,11 @@ export const userService = {
 
     updateStatus: async (id: string, status: string): Promise<any> => {
         const response = await axiosClient.patch(`/users/${id}/status`, { status });
+        return response.data;
+    },
+
+    registerManager: async (managerData: any): Promise<any> => {
+        const response = await axiosClient.post('/auth/register-manager', managerData);
         return response.data;
     },
 };

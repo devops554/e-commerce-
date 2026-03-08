@@ -166,7 +166,9 @@ export const productService = {
     },
 
     getVariants: async (productId: string) => {
-        const response = await axiosClient.get<ProductVariant[]>(`/products/${productId}/variants`);
+        const response = await axiosClient.get<ProductVariant[]>(`/products/${productId}/variants`, {
+            params: { _t: Date.now() }
+        });
         return response.data;
     },
 

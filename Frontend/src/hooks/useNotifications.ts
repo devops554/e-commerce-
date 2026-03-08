@@ -1,30 +1,65 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { notificationService, Notification } from '@/services/notification.service'
+import { useSocket } from './useSocket'
+import { useCallback } from 'react'
+import { useAuth } from '@/providers/AuthContext'
 
 export function useNotifications() {
-    const [unreadCount, setUnreadCount] = useState(0)
-    const [notifications, setNotifications] = useState([])
-    const [isLoading, setIsLoading] = useState(false)
+    const queryClient = useQueryClient();
 
-    // Mock data fetching
-    useEffect(() => {
-        setUnreadCount(3)
-    }, [])
+    const { data: notifications = [], isLoading } = useQuery({
+        queryKey: ['notifications'],
+        queryFn: notificationService.getNotifications,
+        refetchOnWindowFocus: true,
+    });
 
-    const markAsRead = (id: string) => {
-        setUnreadCount(prev => Math.max(0, prev - 1))
-    }
+    const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
 
-    const markAllAsRead = () => {
-        setUnreadCount(0)
-    }
+    const { user } = useAuth();
+
+    // Real-time update via Socket.io
+    const handleNewNotification = useCallback((newNotification: Notification) => {
+        // Filter: Only add if it's for me OR my role
+        const isForMe = newNotification.recipientId === user?.id?.toString();
+        const isForMyRole = newNotification.recipientRole === user?.role;
+
+        if (!isForMe && !isForMyRole) return;
+
+        // Optimistically update the cache
+        queryClient.setQueryData(['notifications'], (old: Notification[] = []) => {
+            // Check if already exists to avoid duplicates
+            if (old.some((n: Notification) => n._id === newNotification._id)) return old;
+            return [newNotification, ...old];
+        });
+    }, [queryClient]);
+
+    useSocket('notification.received', handleNewNotification);
+
+    const markAsReadMutation = useMutation({
+        mutationFn: notificationService.markAsRead,
+        onSuccess: (updated: Notification) => {
+            queryClient.setQueryData(['notifications'], (old: Notification[] = []) =>
+                old.map((n: Notification) => n._id === updated._id ? updated : n)
+            );
+        }
+    });
+
+    const markAllAsReadMutation = useMutation({
+        mutationFn: notificationService.markAllAsRead,
+        onSuccess: () => {
+            queryClient.setQueryData(['notifications'], (old: Notification[] = []) =>
+                old.map((n: Notification) => ({ ...n, isRead: true }))
+            );
+        }
+    });
 
     return {
         notifications,
         unreadCount,
-        markAsRead,
-        markAllAsRead,
+        markAsRead: markAsReadMutation.mutate,
+        markAllAsRead: markAllAsReadMutation.mutate,
         isLoading
     }
 }

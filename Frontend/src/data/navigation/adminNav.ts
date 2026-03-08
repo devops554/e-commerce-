@@ -1,5 +1,5 @@
 
-import { LayoutGrid, LucideIcon } from "lucide-react";
+import { Building2, LayoutGrid, LucideIcon } from "lucide-react";
 import { UserRole } from "@/services/user.service";
 
 export interface NavItemType {
@@ -17,6 +17,7 @@ export interface NavItemType {
 import {
   LayoutDashboard,
   Package,
+  Bike,
   Layers,
   ShoppingCart,
   Users,
@@ -44,7 +45,8 @@ import {
   PieChart,
   UserCircle,
   Key,
-  Globe
+  Globe,
+  Store
 } from "lucide-react";
 
 export const getAdminNavigation = (user: any): NavItemType[] => [
@@ -83,9 +85,24 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     icon: Users,
     items: [
       { title: "Customers", href: "/admin/users", icon: User },
+      { title: "Sellers", href: "/admin/seller", icon: Store },
+      { title: "Managers", href: "/admin/manager", icon: User },
+      { title: "Delivery Partners", href: "/admin/delivery-partners", icon: Bike },
       ...(user?.role === UserRole.ADMIN ? [
         { title: "sub-admins", href: "/admin/subadmin", icon: ShieldCheck }
       ] : []),
+    ],
+  },
+
+  // 🏦 Warehouses
+  {
+    title: "Warehouses",
+    icon: Building2,
+    items: [
+      { title: "All Warehouses", href: "/admin/warehouses", icon: List },
+      { title: "Add Warehouse", href: "/admin/warehouses/add", icon: PlusCircle },
+
+
     ],
   },
 

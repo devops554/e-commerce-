@@ -46,3 +46,38 @@ export class RegisterSubAdminDto {
     @IsOptional()
     phone?: string;
 }
+
+export class RegisterManagerDto {
+    @IsEmail()
+    email: string;
+
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+
+    @IsString()
+    @MinLength(6)
+    password: string;
+
+    @IsString()
+    @IsOptional()
+    phone?: string;
+}
+
+export class ForgotPasswordDto {
+    @IsEmail()
+    email: string;
+}
+
+export class ResetPasswordDto {
+    @IsEmail()
+    email: string;
+
+    @IsString()
+    @IsNotEmpty()
+    otp: string;
+
+    @IsString()
+    @MinLength(6)
+    password: string;
+}

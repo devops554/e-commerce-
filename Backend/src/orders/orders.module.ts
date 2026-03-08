@@ -6,6 +6,10 @@ import { Order, OrderSchema } from './schemas/order.schema';
 import { Product, ProductSchema, ProductVariant, ProductVariantSchema } from '../products/schemas/product.schema';
 import { PaymentsModule } from '../payments/payments.module';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ProductsModule } from '../products/products.module';
+import { WarehousesModule } from '../warehouses/warehouses.module';
+
 
 @Module({
   imports: [
@@ -13,10 +17,15 @@ import { UsersModule } from '../users/users.module';
       { name: Order.name, schema: OrderSchema },
       { name: Product.name, schema: ProductSchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },
+
     ]),
     PaymentsModule,
     UsersModule,
+    NotificationsModule,
+    ProductsModule,
+    WarehousesModule,
   ],
+
   providers: [OrdersService],
   controllers: [OrdersController],
 })

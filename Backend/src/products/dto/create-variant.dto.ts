@@ -35,9 +35,7 @@ export class CreateVariantDto {
     @Min(0)
     discountPrice?: number;
 
-    @IsNumber()
-    @Min(0)
-    stock: number;
+
 
     @IsOptional()
     @IsArray()

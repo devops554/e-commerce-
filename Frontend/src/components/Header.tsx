@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MapPin, ChevronDown, User, LogOut, ClipboardList, UserCircle } from "lucide-react"
+import { MapPin, ChevronDown, User, LogOut, ClipboardList, UserCircle, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
@@ -11,6 +11,7 @@ import { ProductTypeScroller } from "./product-type/ProductTypeScroller"
 import { CartDrawer } from "./CartDrawer"
 import { LoginDialog } from "./auth/LoginDialog"
 import { SearchBar } from "./SearchBar"
+import { UserNotificationsDrawer } from "./notifications/UserNotificationsDrawer"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,6 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { usePathname, useRouter } from "next/navigation"
 import { UserRole } from "@/services/user.service"
+import { toast } from "sonner"
 
 export function Header() {
     const { user, isLoaded, logout } = useAuth()
@@ -43,9 +45,40 @@ export function Header() {
         router.push("/")
     }
 
+
+
     const handleLocationClick = () => {
-        // Open location modal or navigate to location page
-        console.log("Open location modal")
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser")
+            return
+        }
+
+        setLocation("Locating...")
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                    const data = await response.json()
+
+                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || "Unknown Location"
+                    const state = data.address?.state || ""
+
+                    setLocation(`${city}${state ? `, ${state}` : ''}`)
+                    toast.success("Location updated successfully")
+                } catch (error) {
+                    console.error("Error fetching location:", error)
+                    setLocation("Select Location")
+                    toast.error("Failed to determine location details")
+                }
+            },
+            (error) => {
+                console.error("Geolocation error:", error)
+                setLocation("Select Location")
+                toast.error("Please allow location access in your browser")
+            }
+        )
     }
 
     return (
@@ -151,6 +184,15 @@ export function Header() {
                                                     <ClipboardList className="mr-3 h-4 w-4 text-slate-500" />
                                                     <span onClick={() => router.push("/my-orders")} className="text-sm font-semibold">My Orders</span>
                                                 </DropdownMenuItem>
+                                                {user.role === UserRole.MANAGER && (
+                                                    <DropdownMenuItem
+                                                        className="px-3 py-2.5 rounded-xl cursor-pointer focus:bg-slate-50"
+                                                        onClick={() => router.push("/manager")}
+                                                    >
+                                                        <UserCircle className="mr-3 h-4 w-4 text-slate-500" />
+                                                        <span className="text-sm font-semibold">Dashboard</span>
+                                                    </DropdownMenuItem>
+                                                )}
                                             </div>
                                             <DropdownMenuSeparator className="bg-slate-100 mx-1" />
                                             <DropdownMenuItem onClick={handleLogout} className="px-3 py-2.5 rounded-xl text-red-600 focus:bg-red-50 focus:text-red-600 transition-colors cursor-pointer">
@@ -162,6 +204,7 @@ export function Header() {
                                 )}
                             </AnimatePresence>
 
+                            {user && <UserNotificationsDrawer />}
                             <CartDrawer />
                         </div>
                     </div>

@@ -6,10 +6,14 @@ export enum OrderStatus {
     PENDING = 'pending',
     PAID = 'paid',
     CONFIRMED = 'confirmed',
+    PACKED = 'packed',
     SHIPPED = 'shipped',
+    OUT_FOR_DELIVERY = 'out_for_delivery',
     DELIVERED = 'delivered',
     FAILED = 'failed',
     CANCELLED = 'cancelled',
+    RETURNED = 'returned',
+    FAILED_DELIVERY = 'failed_delivery',
 }
 
 export enum PaymentMethod {
@@ -35,6 +39,7 @@ export class Order extends Document {
     @Prop([{
         product: { type: Types.ObjectId, ref: 'Product', required: true },
         variant: { type: Types.ObjectId, ref: 'ProductVariant', required: true },
+        warehouse: { type: Types.ObjectId, ref: 'Warehouse' },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true }, // Snapshotted price
         title: String,
@@ -44,6 +49,7 @@ export class Order extends Document {
     items: {
         product: Types.ObjectId;
         variant: Types.ObjectId;
+        warehouse: Types.ObjectId;
         quantity: number;
         price: number;
         title: string;
@@ -110,6 +116,23 @@ export class Order extends Document {
 
     @Prop({ default: null })
     cancelAt: Date;
+
+    @Prop([{
+        actor: { type: Types.ObjectId, ref: 'User', required: true },
+        actorRole: { type: String, required: true },
+        action: { type: String, required: true }, // e.g., 'STATUS_UPDATE', 'CANCELLED'
+        status: { type: String, enum: OrderStatus, required: true },
+        note: String,
+        timestamp: { type: Date, default: Date.now }
+    }])
+    history: {
+        actor: Types.ObjectId;
+        actorRole: string;
+        action: string;
+        status: OrderStatus;
+        note?: string;
+        timestamp: Date;
+    }[];
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

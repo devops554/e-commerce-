@@ -8,10 +8,15 @@ import { useCategory } from '@/hooks/useCategories'
 import { useProducts } from '@/hooks/useProducts'
 import { useDebounce } from '@/hooks/useDebounce'
 import { ProductCard } from '@/components/product/ProductCard'
-import { Loader2, ChevronLeft, Search } from 'lucide-react'
+import { Loader2, ChevronLeft, Search, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CategoryRowSkeleton } from '@/components/product/CategoryRowSkeleton'
+import {
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+} from "@/components/ui/sheet"
 
 export default function CategoryPage() {
     const params = useParams()
@@ -103,16 +108,30 @@ export default function CategoryPage() {
                                     </h1>
                                 </div>
 
-                                {/* Product Search Bar */}
-                                {/* <div className="relative w-full md:w-72 lg:w-96">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        placeholder="Search products in this category..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-10 h-10 lg:h-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all shadow-none font-medium"
-                                    />
-                                </div> */}
+                                {/* Mobile Sidebar Trigger & Product Search Bar */}
+                                <div className="flex items-center gap-2 w-full md:w-auto">
+                                    <div className="lg:hidden">
+                                        <Sheet>
+                                            <SheetTrigger asChild>
+                                                <Button variant="outline" size="icon" className="shrink-0 rounded-xl h-10 w-10 lg:h-12 lg:w-12 border-slate-200">
+                                                    <Menu className="h-5 w-5 text-slate-600" />
+                                                </Button>
+                                            </SheetTrigger>
+                                            <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 border-none bg-slate-50">
+                                                <CategorySidebar productType={category?.productType?._id as string} />
+                                            </SheetContent>
+                                        </Sheet>
+                                    </div>
+                                    <div className="relative w-full md:w-72 lg:w-96">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            placeholder="Search products in this category..."
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            className="pl-10 h-10 lg:h-12 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all shadow-none font-medium"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Advanced Filter Bar */}

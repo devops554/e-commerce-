@@ -8,13 +8,16 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User as UserIcon, Phone, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Phone, ShieldCheck, Loader2, EyeOff, Eye } from 'lucide-react';
 import { SocialLogin } from './SocialLogin';
+
+import { getErrorMessage } from '@/utils/error-handler';
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     const [loading, setLoading] = useState(false);
     const [otpLoading, setOtpLoading] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Form fields
     const [email, setEmail] = useState('');
@@ -34,7 +37,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             setOtpSent(true);
             toast.success('Verification code sent to your email');
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to send OTP');
+            toast.error(getErrorMessage(error));
         } finally {
             setOtpLoading(false);
         }
@@ -53,14 +56,19 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                 phone,
                 otp
             });
-            setAuthData(response.data.access_token, response.data.user);
+            const { accessToken, refreshToken, user } = response.data;
+            setAuthData(accessToken, refreshToken, user);
             toast.success('Account created successfully!');
             onSuccess?.();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Registration failed');
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     return (
@@ -155,13 +163,20 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             placeholder="••••••••"
                             className="h-12 bg-slate-50 border-none rounded-xl pl-11 focus:ring-2 focus:ring-[#FF3269]/10 font-medium"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={togglePasswordVisibility}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                     </div>
                 </div>
 

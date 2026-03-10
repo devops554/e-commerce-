@@ -16,7 +16,7 @@ const publicRoutes = ['/',
     '/delivery/login',
 ];
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const { nextUrl } = request;
     const token = request.cookies.get('token')?.value;
 

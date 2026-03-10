@@ -3,21 +3,34 @@
 export type VehicleType = 'BIKE' | 'SCOOTER' | 'CAR' | 'VAN';
 export type AvailabilityStatus = 'ONLINE' | 'OFFLINE' | 'BUSY';
 export type AccountStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
-export type PaymentMethod = 'COD' | 'ONLINE' | 'WALLET';
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 export type OrderStatus =
-  | 'created'
-  | 'pending'
-  | 'paid'
-  | 'confirmed'
-  | 'packed'
-  | 'shipped'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'failed'
-  | 'cancelled'
-  | 'returned'
-  | 'failed_delivery';
+  | 'PENDING'
+  | 'CREATED'
+  | 'PAID'
+  | 'CONFIRMED'
+  | 'PACKED'
+  | 'SHIPPED'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'RETURNED'
+  | 'FAILED_DELIVERY';
+
+// Backend uses lowercase 'cod' | 'razorpay' — match exactly
+export type PaymentMethod = 'cod' | 'razorpay';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export type ShipmentStatus =
+  | 'ORDER_PLACED'
+  | 'ASSIGNED_TO_DELIVERY'
+  | 'ACCEPTED'
+  | 'PICKED_UP'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'FAILED_DELIVERY'
+  | 'CANCELLED'
+  | 'RETURNED';
 
 export interface CurrentLocation {
   latitude: number;
@@ -31,11 +44,19 @@ export interface DeliveryPartnerStats {
 }
 
 export interface DeliveryPartnerDocuments {
-  aadhaarNumber?: string;
-  aadhaarImage?: string;
-  panNumber?: string;
-  panImage?: string;
-  drivingLicenseImage?: string;
+  aadhaarNumber?: string | null;
+  aadhaarImage?: string | null;
+  panNumber?: string | null;
+  panImage?: string | null;
+  drivingLicenseImage?: string | null;
+}
+
+export interface Address {
+  addressLine?: string;
+  city?: string;
+  state?: string;
+  country: string;
+  pincode?: string;
 }
 
 export interface DeliveryPartner {
@@ -43,6 +64,10 @@ export interface DeliveryPartner {
   name: string;
   phone: string;
   email: string;
+  bloodGroup?: string;
+  permanentAddress?: Address;
+  currentAddress?: Address;
+  profileImage?: string;
   vehicleType: VehicleType;
   vehicleNumber: string;
   licenseNumber: string;
@@ -82,6 +107,47 @@ export interface OrderHistory {
   note?: string;
 }
 
+// The raw order object as returned nested inside a Shipment
+export interface PopulatedOrder {
+  _id: string;
+  orderId: string;           // human-readable e.g. "ORD-1773041001182-705"
+  user: string;              // ObjectId string (not populated in available orders)
+  items: OrderItem[];
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+  shippingAddress: ShippingAddress;
+  history: OrderHistory[];
+  totalAmount: number;
+  deliveryFee?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// The delivery partner reference nested in shipment
+export interface ShipmentDeliveryPartner {
+  _id: string;
+  name: string;
+  phone: string;
+  vehicleType: VehicleType;
+}
+
+// ─── Shipment — what the backend actually returns for available orders ────────
+export interface Shipment {
+  _id: string;
+  orderId: Order;           // populated nested order object
+  deliveryPartnerId: ShipmentDeliveryPartner;
+  warehouseId: string | { _id: string; name: string; location?: { latitude: number; longitude: number } };
+  status: ShipmentStatus;
+  trackingNumber: string;
+  distance?: number;                 // km — may be added by backend
+  estimatedTime?: number;            // minutes
+  assignedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Keep Order type for backward-compat with other screens (history, active delivery)
 export interface Order {
   _id: string;
   orderId: string;

@@ -29,6 +29,16 @@ export function ProductSpecifications({ specifications, attributes }: Props) {
                 <h3 className="text-lg font-black text-slate-900 tracking-tight">Specifications</h3>
             </div>
 
+            {/* GST Details */}
+            <div className="pb-2">
+                {specifications?.gst?.hsnCode && (
+                    <SpecRow label="HSN Code" value={specifications.gst.hsnCode} />
+                )}
+                {specifications?.gst?.gstRate !== undefined && (
+                    <SpecRow label="GST Rate" value={`${specifications.gst.gstRate}%`} />
+                )}
+            </div>
+
             {hasAttrs && (
                 <div className="pb-2">
                     {attributes.filter(a => a.name && a.value).map((attr, idx) => (

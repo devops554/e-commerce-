@@ -5,7 +5,7 @@ import { User } from './user.service';
 // --- Types ---
 
 export type PaymentMethod = 'razorpay' | 'cod';
-export type OrderStatus = 'created' | 'pending' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'failed' | 'cancelled' | 'returned' | 'failed_delivery';
+export type OrderStatus = 'created' | 'pending' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'failed' | 'cancelled' | 'returned' | 'failed_delivery' | 'PENDING_REASSIGNMENT';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface ShippingAddress {
@@ -41,9 +41,24 @@ export interface OrderItemDetail {
     quantity: number;
     price: number;
     title?: string;
+    image?: string;
     status?: OrderStatus;
     cancelReason?: string;
     warehouse?: any;
+    // GST snapshot
+    hsnCode?: string;
+    gstRate?: number;
+    basePrice?: number;
+    gstAmountPerUnit?: number;
+    cgst?: number;
+    sgst?: number;
+    igst?: number;
+    lineTotal?: number;
+    lineTaxableValue?: number;
+    lineCgst?: number;
+    lineSgst?: number;
+    lineIgst?: number;
+    lineTotalGst?: number;
 }
 
 export interface OrderHistory {
@@ -85,6 +100,16 @@ export interface Order {
     createdAt: string;
     updatedAt: string;
     history?: OrderHistory[];
+    // GST totals
+    subTotal?: number;
+    totalCgst?: number;
+    totalSgst?: number;
+    totalIgst?: number;
+    totalGstAmount?: number;
+    shippingCharge?: number;
+    isInterState?: boolean;
+    invoiceNumber?: string;
+    invoiceDate?: string;
 }
 
 export interface CreateOrderDto {
@@ -105,6 +130,61 @@ export interface OrdersResponse {
     page: number;
     limit: number;
     totalPages: number;
+}
+
+export interface InvoiceItem {
+    title: string;
+    sku?: string;
+    attributes?: { name: string; value: string }[];
+    hsnCode?: string;
+    thumbnail?: string;
+    gstRate: number;
+    quantity: number;
+    unitPrice: number;
+    basePrice: number;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    gstAmountPerUnit: number;
+    lineTotal: number;
+    lineTaxableValue: number;
+    lineCgst: number;
+    lineSgst: number;
+    lineIgst: number;
+    lineTotalGst: number;
+}
+
+export interface InvoiceData {
+    seller: {
+        legalName: string;
+        gstin: string;
+        stateCode: string;
+        address: string;
+        email: string;
+        phone: string;
+    };
+    buyer: {
+        fullName: string;
+        phone: string;
+        address: ShippingAddress;
+        gstin: string | null;
+    };
+    invoice: {
+        invoiceNumber: string;
+        invoiceDate: string;
+        orderId: string;
+    };
+    isInterState: boolean;
+    items: InvoiceItem[];
+    totals: {
+        subTotal: number;
+        totalCgst: number;
+        totalSgst: number;
+        totalIgst: number;
+        totalGstAmount: number;
+        shippingCharge: number;
+        totalAmount: number;
+    };
 }
 
 // --- Service ---
@@ -155,5 +235,21 @@ export const orderService = {
 
     dispatchItem: (orderId: string, variantId: string, warehouseId: string) =>
         axiosClient.post(`/orders/${orderId}/dispatch`, { variantId, warehouseId }),
+
+    confirmBulkItemDispatch: (orderId: string, warehouseId: string) =>
+        axiosClient.post(`/orders/${orderId}/bulk-dispatch`, { warehouseId }),
+
+    reassignWarehouse: (orderId: string, oldWarehouseId: string, newWarehouseId: string) =>
+        axiosClient.post(`/orders/${orderId}/reassign-warehouse`, { oldWarehouseId, newWarehouseId }),
+
+    getInvoice: async (id: string): Promise<InvoiceData> => {
+        const response = await axiosClient.get<InvoiceData>(`/orders/${id}/invoice`);
+        return response.data;
+    },
+
+    getPackingSlip: async (id: string): Promise<any> => {
+        const response = await axiosClient.get(`/orders/${id}/packing-slip`);
+        return response.data;
+    },
 };
 

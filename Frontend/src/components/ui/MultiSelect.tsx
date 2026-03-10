@@ -5,8 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
+interface MultiSelectOption {
+    label: string
+    value: string
+}
+
 interface MultiSelectProps {
-    options: string[]
+    options: (string | MultiSelectOption)[]
     selected: string[]
     onChange: (val: string[]) => void
     placeholder: string
@@ -16,9 +21,17 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: MultiS
     const [search, setSearch] = useState("")
     const [isOpen, setIsOpen] = useState(false)
 
-    const filtered = options.filter(opt =>
-        opt.toLowerCase().includes(search.toLowerCase()) && !selected.includes(opt)
+    const normalizedOptions = options.map(opt =>
+        typeof opt === 'string' ? { label: opt, value: opt } : opt
     )
+
+    const filtered = normalizedOptions.filter(opt =>
+        opt.label.toLowerCase().includes(search.toLowerCase()) && !selected.includes(opt.value)
+    )
+
+    const getLabel = (value: string) => {
+        return normalizedOptions.find(opt => opt.value === value)?.label || value
+    }
 
     return (
         <div className="relative">
@@ -29,7 +42,7 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: MultiS
                 {selected.length === 0 && <span className="text-slate-400 p-1 text-sm">{placeholder}</span>}
                 {selected.map(val => (
                     <div key={val} className="px-3 py-1.5 bg-rose-50 text-[#FF3269] text-xs font-bold rounded-xl flex items-center gap-2 animate-in zoom-in-95 duration-200">
-                        {val}
+                        {getLabel(val)}
                         <X className="w-3.5 h-3.5 cursor-pointer hover:text-rose-700 transition-colors" onClick={(e) => {
                             e.stopPropagation()
                             onChange(selected.filter(v => v !== val))
@@ -51,7 +64,7 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: MultiS
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                 <Input
-                                    placeholder="Search categories..."
+                                    placeholder="Search..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="pl-10 h-10 rounded-xl border-slate-100 bg-slate-50 focus:bg-white"
@@ -67,14 +80,14 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: MultiS
                                 ) : (
                                     filtered.map(opt => (
                                         <div
-                                            key={opt}
+                                            key={opt.value}
                                             className="p-3 hover:bg-rose-50 hover:text-[#FF3269] rounded-xl text-sm font-bold text-slate-600 transition-all cursor-pointer flex items-center justify-between group"
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                onChange([...selected, opt])
+                                                onChange([...selected, opt.value])
                                             }}
                                         >
-                                            {opt}
+                                            {opt.label}
                                             <span className="opacity-0 group-hover:opacity-100 text-[10px] uppercase tracking-widest font-black">Add</span>
                                         </div>
                                     ))

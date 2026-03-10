@@ -7,13 +7,15 @@ import { RedisModule } from '../redis/redis.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: ProductType.name, schema: ProductTypeSchema }]),
-        RedisModule,
-        UsersModule,
-    ],
-    controllers: [ProductTypesController],
-    providers: [ProductTypesService],
-    exports: [ProductTypesService],
+  imports: [
+    MongooseModule.forFeature([
+      { name: ProductType.name, schema: ProductTypeSchema },
+    ]),
+    RedisModule,
+    UsersModule,
+  ],
+  controllers: [ProductTypesController],
+  providers: [ProductTypesService],
+  exports: [ProductTypesService],
 })
-export class ProductTypesModule { }
+export class ProductTypesModule {}

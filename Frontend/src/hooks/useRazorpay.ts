@@ -1,15 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import axiosClient from "@/lib/axiosClient"
 import { toast } from "sonner"
 import { useDispatch } from "react-redux"
 import { clearCart } from "@/store/slices/cartSlice"
 import axios from "axios"
+import { useRouter } from "next/navigation"
 
 export function useRazorpay() {
     const [loading, setLoading] = useState(false)
     const dispatch = useDispatch()
+    const router = useRouter()
 
     const loadScript = (src: string) => {
         return new Promise((resolve) => {
@@ -51,8 +52,14 @@ export function useRazorpay() {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
                         })
-                        toast.success("Payment successful! Your order is confirmed.")
+
+                        // 4. Clear cart from Redux + localStorage
                         dispatch(clearCart())
+
+                        toast.success("Payment successful! Your order is confirmed.")
+
+                        // 5. Redirect to orders page
+                        router.push("/my-orders")
                     } catch (error) {
                         toast.error("Payment verification failed.")
                     }
@@ -63,7 +70,7 @@ export function useRazorpay() {
                     contact: userData.phone,
                 },
                 theme: {
-                    color: "#15803d", // green-700
+                    color: "#15803d",
                 },
             }
 

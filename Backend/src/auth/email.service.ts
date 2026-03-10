@@ -1,5 +1,9 @@
 import { google } from 'googleapis';
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 @Injectable()
 export class EmailService {
@@ -7,19 +11,20 @@ export class EmailService {
   private auth: any;
 
   // ─── CONFIGURATION ───
-  private readonly logoUrl = 'https://res.cloudinary.com/dmpuhqwqb/image/upload/v1770719442/logo-2_yro9yx.gif';
+  private readonly logoUrl =
+    'https://res.cloudinary.com/dmpuhqwqb/image/upload/v1770719442/logo-2_yro9yx.gif';
   private readonly companyName = process.env.SMTP_FROM_NAME || 'BivhaShop';
 
   // ─── BRAND COLORS ───
   private readonly colors = {
-    primary: '#15803d',      // green-700
-    secondary: '#6c757d',    // Subtitles
-    success: '#28a745',      // Success messages/buttons
-    warning: '#ffc107',      // Warnings
-    danger: '#dc3545',       // Errors/Urgent
-    background: '#f4f7f6',   // Light gray background for the whole email
-    card: '#ffffff',         // White background for the content
-    text: '#333333'          // Main text color
+    primary: '#15803d', // green-700
+    secondary: '#6c757d', // Subtitles
+    success: '#28a745', // Success messages/buttons
+    warning: '#ffc107', // Warnings
+    danger: '#dc3545', // Errors/Urgent
+    background: '#f4f7f6', // Light gray background for the whole email
+    card: '#ffffff', // White background for the content
+    text: '#333333', // Main text color
   };
 
   constructor() {
@@ -28,19 +33,20 @@ export class EmailService {
     const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
     if (!clientId || !clientSecret || !refreshToken) {
-      this.logger.warn('Missing Google OAuth2 credentials in environment variables');
+      this.logger.warn(
+        'Missing Google OAuth2 credentials in environment variables',
+      );
     }
 
-    this.auth = new google.auth.OAuth2(
-      clientId,
-      clientSecret
-    );
+    this.auth = new google.auth.OAuth2(clientId, clientSecret);
 
     this.auth.setCredentials({
       refresh_token: refreshToken,
     });
 
-    this.logger.log(`Initializing Gmail API Email Service with user: ${process.env.SMTP_USER}`);
+    this.logger.log(
+      `Initializing Gmail API Email Service with user: ${process.env.SMTP_USER}`,
+    );
   }
 
   // ─── EMAIL METHODS ───
@@ -101,8 +107,13 @@ export class EmailService {
       });
       this.logger.log(`OTP successfully sent to ${email}`);
     } catch (error) {
-      this.logger.error(`Error sending email via Gmail API to ${email}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Failed to send verification email');
+      this.logger.error(
+        `Error sending email via Gmail API to ${email}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to send verification email',
+      );
     }
   }
 }

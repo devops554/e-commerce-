@@ -20,6 +20,7 @@ import { socketService } from '../../services/socketService';
 import { locationService } from '../../services/locationService';
 import { Badge, Card, Divider, Skeleton } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
+
 import { getInitials } from '../../utils/helpers';
 
 export default function ProfileScreen() {
@@ -94,17 +95,55 @@ export default function ProfileScreen() {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.heroDecor} />
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitials(displayPartner?.name || 'DP')}</Text>
-            </View>
+          <View style={styles.heroDecorBottom} />
+
+          {/* ── Redesigned Profile Picture ── */}
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            {/* Outer glow ring */}
+            <LinearGradient
+              colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.25)']}
+              style={styles.avatarRing}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.avatarInner}>
+                {displayPartner?.profileImage ? (
+                  <Image
+                    source={{ uri: displayPartner.profileImage }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <View style={styles.avatarFallback}>
+                    <Text style={styles.avatarText}>
+                      {getInitials(displayPartner?.name || 'DP')}
+                    </Text>
+                  </View>
+                )}
+                {/* Subtle dark overlay hint with camera icon */}
+                <View style={styles.avatarEditOverlay}>
+                  <Text style={styles.avatarCameraIcon}>📷</Text>
+                </View>
+              </View>
+            </LinearGradient>
+
+            {/* Status dot */}
             <View
               style={[
                 styles.onlineDot,
                 { backgroundColor: statusColor[displayPartner?.availabilityStatus ?? 'OFFLINE'] },
               ]}
             />
-          </View>
+
+            {/* Small edit badge */}
+            <View style={styles.avatarEditBadge}>
+              <Text style={styles.avatarEditBadgeText}>✏️</Text>
+            </View>
+          </TouchableOpacity>
+          {/* ── End Profile Picture ── */}
 
           {isLoading ? (
             <Skeleton height={24} width={160} style={{ marginBottom: 8 }} />
@@ -222,7 +261,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.versionText}>SwiftDeliver Partner v1.0.0</Text>
+        <Text style={styles.versionText}>SwiftDeliver Partner v54</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -276,6 +315,7 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, textAlign: 'center', fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
   editBtn: { minWidth: 60, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: Colors.surfaceAlt, borderRadius: BorderRadius.sm, alignItems: 'center' },
   editText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.primary },
+
   heroCard: {
     margin: Spacing.md,
     borderRadius: 24,
@@ -284,11 +324,117 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...Shadow.md,
   },
-  heroDecor: { position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.06)' },
-  avatarContainer: { position: 'relative', marginBottom: 12 },
-  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
-  avatarText: { fontSize: 32, fontWeight: '900', color: Colors.white },
-  onlineDot: { position: 'absolute', bottom: 2, right: 2, width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: Colors.primary },
+  heroDecor: {
+    position: 'absolute',
+    right: -60,
+    top: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  heroDecorBottom: {
+    position: 'absolute',
+    left: -40,
+    bottom: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+
+  // ── Profile Picture Styles ──
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarRing: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    padding: 3,           // ring thickness
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Drop shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  avatarInner: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+  },
+  avatarFallback: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: Colors.white,
+  },
+  avatarEditOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCameraIcon: {
+    fontSize: 14,
+  },
+  onlineDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 3,
+    borderColor: Colors.primary,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  avatarEditBadgeText: {
+    fontSize: 12,
+  },
+  // ── End Profile Picture Styles ──
+
   heroName: { fontSize: FontSize.xxl, fontWeight: '900', color: Colors.white, letterSpacing: -0.3 },
   heroPhone: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.65)', marginBottom: Spacing.lg },
   heroStatsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: BorderRadius.lg, paddingVertical: 12, paddingHorizontal: Spacing.md, width: '100%' },

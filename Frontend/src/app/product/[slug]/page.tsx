@@ -122,7 +122,9 @@ export default function ProductPage() {
             title: product.title,
             price: effectivePrice,
             quantity: 1,
-            image: selectedImage
+            image: selectedImage,
+            gstRate: product.gst?.gstRate,
+            hsnCode: product.gst?.hsnCode
         })
         toast.success(`${product.title} added to cart!`)
     }

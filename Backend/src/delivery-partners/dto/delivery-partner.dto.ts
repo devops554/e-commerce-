@@ -1,98 +1,206 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MinLength,
+  IsObject,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
 
+export class AddressDto {
+  @IsString()
+  @IsOptional()
+  addressLine?: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+
+  @IsString()
+  @IsOptional()
+  pincode?: string;
+}
+
 export class RegisterDeliveryPartnerDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    @IsNotEmpty()
-    phone: string;
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 
-    @IsEmail()
-    @IsOptional()
-    email?: string;
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
-    @IsString()
-    @MinLength(6)
-    password: string;
+  @IsString()
+  @MinLength(6)
+  password: string;
 
-    @IsEnum(["BIKE", "SCOOTER", "CAR", "VAN"])
-    @IsOptional()
-    vehicleType?: string;
+  @IsEnum(['BIKE', 'SCOOTER', 'CAR', 'VAN'])
+  @IsOptional()
+  vehicleType?: string;
 
-    @IsString()
-    @IsOptional()
-    vehicleNumber?: string;
+  @IsString()
+  @IsOptional()
+  vehicleNumber?: string;
 
-    @IsString()
-    @IsOptional()
-    licenseNumber?: string;
+  @IsString()
+  @IsOptional()
+  licenseNumber?: string;
 
-    @IsString()
-    @IsOptional()
-    warehouseId?: string;
+  @IsOptional()
+  warehouseIds?: string[];
 
-    @IsString()
-    @IsOptional()
-    aadhaarNumber?: string;
+  @IsString()
+  @IsOptional()
+  aadhaarNumber?: string;
 
-    @IsString()
-    @IsOptional()
-    panNumber?: string;
+  @IsString()
+  @IsOptional()
+  panNumber?: string;
 
-    @IsString()
-    @IsOptional()
-    aadhaarImage?: string;
+  @IsString()
+  @IsOptional()
+  aadhaarImage?: string;
 
-    @IsString()
-    @IsOptional()
-    panImage?: string;
+  @IsString()
+  @IsOptional()
+  panImage?: string;
 
-    @IsString()
-    @IsOptional()
-    drivingLicenseImage?: string;
+  @IsString()
+  @IsOptional()
+  drivingLicenseImage?: string;
+
+  @IsString()
+  @IsOptional()
+  bloodGroup?: string;
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => AddressDto)
+  permanentAddress?: AddressDto;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => AddressDto)
+  currentAddress?: AddressDto;
 }
 
 export class LoginDeliveryPartnerDto {
-    @IsString()
-    @IsNotEmpty()
-    phone: string;
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 
-    @IsString()
-    @IsNotEmpty()
-    password: string;
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }
 
 export class UpdateDeliveryPartnerDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-    @IsOptional()
-    @IsEnum(["BIKE", "SCOOTER", "CAR", "VAN"])
-    vehicleType?: string;
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsOptional()
-    @IsString()
-    vehicleNumber?: string;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-    @IsOptional()
-    @IsEnum(["ONLINE", "OFFLINE", "BUSY"])
-    availabilityStatus?: string;
+  @IsOptional()
+  @IsEnum(['BIKE', 'SCOOTER', 'CAR', 'VAN'])
+  vehicleType?: string;
 
-    @IsOptional()
-    @IsEnum(["ACTIVE", "INACTIVE", "BLOCKED"])
-    accountStatus?: string;
+  @IsOptional()
+  @IsString()
+  vehicleNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  licenseNumber?: string;
+
+  @IsOptional()
+  warehouseIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  aadhaarNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  panNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  bloodGroup?: string;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => AddressDto)
+  permanentAddress?: AddressDto;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => AddressDto)
+  currentAddress?: AddressDto;
+
+  @IsOptional()
+  @IsEnum(['ONLINE', 'OFFLINE', 'BUSY'])
+  availabilityStatus?: string;
+
+  @IsOptional()
+  @IsString()
+  aadhaarImage?: string;
+
+  @IsOptional()
+  @IsString()
+  panImage?: string;
+
+  @IsOptional()
+  @IsString()
+  drivingLicenseImage?: string;
+
+  @IsOptional()
+  @IsObject()
+  documents?: {
+    aadhaarNumber?: string;
+    aadhaarImage?: string;
+    panNumber?: string;
+    panImage?: string;
+    drivingLicenseImage?: string;
+  };
+
+  @IsOptional()
+  @IsString()
+  profileImage?: string;
 }
 
 export class UpdateLocationDto {
-    @IsNumber()
-    @IsNotEmpty()
-    latitude: number;
+  @IsNumber()
+  @IsNotEmpty()
+  latitude: number;
 
-    @IsNumber()
-    @IsNotEmpty()
-    longitude: number;
+  @IsNumber()
+  @IsNotEmpty()
+  longitude: number;
 }

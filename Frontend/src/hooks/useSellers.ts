@@ -37,3 +37,24 @@ export const useUpdateSellerStatus = () => {
         },
     });
 };
+
+// --- useSellersActions: admin/seller - registration and management ---
+export const useSellersActions = () => {
+    const queryClient = useQueryClient();
+
+    const registerSellerMutation = useMutation({
+        mutationFn: (data: any) => sellerService.register(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sellers'] });
+            toast.success('Seller registered successfully');
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to register seller');
+        },
+    });
+
+    return {
+        registerSeller: registerSellerMutation.mutateAsync,
+        isRegistering: registerSellerMutation.isPending,
+    };
+};

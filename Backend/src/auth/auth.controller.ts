@@ -1,6 +1,22 @@
-import { Controller, Post, Body, UseGuards, Get, Req, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Req,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ForgotPasswordDto, LoginDto, RegisterDto, RegisterSubAdminDto, RegisterManagerDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  RegisterSubAdminDto,
+  RegisterManagerDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { JwtAuthGuard } from './auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
@@ -8,74 +24,74 @@ import { UserRole } from '../users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
-    private readonly logger = new Logger(AuthController.name);
+  private readonly logger = new Logger(AuthController.name);
 
-    constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
-    // ─── AUTHENTICATION ROUTES ───
+  // ─── AUTHENTICATION ROUTES ───
 
-    @Post('request-otp')
-    async requestOtp(@Body('email') email: string) {
-        return this.authService.requestOtp(email);
+  @Post('request-otp')
+  async requestOtp(@Body('email') email: string) {
+    return this.authService.requestOtp(email);
+  }
+
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto) {
+    this.logger.log(`Registration request for email: ${registerDto.email}`);
+    return this.authService.register(registerDto);
+  }
+
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    this.logger.log(`Login attempt for email: ${loginDto.email}`);
+    return this.authService.login(loginDto);
+  }
+
+  @Post('refresh')
+  async refresh(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
+  }
+
+  @Post('google')
+  async googleLogin(@Body('idToken') idToken: string) {
+    this.logger.log('Google login attempt');
+    return this.authService.googleLogin(idToken);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    this.logger.log(`Forgot password request for: ${forgotPasswordDto.email}`);
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    this.logger.log(`Password reset request for: ${resetPasswordDto.email}`);
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('register-subadmin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async registerSubAdmin(@Body() registerDto: RegisterSubAdminDto) {
+    this.logger.log(`Sub-admin registration by admin: ${registerDto.email}`);
+    return this.authService.registerSubAdmin(registerDto);
+  }
+
+  @Post('register-manager')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async registerManager(@Body() registerDto: RegisterManagerDto) {
+    this.logger.log(`Manager registration by admin: ${registerDto.email}`);
+    return this.authService.registerManager(registerDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getProfile(@Req() req: any) {
+    if (!req.user) {
+      throw new UnauthorizedException();
     }
-
-    @Post('register')
-    async register(@Body() registerDto: RegisterDto) {
-        this.logger.log(`Registration request for email: ${registerDto.email}`);
-        return this.authService.register(registerDto);
-    }
-
-    @Post('login')
-    async login(@Body() loginDto: LoginDto) {
-        this.logger.log(`Login attempt for email: ${loginDto.email}`);
-        return this.authService.login(loginDto);
-    }
-
-    @Post('refresh')
-    async refresh(@Body('refreshToken') refreshToken: string) {
-        return this.authService.refreshToken(refreshToken);
-    }
-
-    @Post('google')
-    async googleLogin(@Body('idToken') idToken: string) {
-        this.logger.log('Google login attempt');
-        return this.authService.googleLogin(idToken);
-    }
-
-    @Post('forgot-password')
-    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-        this.logger.log(`Forgot password request for: ${forgotPasswordDto.email}`);
-        return this.authService.forgotPassword(forgotPasswordDto);
-    }
-
-    @Post('reset-password')
-    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-        this.logger.log(`Password reset request for: ${resetPasswordDto.email}`);
-        return this.authService.resetPassword(resetPasswordDto);
-    }
-
-    @Post('register-subadmin')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN)
-    async registerSubAdmin(@Body() registerDto: RegisterSubAdminDto) {
-        this.logger.log(`Sub-admin registration by admin: ${registerDto.email}`);
-        return this.authService.registerSubAdmin(registerDto);
-    }
-
-    @Post('register-manager')
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN)
-    async registerManager(@Body() registerDto: RegisterManagerDto) {
-        this.logger.log(`Manager registration by admin: ${registerDto.email}`);
-        return this.authService.registerManager(registerDto);
-    }
-
-    @UseGuards(JwtAuthGuard)
-    @Get('me')
-    async getProfile(@Req() req: any) {
-        if (!req.user) {
-            throw new UnauthorizedException();
-        }
-        return req.user;
-    }
+    return req.user;
+  }
 }

@@ -106,8 +106,12 @@ export default function OrderDetailsPage() {
                         <Separator />
                         <div className="space-y-2 pt-1">
                             <div className="flex justify-between text-sm text-muted-foreground">
-                                <span>Subtotal</span>
-                                <span>&#8377;{order.totalAmount?.toLocaleString('en-IN')}</span>
+                                <span>Subtotal (Taxable Value)</span>
+                                <span>&#8377;{((order.totalAmount || 0) - (order.totalGstAmount || 0)).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                                <span>GST Amount</span>
+                                <span>&#8377;{order.totalGstAmount?.toLocaleString('en-IN')}</span>
                             </div>
                             <div className="flex justify-between text-sm text-muted-foreground">
                                 <span>Delivery</span>
@@ -115,12 +119,45 @@ export default function OrderDetailsPage() {
                             </div>
                             <Separator />
                             <div className="flex justify-between text-base font-black text-foreground">
-                                <span>Total Paid</span>
+                                <div className="flex flex-col">
+                                    <span>Total Paid</span>
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Inclusive of GST</span>
+                                </div>
                                 <span>&#8377;{order.totalAmount?.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* ── 2.5 Tax Details ── */}
+                {order.items.some((i: any) => i.gstRate) && (
+                    <Card className="shadow-sm border-emerald-100 bg-emerald-50/20">
+                        <CardHeader className="pb-2 px-5 pt-4">
+                            <CardTitle className="text-[11px] font-black uppercase tracking-widest text-emerald-800 flex items-center gap-2">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                Tax Breakdown
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-5 pb-4">
+                            <div className="space-y-2">
+                                {order.items.map((item: any, i: number) => item.gstRate ? (
+                                    <div key={i} className="flex justify-between items-center text-[12px]">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-700">{item.title}</span>
+                                            <span className="text-[10px] text-slate-500">GST @{item.gstRate}% on &#8377;{item.lineTaxableValue?.toLocaleString('en-IN')}</span>
+                                        </div>
+                                        <span className="font-bold text-slate-900">&#8377;{item.lineTotalGst?.toLocaleString('en-IN')}</span>
+                                    </div>
+                                ) : null)}
+                                <Separator className="bg-emerald-100" />
+                                <div className="flex justify-between items-center text-[12px] pt-1">
+                                    <span className="font-black text-emerald-900">Total GST Paid</span>
+                                    <span className="font-black text-emerald-900">&#8377;{order.totalGstAmount?.toLocaleString('en-IN')}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* ── 3. Shipping Address ── */}
                 <OrderShippingCard address={order.shippingAddress} />

@@ -13,6 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import Image from "next/image"
 import Link from "next/link"
+import { getOrderItemGst, calculateOrderTotals } from "@/utils/gst"
 
 export function CartDrawer() {
     const { items, totalAmount, removeFromCart, incrementQuantity, decrementQuantity } = useCart()
@@ -118,6 +119,9 @@ export function CartDrawer() {
                                         </p>
                                         <p className="text-[12px] font-black text-gray-900 mt-1">
                                             ₹{item.price}
+                                            {item.gstRate && (
+                                                <span className="ml-1.5 text-[10px] text-gray-400 font-bold uppercase">Incl. {item.gstRate}% GST</span>
+                                            )}
                                         </p>
                                     </div>
 
@@ -172,24 +176,34 @@ export function CartDrawer() {
                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                                 Bill Details
                             </p>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500 font-medium">Items Total</span>
-                                    <span className="text-sm font-bold text-gray-900">₹{totalAmount}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500 font-medium">Delivery Fee</span>
-                                    <span className="text-sm font-bold text-green-600">FREE</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500 font-medium">Handling Fee</span>
-                                    <span className="text-sm font-bold text-green-600">FREE</span>
-                                </div>
-                            </div>
-                            <div className="border-t border-dashed border-gray-200 pt-2.5 flex justify-between items-center">
-                                <span className="text-sm font-black text-gray-900">Grand Total</span>
-                                <span className="text-lg font-black text-gray-900">₹{totalAmount}</span>
-                            </div>
+                            {(() => {
+                                const { subTotal, totalGst } = calculateOrderTotals(items);
+                                return (
+                                    <>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-500 font-medium">Items (excl. GST)</span>
+                                                <span className="text-sm font-bold text-gray-900">₹{subTotal.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-500 font-medium">GST Amount</span>
+                                                <span className="text-sm font-bold text-gray-900">₹{totalGst.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-500 font-medium">Delivery Fee</span>
+                                                <span className="text-sm font-bold text-green-600">FREE</span>
+                                            </div>
+                                        </div>
+                                        <div className="border-t border-dashed border-gray-200 pt-2.5 flex justify-between items-center">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-gray-900">Grand Total</span>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">All prices are GST inclusive</p>
+                                            </div>
+                                            <span className="text-lg font-black text-gray-900">₹{totalAmount.toLocaleString('en-IN')}</span>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         {/* Checkout CTA */}

@@ -1,16 +1,19 @@
-// src/api/services.ts
-
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 import apiClient from './client';
 import {
   AuthResponse,
   LoginCredentials,
   Order,
+  Shipment,
   Transaction,
   WalletSummary,
   DeliveryPartner,
   AvailabilityStatus,
   TokenResponse,
 } from '../types';
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -38,42 +41,69 @@ export const authAPI = {
     const { data } = await apiClient.patch<DeliveryPartner>('/delivery/profile', payload);
     return data;
   },
+
+  uploadFile: async (formData: FormData): Promise<{ url: string; publicId: string }> => {
+    const token = await SecureStore.getItemAsync('accessToken');
+    const response = await fetch(`${BASE_URL}/delivery/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[DIAGNOSTIC] Fetch Upload failed:', response.status, errorData);
+      throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+    }
+
+    return response.json();
+  },
 };
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export const ordersAPI = {
-  getAvailableOrders: async (): Promise<Order[]> => {
-    const { data } = await apiClient.get<Order[]>('/delivery/orders/available');
+  // ✅ Returns Shipment[] — backend populates orderId as nested object
+  getAvailableOrders: async (): Promise<Shipment[]> => {
+    const { data } = await apiClient.get<Shipment[]>('/delivery/orders/available');
     return data;
   },
 
-  getActiveOrder: async (): Promise<Order | null> => {
-    const { data } = await apiClient.get<Order | null>('/delivery/orders/active');
+  // accept/reject now use shipmentId
+  acceptOrder: async (shipmentId: string, orderId?: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/accept`);
     return data;
   },
 
-  acceptOrder: async (orderId: string): Promise<Order> => {
-    const { data } = await apiClient.post<Order>('/delivery/orders/accept', { orderId });
+  rejectOrder: async (shipmentId: string, orderId?: string, reason?: string): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/reject`, { reason });
+  },
+
+  getActiveOrder: async (): Promise<Shipment | null> => {
+    const { data } = await apiClient.get<Shipment | null>('/delivery/orders/active');
     return data;
   },
 
-  rejectOrder: async (orderId: string): Promise<void> => {
-    await apiClient.post('/delivery/orders/reject', { orderId });
-  },
-
-  startDelivery: async (orderId: string): Promise<Order> => {
-    const { data } = await apiClient.post<Order>('/delivery/orders/start', { orderId });
+  pickupOrder: async (shipmentId: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/pickup`);
     return data;
   },
 
-  completeDelivery: async (orderId: string): Promise<Order> => {
-    const { data } = await apiClient.post<Order>('/delivery/orders/complete', { orderId });
+  startDelivery: async (shipmentId: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/start-delivery`);
     return data;
   },
 
-  failDelivery: async (orderId: string, reason: string): Promise<Order> => {
-    const { data } = await apiClient.post<Order>('/delivery/orders/fail', { orderId, reason });
+  completeDelivery: async (shipmentId: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/complete-delivery`);
+    return data;
+  },
+
+  failDelivery: async (shipmentId: string, reason: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/status`, { status: 'FAILED_DELIVERY', reason });
     return data;
   },
 

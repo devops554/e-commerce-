@@ -19,6 +19,8 @@ apiClient.interceptors.request.use(
     const token = await SecureStore.getItemAsync('accessToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('API Client: No token found for request to', config.url);
     }
     return config;
   },

@@ -66,7 +66,10 @@ axiosClient.interceptors.response.use(
             toast.error("Access Denied: You don't have permission to perform this action.");
         } else {
             // Avoid double toasting if it's a 401 that we're trying to refresh
-            if (error.response?.status !== 401) {
+            // Also avoid toasting for /carts background requests to avoid "bad impression"
+            const url = error.config?.url || '';
+            const isCartRequest = url.includes('/carts') || url.includes('carts');
+            if (error.response?.status !== 401 && !isCartRequest) {
                 toast.error(errorMessage);
             }
         }

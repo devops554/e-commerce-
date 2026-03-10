@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
-import { useWarehouseOrders, useDispatchItem } from '@/hooks/useOrders'
+import { useWarehouseOrders, useDispatchItem, useBulkDispatchItem } from '@/hooks/useOrders'
 import { Loader2, CheckCircle2, UserCheck, Send } from 'lucide-react'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { ConfirmOrdersTable, AssignDeliveryTable, DispatchedOrdersTable } from './_components/OrderTables'
@@ -24,6 +24,7 @@ const FulfilmentPage = () => {
     const [activeTab, setActiveTab] = useState<Tab>('confirm')
 
     const dispatchMutation = useDispatchItem()
+    const bulkDispatchMutation = useBulkDispatchItem()
 
     useEffect(() => {
         setBreadcrumbs([
@@ -37,6 +38,11 @@ const FulfilmentPage = () => {
         await dispatchMutation.mutateAsync({ orderId, variantId, warehouseId: warehouse._id })
     }
 
+    const handleBulkConfirm = async (orderId: string) => {
+        if (!warehouse) return
+        await bulkDispatchMutation.mutateAsync({ orderId, warehouseId: warehouse._id })
+    }
+
     const isLoading = warehouseLoading || ordersLoading
 
     const isMyItem = (item: any) =>
@@ -44,24 +50,25 @@ const FulfilmentPage = () => {
         (typeof item.warehouse === 'object' && (item.warehouse as any)?._id === warehouse?._id)
 
     // Tab 1: Orders with any item still 'pending' (not yet confirmed by manager)
+    // Exclude items already in PENDING_REASSIGNMENT
     const confirmOrders = (orders || []).filter(order =>
-        order.items.some((item: any) => isMyItem(item) && item.status === 'pending')
+        order.items.some((item: any) => isMyItem(item) && item.status?.toLowerCase() === 'pending')
     )
 
     // Tab 2: Orders where all warehouse items are confirmed (awaiting delivery assignment)
     const assignOrders = (orders || []).filter(order =>
         order.items.filter(isMyItem).length > 0 &&
         order.items.filter(isMyItem).every((item: any) =>
-            item.status === 'confirmed' || item.status === 'packed' || item.status === 'shipped' || item.status === 'cancelled'
+            ['confirmed', 'packed', 'shipped', 'cancelled', 'pending_reassignment'].includes(item.status?.toLowerCase() || '')
         ) &&
-        order.items.some((item: any) => isMyItem(item) && (item.status === 'confirmed' || item.status === 'packed'))
+        order.items.some((item: any) => isMyItem(item) && (item.status?.toLowerCase() === 'confirmed' || item.status?.toLowerCase() === 'packed'))
     )
 
-    // Tab 3: All warehouse items are shipped/delivered
+    // Tab 3: All warehouse items are shipped/delivered/cancelled or reassigned
     const dispatchedOrders = (orders || []).filter(order =>
         order.items.filter(isMyItem).length > 0 &&
         order.items.filter(isMyItem).every((item: any) =>
-            item.status === 'shipped' || item.status === 'delivered' || item.status === 'cancelled'
+            ['shipped', 'delivered', 'cancelled', 'pending_reassignment'].includes(item.status?.toLowerCase() || '')
         )
     )
 
@@ -135,7 +142,8 @@ const FulfilmentPage = () => {
                         warehouseId={warehouse?._id}
                         isMyItem={isMyItem}
                         onConfirm={handleConfirm}
-                        isConfirming={dispatchMutation.isPending}
+                        onBulkConfirm={handleBulkConfirm}
+                        isConfirming={dispatchMutation.isPending || bulkDispatchMutation.isPending}
                     />
                 ) : activeTab === 'assign' ? (
                     <AssignDeliveryTable

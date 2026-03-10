@@ -33,10 +33,15 @@ export default function MapNavigationScreen() {
 
   // Mocked customer location from order shippingAddress
   // In production, backend should provide coordinates
-  const customerLocation = {
-    latitude: 28.6139 + (Math.random() - 0.5) * 0.05,
-    longitude: 77.209 + (Math.random() - 0.5) * 0.05,
-  };
+  const customerLocation = order?.shippingAddress && (order.shippingAddress as any).latitude
+    ? {
+      latitude: (order.shippingAddress as any).latitude,
+      longitude: (order.shippingAddress as any).longitude,
+    }
+    : {
+      latitude: 28.6139 + (Math.random() - 0.5) * 0.05,
+      longitude: 77.209 + (Math.random() - 0.5) * 0.05,
+    };
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -120,7 +125,7 @@ export default function MapNavigationScreen() {
         <View style={styles.headerInfo}>
           {order && (
             <>
-              <Text style={styles.headerTitle}>#{order.orderId}</Text>
+              <Text style={styles.headerTitle}>#{typeof order.orderId === 'string' ? order.orderId : 'ID Error'}</Text>
               <Text style={styles.headerSub} numberOfLines={1}>
                 📍 {order.shippingAddress.street}, {order.shippingAddress.city}
               </Text>
@@ -187,14 +192,25 @@ export default function MapNavigationScreen() {
         {order && (
           <View style={styles.deliveryInfo}>
             <View style={styles.deliveryInfoRow}>
-              <Text style={styles.deliveryLabel}>Customer</Text>
-              <Text style={styles.deliveryValue}>{order.user.name}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.deliveryLabel}>CUSTOMER</Text>
+                <Text style={styles.deliveryValue}>{order.user.name}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => Linking.openURL(`tel:${order.user.phone}`)}
+                style={styles.callSmallBtn}
+              >
+                <Text style={{ fontSize: 18 }}>📞 Call</Text>
+              </TouchableOpacity>
             </View>
+            <View style={styles.divider} />
             <View style={styles.deliveryInfoRow}>
-              <Text style={styles.deliveryLabel}>Address</Text>
-              <Text style={styles.deliveryValue} numberOfLines={2}>
-                {order.shippingAddress.street}, {order.shippingAddress.city}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.deliveryLabel}>ADDRESS</Text>
+                <Text style={styles.deliveryValue} numberOfLines={2}>
+                  {order.shippingAddress.street}, {order.shippingAddress.city}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -279,10 +295,19 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     ...Shadow.lg,
   },
-  deliveryInfo: { gap: 8, marginBottom: Spacing.md },
-  deliveryInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  deliveryLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600', flex: 0.4 },
-  deliveryValue: { fontSize: FontSize.sm, color: Colors.textPrimary, fontWeight: '600', flex: 0.6, textAlign: 'right' },
+  deliveryInfo: { gap: 12, marginBottom: Spacing.md },
+  deliveryInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  deliveryLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
+  deliveryValue: { fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: '700' },
+  callSmallBtn: {
+    backgroundColor: Colors.success + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.success + '30'
+  },
+  divider: { height: 1, backgroundColor: Colors.border, marginVertical: 4 },
   mapActions: { flexDirection: 'row', gap: 10 },
   fitBtn: {
     borderWidth: 1.5,

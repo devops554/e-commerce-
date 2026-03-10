@@ -38,6 +38,18 @@ export function useUpdatePartnerStatus() {
     });
 }
 
+export function useUpdatePartner() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<RegisterPartnerDto> }) =>
+            deliveryPartnerService.update(id, data),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['delivery-partners'] });
+            queryClient.invalidateQueries({ queryKey: ['delivery-partner', data._id] });
+        },
+    });
+}
+
 export function useDeletePartner() {
     const queryClient = useQueryClient();
     return useMutation({

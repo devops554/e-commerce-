@@ -12,6 +12,7 @@ import {
     Phone,
     Home,
     XCircle,
+    FileText,
 } from "lucide-react"
 import { Order, OrderStatus, orderService } from "@/services/order.service"
 import Link from "next/link"
@@ -77,6 +78,11 @@ const STATUS_CONFIG: Record<
         label: "Delivery Failed",
         dot: "bg-red-400",
         pill: "bg-red-50 text-red-700 border border-red-200",
+    },
+    PENDING_REASSIGNMENT: {
+        label: "Pending Reassignment",
+        dot: "bg-amber-400",
+        pill: "bg-amber-50 text-amber-700 border border-amber-200",
     },
 }
 
@@ -155,6 +161,11 @@ export function OrderCard({ order }: { order: Order }) {
                     <p className="text-lg font-black text-[#3b2e1e] tracking-tight">
                         &#8377;{order.totalAmount?.toLocaleString("en-IN")}
                     </p>
+                    {order.totalGstAmount !== undefined && order.totalGstAmount > 0 && (
+                        <p className="text-[10px] text-[#a09070] font-bold uppercase tracking-tight">
+                            Incl. &#8377;{order.totalGstAmount.toLocaleString("en-IN")} GST
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -327,6 +338,16 @@ export function OrderCard({ order }: { order: Order }) {
                     <Eye className="w-3.5 h-3.5" />
                     View Details
                 </Link>
+
+                {order.invoiceNumber && (
+                    <button
+                        onClick={() => window.open(`/my-orders/${order._id}/invoice`, '_blank')}
+                        className="flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-600 text-[11px] font-black h-10 px-4 rounded-2xl border border-slate-200 transition-all duration-200"
+                    >
+                        <FileText className="w-3.5 h-3.5" />
+                        Invoice
+                    </button>
+                )}
             </div>
 
             <CancelOrderDialog

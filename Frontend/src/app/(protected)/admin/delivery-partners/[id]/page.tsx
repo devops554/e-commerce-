@@ -1,5 +1,5 @@
 import React from 'react'
-import DeliveryPartnerDetail from '../_components/DeliveryPartnerDetail'
+import DeliveryPartnerDetail from '@/components/delivery-partners/DeliveryPartnerDetail'
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params

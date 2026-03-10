@@ -5,85 +5,124 @@ export type DeliveryPartnerDocument = DeliveryPartner & Document;
 
 @Schema({ timestamps: true })
 export class DeliveryPartner {
+  @Prop({ required: true })
+  name: string;
 
-    @Prop({ required: true })
-    name: string;
+  @Prop({ required: true, unique: true })
+  phone: string;
 
-    @Prop({ required: true, unique: true })
-    phone: string;
+  @Prop({ unique: true, sparse: true })
+  email: string;
 
-    @Prop({ unique: true, sparse: true })
-    email: string;
+  @Prop({ required: true })
+  password: string;
 
-    @Prop({ required: true })
-    password: string;
+  @Prop({
+    enum: ['BIKE', 'SCOOTER', 'CAR', 'VAN'],
+    default: 'BIKE',
+  })
+  vehicleType: string;
 
-    @Prop({
-        enum: ["BIKE", "SCOOTER", "CAR", "VAN"],
-        default: "BIKE"
-    })
-    vehicleType: string;
+  @Prop()
+  vehicleNumber: string;
 
-    @Prop()
-    vehicleNumber: string;
+  @Prop()
+  licenseNumber: string;
 
-    @Prop()
-    licenseNumber: string;
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: 'Warehouse' }],
+    default: [],
+  })
+  warehouseIds: Types.ObjectId[];
 
-    @Prop({
-        type: Types.ObjectId,
-        ref: "Warehouse"
-    })
-    warehouseId: Types.ObjectId;
+  @Prop({
+    enum: ['ONLINE', 'OFFLINE', 'BUSY'],
+    default: 'OFFLINE',
+  })
+  availabilityStatus: string;
 
-    @Prop({
-        enum: ["ONLINE", "OFFLINE", "BUSY"],
-        default: "OFFLINE"
-    })
-    availabilityStatus: string;
+  @Prop({
+    enum: ['ACTIVE', 'INACTIVE', 'BLOCKED'],
+    default: 'ACTIVE',
+  })
+  accountStatus: string;
 
-    @Prop({
-        enum: ["ACTIVE", "INACTIVE", "BLOCKED"],
-        default: "ACTIVE"
-    })
-    accountStatus: string;
+  @Prop({
+    type: {
+      latitude: Number,
+      longitude: Number,
+      lastUpdated: Date,
+    },
+  })
+  currentLocation: {
+    latitude: number;
+    longitude: number;
+    lastUpdated: Date;
+  };
 
-    @Prop({
-        type: {
-            latitude: Number,
-            longitude: Number,
-            lastUpdated: Date
-        }
-    })
-    currentLocation: {
-        latitude: number;
-        longitude: number;
-        lastUpdated: Date;
-    };
+  @Prop({ default: 0 })
+  totalDeliveries: number;
 
-    @Prop({ default: 0 })
-    totalDeliveries: number;
+  @Prop({ default: 0 })
+  rating: number;
 
-    @Prop({ default: 0 })
-    rating: number;
+  @Prop({
+    type: {
+      aadhaarNumber: String,
+      aadhaarImage: String,
+      panNumber: String,
+      panImage: String,
+      drivingLicenseImage: String,
+    },
+  })
+  documents: {
+    aadhaarNumber: string;
+    aadhaarImage: string;
+    panNumber: string;
+    panImage: string;
+    drivingLicenseImage: string;
+  };
 
-    @Prop({
-        type: {
-            aadhaarNumber: String,
-            aadhaarImage: String,
-            panNumber: String,
-            panImage: String,
-            drivingLicenseImage: String
-        }
-    })
-    documents: {
-        aadhaarNumber: string;
-        aadhaarImage: string;
-        panNumber: string;
-        panImage: string;
-        drivingLicenseImage: string;
-    };
+  @Prop()
+  profileImage: string;
 
+  @Prop()
+  bloodGroup: string;
+
+  @Prop({
+    type: {
+      addressLine: String,
+      city: String,
+      state: String,
+      country: { type: String, default: 'India' },
+      pincode: String,
+    },
+  })
+  permanentAddress: {
+    addressLine?: string;
+    city?: string;
+    state?: string;
+    country: string;
+    pincode?: string;
+  };
+
+  @Prop({
+    type: {
+      addressLine: String,
+      city: String,
+      state: String,
+      country: { type: String, default: 'India' },
+      pincode: String,
+    },
+  })
+  currentAddress: {
+    addressLine?: string;
+    city?: string;
+    state?: string;
+    country: string;
+    pincode?: string;
+  };
 }
 
-export const DeliveryPartnerSchema = SchemaFactory.createForClass(DeliveryPartner);
+export const DeliveryPartnerSchema =
+  SchemaFactory.createForClass(DeliveryPartner);

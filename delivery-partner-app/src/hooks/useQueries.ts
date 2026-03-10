@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authAPI, ordersAPI, locationAPI, walletAPI, dashboardAPI } from '../api/services';
 import { useAuthStore } from '../store/authStore';
-import { LoginCredentials } from '../types';
+import { LoginCredentials, Order, Shipment } from '../types';
 
 export const QUERY_KEYS = {
   profile: ['profile'],
@@ -50,7 +50,7 @@ export const useAvailableOrders = () =>
   });
 
 export const useActiveOrder = () =>
-  useQuery({
+  useQuery<Shipment | null>({
     queryKey: QUERY_KEYS.activeOrder,
     queryFn: ordersAPI.getActiveOrder,
     refetchInterval: 15_000,
@@ -59,7 +59,8 @@ export const useActiveOrder = () =>
 export const useAcceptOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (orderId: string) => ordersAPI.acceptOrder(orderId),
+    mutationFn: ({ shipmentId, orderId }: { shipmentId: string; orderId?: string }) =>
+      ordersAPI.acceptOrder(shipmentId, orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.availableOrders });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
@@ -70,9 +71,20 @@ export const useAcceptOrder = () => {
 export const useRejectOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (orderId: string) => ordersAPI.rejectOrder(orderId),
+    mutationFn: ({ shipmentId, orderId }: { shipmentId: string; orderId?: string }) =>
+      ordersAPI.rejectOrder(shipmentId, orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.availableOrders });
+    },
+  });
+};
+
+export const usePickupOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipmentId: string) => ordersAPI.pickupOrder(shipmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
   });
 };
@@ -80,7 +92,7 @@ export const useRejectOrder = () => {
 export const useStartDelivery = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (orderId: string) => ordersAPI.startDelivery(orderId),
+    mutationFn: (shipmentId: string) => ordersAPI.startDelivery(shipmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -90,7 +102,7 @@ export const useStartDelivery = () => {
 export const useCompleteDelivery = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (orderId: string) => ordersAPI.completeDelivery(orderId),
+    mutationFn: (shipmentId: string) => ordersAPI.completeDelivery(shipmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboardStats });

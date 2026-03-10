@@ -22,6 +22,8 @@ interface ProductCardProps {
     image: string;
     stock?: number;
     attributes?: { name: string; value: string }[];
+    gstRate?: number;
+    hsnCode?: string;
 }
 
 export const ProductCard = ({
@@ -35,6 +37,8 @@ export const ProductCard = ({
     image,
     stock: initialStock = 0,
     attributes = [],
+    gstRate,
+    hsnCode,
 }: ProductCardProps) => {
     const { addToCart } = useCart();
 
@@ -65,7 +69,9 @@ export const ProductCard = ({
             title,
             price: discountPrice > 0 ? discountPrice : price,
             quantity: 1,
-            image
+            image,
+            gstRate,
+            hsnCode,
         });
         toast.success(`Added to cart`);
     };

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useOrderById, useDispatchItem, useCancelOrder } from '@/hooks/useOrders'
+import { useShipments } from '@/hooks/useShipments'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import {
     ArrowLeft, Loader2, AlertCircle, ShoppingBag,
-    User, Phone, MapPin, Check, XCircle
+    User, Phone, MapPin, Check, XCircle, Truck, Hash, Calendar, Info
 } from 'lucide-react'
 import { FaWhatsapp } from "react-icons/fa"
 import { format } from 'date-fns'
@@ -18,6 +19,16 @@ import { OrderStatusCard } from '@/components/order/OrderStatusCard'
 import { OrderItemCard } from '@/components/order/OrderItemCard'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
+import { AssignPartnerDialog } from '@/components/admin/AssignPartnerDialog'
+import { useUpdateShipmentStatus } from '@/hooks/useShipments'
+import { ShipmentStatus } from '@/services/shipment.service'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Dialog,
     DialogContent,
@@ -35,12 +46,19 @@ export default function ManagerOrderDetailsPage() {
 
     const { data: warehouse, isLoading: isWarehouseLoading } = useManagerWarehouse()
     const { data: order, isLoading: isOrderLoading, error } = useOrderById(orderId)
+    const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({
+        orderId: order?._id,
+        warehouseId: warehouse?._id
+    })
 
     const dispatchMutation = useDispatchItem()
     const cancelMutation = useCancelOrder()
 
     const [showCancelDialog, setShowCancelDialog] = useState(false)
     const [cancelReason, setCancelReason] = useState('')
+    const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
+
+    const updateShipmentStatusMutation = useUpdateShipmentStatus()
 
     useEffect(() => {
         setBreadcrumbs([
@@ -66,7 +84,7 @@ export default function ManagerOrderDetailsPage() {
         router.back()
     }
 
-    const isLoading = isWarehouseLoading || isOrderLoading
+    const isLoading = isWarehouseLoading || isOrderLoading || isShipmentLoading
 
     if (isLoading) {
         return (
@@ -95,8 +113,8 @@ export default function ManagerOrderDetailsPage() {
     )
 
     const isCancellable = !['cancelled', 'delivered', 'shipped'].includes(order.orderStatus)
-
-
+    const shipment = shipmentData?.data?.[0]
+    const partner = shipment?.deliveryPartnerId
 
     return (
         <div className="space-y-6 pb-10">
@@ -112,7 +130,7 @@ export default function ManagerOrderDetailsPage() {
                                 <XCircle className="w-5 h-5 text-rose-600" />
                             </div>
                             <div>
-                                <DialogTitle className="text-base font-black text-slate-900">Cancel Order</DialogTitle>
+                                <DialogTitle className="text-base font-black text-slate-900">Request Order Reassignment</DialogTitle>
                                 <DialogDescription className="text-xs text-slate-500 font-medium mt-0.5">
                                     Order <span className="font-mono font-bold text-slate-700">#{order.orderId}</span>
                                 </DialogDescription>
@@ -120,16 +138,16 @@ export default function ManagerOrderDetailsPage() {
                         </div>
                     </DialogHeader>
 
-                    <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 text-xs text-rose-700 font-medium">
-                        This action is <span className="font-black">irreversible</span>. The customer will be notified with the reason you provide below.
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 font-medium">
+                        Confirming this will notify the <span className="font-black">Admin</span> that your warehouse cannot fulfillment this order. The Admin will reassign it to another warehouse.
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-xs font-black text-slate-700 uppercase tracking-wide">
-                            Cancellation Reason <span className="text-rose-500">*</span>
+                            Fulfillment Issue Reason <span className="text-rose-500">*</span>
                         </label>
                         <Textarea
-                            placeholder="e.g. Item out of stock at warehouse, customer requested cancellation, address issue..."
+                            placeholder="e.g. Item out of stock at this warehouse, damaged during packing..."
                             value={cancelReason}
                             onChange={e => setCancelReason(e.target.value)}
                             className="resize-none bg-white border-slate-200 focus:border-rose-400 text-sm rounded-xl"
@@ -150,13 +168,13 @@ export default function ManagerOrderDetailsPage() {
                             Discard
                         </Button>
                         <Button
-                            className="rounded-xl flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black shadow-lg shadow-rose-100"
+                            className="rounded-xl flex-1 bg-amber-600 hover:bg-amber-700 text-white font-black shadow-lg shadow-amber-100"
                             onClick={handleCancel}
                             disabled={!cancelReason.trim() || cancelMutation.isPending}
                         >
                             {cancelMutation.isPending
-                                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Cancelling…</>
-                                : <><XCircle className="w-4 h-4 mr-2" />Confirm Cancel</>
+                                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Requesting…</>
+                                : <><AlertCircle className="w-4 h-4 mr-2" />Submit Request</>
                             }
                         </Button>
                     </DialogFooter>
@@ -178,7 +196,18 @@ export default function ManagerOrderDetailsPage() {
                             <h1 className="text-xl font-black text-slate-900 tracking-tight">Fulfillment Management</h1>
                             <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-md uppercase tracking-widest border border-blue-200">Manager</span>
                         </div>
-                        <p className="text-xs text-slate-400 font-mono truncate">{order.orderId}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                            <p className="text-xs text-slate-400 font-mono truncate">{order.orderId}</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 text-[10px] rounded border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-emerald-50/50"
+                                onClick={() => router.push(`/manager/orders/${order._id}/invoice`)}
+                            >
+                                <ShoppingBag className="w-3 h-3 mr-1" />
+                                View Invoice
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -193,11 +222,11 @@ export default function ManagerOrderDetailsPage() {
                     {isCancellable && (
                         <Button
                             variant="outline"
-                            className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold rounded-xl"
+                            className="border-amber-200 text-amber-600 hover:bg-amber-50 font-bold rounded-xl"
                             onClick={() => setShowCancelDialog(true)}
                         >
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Cancel Order
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            Cannot Fulfill
                         </Button>
                     )}
                 </div>
@@ -215,6 +244,155 @@ export default function ManagerOrderDetailsPage() {
                         cancelAt={order.cancelAt}
                         cancelBy={order.cancelBy}
                     />
+
+                    {/* Shipment Assignment Details */}
+                    <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
+                        <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between">
+                            <CardTitle className="text-base font-black flex items-center gap-2 text-slate-900">
+                                <Truck className="w-5 h-5 text-indigo-500" />
+                                Logistics & Assignment
+                            </CardTitle>
+                            {shipment && (
+                                <Badge className={`font-bold capitalize ${shipment.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
+                                    shipment.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700' :
+                                        'bg-indigo-100 text-indigo-700'
+                                    }`}>
+                                    {shipment.status.replace(/_/g, ' ')}
+                                </Badge>
+                            )}
+                        </CardHeader>
+                        <CardContent className="px-6 py-6 font-medium">
+                            {!shipment ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-slate-500 gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
+                                        <Info className="w-6 h-6 text-slate-300" />
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-400">No delivery partner assigned to this order yet.</p>
+                                    <Button
+                                        onClick={() => router.push('/manager/orders')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-xl font-black bg-white border-slate-200"
+                                    >
+                                        Go to Assignment List
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-5">
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Assigned Delivery Partner</span>
+                                            {!partner ? (
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="flex items-center gap-3 bg-rose-50/50 p-3 rounded-2xl border border-rose-100">
+                                                        <AlertCircle className="w-5 h-5 text-rose-500" />
+                                                        <p className="text-xs font-bold text-rose-600">No partner assigned</p>
+                                                    </div>
+                                                    <Button
+                                                        onClick={() => setIsAssignDialogOpen(true)}
+                                                        className="rounded-xl bg-slate-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 w-full"
+                                                    >
+                                                        Assign Partner Now
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                                                        <User className="w-5 h-5 text-indigo-600" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-black text-slate-900 truncate">{partner.name || 'N/A'}</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold">{partner.phone || 'No phone'}</p>
+                                                    </div>
+                                                    <div className="ml-auto flex items-center gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="rounded-full h-8 w-8 text-green-500"
+                                                            onClick={() => partner.phone && window.open(`https://wa.me/${partner.phone}`, '_blank')}
+                                                        >
+                                                            <FaWhatsapp size={18} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="rounded-full h-8 w-8 text-slate-400 hover:text-indigo-600"
+                                                            onClick={() => setIsAssignDialogOpen(true)}
+                                                        >
+                                                            <Info className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Tracking Number</span>
+                                            <div className="flex items-center gap-2 text-sm font-mono font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-fit">
+                                                <Hash className="w-3.5 h-3.5 text-slate-400" />
+                                                {shipment.trackingNumber}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Status Override</span>
+                                            <Select
+                                                value={shipment.status}
+                                                onValueChange={(status) => updateShipmentStatusMutation.mutate({
+                                                    id: shipment._id,
+                                                    data: { status: status as ShipmentStatus }
+                                                })}
+                                                disabled={updateShipmentStatusMutation.isPending}
+                                            >
+                                                <SelectTrigger className="h-10 rounded-xl text-[11px] font-black uppercase border-slate-200 bg-white shadow-sm">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(ShipmentStatus).map(s => (
+                                                        <SelectItem key={s} value={s} className="text-xs font-bold uppercase">
+                                                            {s.replace(/_/g, ' ')}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Assigned On</span>
+                                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                                                    <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                                                    {shipment.assignedAt ? format(new Date(shipment.assignedAt), 'MMM dd, HH:mm') : 'Pending'}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Picked Up</span>
+                                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                                                    <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                                                    {shipment.pickedAt ? format(new Date(shipment.pickedAt), 'MMM dd, HH:mm') : 'Pending'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Dispatch Agent</span>
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
+                                                <Check className={`w-4 h-4 ${shipment.deliveredAt ? 'text-green-600' : 'text-slate-300'}`} />
+                                                {shipment.deliveredAt
+                                                    ? `Delivered on ${format(new Date(shipment.deliveredAt), 'MMM dd, yyyy HH:mm')}`
+                                                    : shipment.status === 'OUT_FOR_DELIVERY' ? 'Order is out for delivery' :
+                                                        shipment.status === 'ACCEPTED' ? 'Partner accepted, awaiting pickup' :
+                                                            shipment.status === 'ASSIGNED_TO_DELIVERY' ? 'Awaiting partner acceptance' :
+                                                                'Awaiting pickup from warehouse'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
                         <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between">
@@ -238,10 +416,14 @@ export default function ManagerOrderDetailsPage() {
                                             <OrderItemCard item={item} isLast={i === warehouseItems.length - 1} />
                                         </div>
                                         <div className="ml-4 flex flex-col items-end gap-2 shrink-0 self-center">
-                                            {item.status === 'confirmed' || item.status === 'packed' || item.status === 'shipped' || item.status === 'delivered' ? (
+                                            {['confirmed', 'packed', 'shipped', 'delivered'].includes(item.status) ? (
                                                 <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 font-black px-4 py-2 mt-2 rounded-xl">
                                                     <Check className="h-4 w-4 mr-1.5" />
                                                     Confirmed
+                                                </Badge>
+                                            ) : item.status === 'PENDING_REASSIGNMENT' ? (
+                                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 font-black px-4 py-2 mt-2 rounded-xl">
+                                                    Reassignment Requested
                                                 </Badge>
                                             ) : item.status !== 'cancelled' ? (
                                                 <Button
@@ -332,6 +514,16 @@ export default function ManagerOrderDetailsPage() {
                     </Card>
                 </div>
             </div>
+
+            {shipment && (
+                <AssignPartnerDialog
+                    isOpen={isAssignDialogOpen}
+                    onClose={() => setIsAssignDialogOpen(false)}
+                    shipmentId={shipment._id}
+                    warehouseId={warehouse._id}
+                    trackingNumber={shipment.trackingNumber}
+                />
+            )}
         </div>
     )
 }

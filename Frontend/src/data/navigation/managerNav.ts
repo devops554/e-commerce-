@@ -4,6 +4,7 @@ import {
     Warehouse as WarehouseIcon,
     History,
     Settings,
+    Bike,
 } from 'lucide-react'
 
 export const managerNavigation = [
@@ -24,9 +25,13 @@ export const managerNavigation = [
     },
     {
         title: 'Stock History',
-
         href: '/manager/history',
         icon: History,
+    },
+    {
+        title: 'Delivery Fleet',
+        href: '/manager/delivery-partners',
+        icon: Bike,
     },
     {
         title: 'Settings',

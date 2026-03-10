@@ -1,0 +1,46 @@
+{
+  "_id": "69ac30d7c79c5fb5b1402e66",
+  "name": "raju kumar ",
+  "phone": "6352396301",
+  "password": "$2b$10$nXcs8N8aSe7yr5/f4jYovuFcdmTsjBTpfTeXHk/UvpyqfcJGlB4vi",
+  "vehicleType": "BIKE",
+  "vehicleNumber": "mh7845uj",
+  "licenseNumber": "dl-78456328",
+  "warehouseId": "69ab233ca6007ca5ba4ae921",
+  "availabilityStatus": "OFFLINE",
+  "accountStatus": "ACTIVE",
+  "totalDeliveries": 0,
+  "rating": 0,
+  "documents": {
+    "aadhaarImage": "file:///data/user/0/host.exp.exponent/cache/ImagePicker/4cf33ff9-7d60-4e63-a312-e8fa30a31eac.jpeg",
+    "panImage": "file:///data/user/0/host.exp.exponent/cache/ImagePicker/05ddcedf-1e0e-4e58-a38d-df1ea580c5b2.jpeg",
+    "drivingLicenseImage": "file:///data/user/0/host.exp.exponent/cache/ImagePicker/a0decc18-4737-4276-bd10-8a7126e9c465.jpeg",
+    "_id": "69ae92e1346be3a067404add"
+  },
+  "createdAt": "2026-03-07T14:06:15.309Z",
+  "updatedAt": "2026-03-09T10:08:39.331Z",
+  "__v": 0,
+  "bloodGroup": "B+",
+  "currentAddress": {
+    "addressLine": "simrahi",
+    "city": "Supaul",
+    "state": "Bihar",
+    "country": "India",
+    "pincode": "852111",
+    "_id": "69ae72d4f38b321881827a7b"
+  },
+  "email": "ramnarayan@gmail.com",
+  "permanentAddress": {
+    "addressLine": "simrahi",
+    "city": "Supaul",
+    "state": "Bihar",
+    "country": "India",
+    "pincode": "847230",
+    "_id": "69ae72d4f38b321881827a7c"
+  },
+  "warehouseIds": [
+    "69ab233ca6007ca5ba4ae921",
+    "69abb144d63535e414bd7e46"
+  ],
+  "profileImage": "https://res.cloudinary.com/divmjg4i9/image/upload/v1773050919/delivery-partners/sh5jfv5bc2vzfwcsuwrd.jpg"
+}

@@ -18,7 +18,7 @@ export const Badge: React.FC<BadgeProps> = ({
     style
 }) => (
     <View style={[styles.badge, { backgroundColor }, style]}>
-        <Text style={[styles.badgeText, { color }]}>{label}</Text>
+        <Text style={[styles.badgeText, { color }]}>{typeof label === 'string' ? label : String(label)}</Text>
     </View>
 );
 
@@ -110,8 +110,8 @@ interface EmptyStateProps {
 export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, style }) => (
     <View style={[styles.emptyState, style]}>
         <Text style={styles.emptyIcon}>{icon}</Text>
-        <Text style={styles.emptyTitle}>{title}</Text>
-        {subtitle && <Text style={styles.emptySubtitle}>{subtitle}</Text>}
+        <Text style={styles.emptyTitle}>{typeof title === 'string' ? title : String(title)}</Text>
+        {subtitle && <Text style={styles.emptySubtitle}>{typeof subtitle === 'string' ? subtitle : String(subtitle)}</Text>}
     </View>
 );
 

@@ -124,7 +124,7 @@ const HistoryCard = ({ order, onPress }: { order: Order; onPress: () => void }) 
         <View style={[styles.statusIndicator, { backgroundColor: statusColor }]} />
         <View style={{ flex: 1 }}>
           <View style={styles.cardTopRow}>
-            <Text style={styles.orderId}>#{order.orderId}</Text>
+            <Text style={styles.orderId}>#{typeof order.orderId === 'string' ? order.orderId : 'ID Error'}</Text>
             <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
           </View>
           <Text style={styles.orderAddr} numberOfLines={1}>

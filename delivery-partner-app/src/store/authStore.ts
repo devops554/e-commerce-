@@ -38,7 +38,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   updatePartner: (updatedFields) => {
     const current = get().partner;
     if (current) {
-      set({ partner: { ...current, ...updatedFields } });
+      const mergedPartner = { ...current, ...updatedFields };
+      // Deep merge documents if present
+      if (updatedFields.documents && current.documents) {
+        mergedPartner.documents = {
+          ...current.documents,
+          ...updatedFields.documents,
+        };
+      }
+      set({ partner: mergedPartner });
     } else {
       set({ partner: updatedFields as DeliveryPartner });
     }

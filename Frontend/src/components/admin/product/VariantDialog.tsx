@@ -15,6 +15,7 @@ import { Plus, X } from 'lucide-react'
 import SimpleImageUpload from '@/components/SimpleImageUpload'
 import { CheckIcon, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import GstBreakdownCard from './GstBreakdownCard'
 
 interface VariantDialogProps {
     isOpen: boolean;
@@ -24,9 +25,10 @@ interface VariantDialogProps {
     isLoading?: boolean;
     availableImages?: { url: string; publicId: string }[];
     productAttributes?: { name: string; value: string }[];
+    productGst?: { gstRate?: number; includedInPrice?: boolean };
 }
 
-export default function VariantDialog({ isOpen, onClose, onSave, initialData, isLoading, availableImages = [], productAttributes = [] }: VariantDialogProps) {
+export default function VariantDialog({ isOpen, onClose, onSave, initialData, isLoading, availableImages = [], productAttributes = [], productGst }: VariantDialogProps) {
     const [formData, setFormData] = React.useState<any>(initialData || {
         price: 0,
         isActive: true,
@@ -158,6 +160,13 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
                             />
                         </div>
                     </div>
+
+                    {/* Live GST breakdown — shown if product has GST config */}
+                    <GstBreakdownCard
+                        price={formData.discountPrice || formData.price || 0}
+                        gstRate={productGst?.gstRate}
+                        includedInPrice={productGst?.includedInPrice}
+                    />
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

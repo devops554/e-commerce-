@@ -34,7 +34,7 @@ const warehouseSchema = z.object({
     managerId: z.string().optional(),
     contact: z.object({
         contactPerson: z.string().min(3, "Contact person is required"),
-        phone: z.string().min(10, "Valid phone is required"),
+        phone: z.coerce.string().min(10, "Valid phone is required"),
         email: z.string().email("Valid email is required"),
     }),
     address: z.object({
@@ -43,7 +43,7 @@ const warehouseSchema = z.object({
         city: z.string().min(2, "City is required"),
         state: z.string().min(2, "State is required"),
         country: z.string().min(2, "Country is required"),
-        pincode: z.string().min(6, "Valid pincode is required"),
+        pincode: z.coerce.string().min(6, "Valid pincode is required"),
     }),
     location: z.object({
         latitude: z.coerce.number().default(0),

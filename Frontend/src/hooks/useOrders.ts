@@ -6,6 +6,8 @@ import { useRazorpay } from "./useRazorpay";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { clearCart } from "@/store/slices/cartSlice";
+import { UseQueryResult } from "@tanstack/react-query";
+import { OrdersResponse } from "@/services/order.service";
 
 export const useWarehouseOrders = (warehouseId: string) => {
     return useQuery({
@@ -32,7 +34,22 @@ export const useDispatchItem = () => {
     });
 };
 
+export const useBulkDispatchItem = () => {
+    const queryClient = useQueryClient();
 
+    return useMutation({
+        mutationFn: ({ orderId, warehouseId }: { orderId: string, warehouseId: string }) =>
+            orderService.confirmBulkItemDispatch(orderId, warehouseId),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['warehouse-orders', variables.warehouseId] });
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            toast.success("All items confirmed successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to confirm items");
+        }
+    });
+};
 
 export const useCancelOrder = () => {
     const queryClient = useQueryClient();
@@ -51,8 +68,22 @@ export const useCancelOrder = () => {
     });
 };
 
-import { UseQueryResult } from "@tanstack/react-query";
-import { OrdersResponse } from "@/services/order.service";
+export const useReassignWarehouse = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ orderId, oldWarehouseId, newWarehouseId }: { orderId: string, oldWarehouseId: string, newWarehouseId: string }) =>
+            orderService.reassignWarehouse(orderId, oldWarehouseId, newWarehouseId),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['orders', variables.orderId] });
+            toast.success("Order reassigned successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to reassign order");
+        }
+    });
+};
 
 export const useOrders = (params: any = {}): UseQueryResult<OrdersResponse, Error> => {
     return useQuery({
@@ -81,6 +112,7 @@ export const usePlaceOrder = () => {
     const { initPayment } = useRazorpay();
     const router = useRouter();
     const dispatch = useDispatch();
+    const queryClient = useQueryClient();
 
     const placeOrder = async (orderData: CreateOrderDto, userData: any) => {
         setLoading(true);
@@ -89,8 +121,15 @@ export const usePlaceOrder = () => {
                 await initPayment(orderData, userData);
             } else {
                 await orderService.create(orderData);
-                toast.success("Order placed successfully");
+
+                // Clear cart from Redux + localStorage
                 dispatch(clearCart());
+
+                // Remove remote cart from React Query cache so useCart
+                // doesn't re-populate the Redux store before redirect
+                queryClient.removeQueries({ queryKey: ['cart'] });
+
+                toast.success("Order placed successfully");
                 router.push("/my-orders");
             }
         } catch (error: any) {
@@ -102,5 +141,3 @@ export const usePlaceOrder = () => {
 
     return { placeOrder, loading };
 };
-
-

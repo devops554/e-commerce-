@@ -14,10 +14,12 @@ import CustomerCareSection from './CustomerCareSection'
 import VariantManagementSection from './VariantManagementSection'
 import VariantDialog from './VariantDialog'
 import SeoSection from './SeoSection'
+import ProductGstSection from './ProductGstSection'
 import { Save, ArrowLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useProductVariantActions } from '@/hooks/useProducts'
 import { ProductVariant } from '@/services/product.service'
+import { useQueryClient } from '@tanstack/react-query'
 
 function resolveId(val: any): string | null {
     if (!val) return null
@@ -35,16 +37,21 @@ interface ProductFormProps {
 
 export default function ProductForm({ initialData, onSubmit, isLoading, title }: ProductFormProps) {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const [formData, setFormData] = useState(initialData || {
         isActive: true,
         images: [],
         productType: '',
+        gst: { hsnCode: '', gstRate: 18, includedInPrice: true }
     })
 
     // Sync formData with initialData when it changes (important for variants)
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData)
+            setFormData({
+                ...initialData,
+                gst: initialData.gst || { hsnCode: '', gstRate: 18, includedInPrice: true }
+            })
         }
     }, [initialData])
 
@@ -83,7 +90,19 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        onSubmit(formData)
+
+        // Sanitize data: Ensure IDs are strings, not objects
+        const sanitizedData = {
+            ...formData,
+            productType: resolveId(formData.productType),
+            category: resolveId(formData.category),
+            subCategory: resolveId(formData.subCategory) || undefined,
+            brand: resolveId(formData.brand),
+            createdBy: resolveId(formData.createdBy) || undefined,
+            updatedBy: resolveId(formData.updatedBy) || undefined
+        }
+
+        onSubmit(sanitizedData)
     }
 
     // Variant Actions
@@ -96,6 +115,8 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
             }
             setIsVariantDialogOpen(false)
             setEditingVariant(null)
+            queryClient.invalidateQueries({ queryKey: ['product', formData._id] })
+
         } catch (error) {
             console.error('Failed to save variant:', error)
         }
@@ -103,7 +124,12 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
 
     const handleDeleteVariant = async (variantId: string) => {
         if (confirm('Are you sure you want to delete this variant?')) {
-            await deleteVariant({ id: variantId, productId: formData._id })
+            try {
+                await deleteVariant({ id: variantId, productId: formData._id })
+                queryClient.invalidateQueries({ queryKey: ['product', formData._id] })
+            } catch (error) {
+                console.error('Failed to delete variant:', error)
+            }
         }
     }
 
@@ -163,6 +189,7 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                 {/* Right Column - Status & Category */}
                 <div className="space-y-8">
                     <CategorySelectionSection data={formData} onChange={handleFieldChange} />
+                    <ProductGstSection data={formData} onChange={handleFieldChange} />
                     <SeoSection data={formData} onChange={handleFieldChange} />
                     <AdditionalSettingsSection data={formData} onChange={handleFieldChange} />
                     <ManufacturerSection data={formData} onChange={handleFieldChange} />
@@ -184,6 +211,7 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                     ...(formData.images || [])
                 ]}
                 productAttributes={formData.attributes || []}
+                productGst={formData.gst}
             />
         </form>
     )

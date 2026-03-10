@@ -17,18 +17,24 @@ export function ProductPricing({ variant }: Props) {
         : 0
 
     return (
-        <div className="flex items-end gap-3 flex-wrap">
-            <span className="text-4xl font-black text-primary leading-none">₹{effectivePrice.toLocaleString('en-IN')}</span>
-            {hasDiscount && (
-                <>
-                    <span className="text-lg text-slate-400 line-through decoration-slate-300 font-bold mb-1">
-                        ₹{variant.price.toLocaleString('en-IN')}
-                    </span>
-                    <Badge className="mb-1.5 bg-green-500 hover:bg-green-600 font-black border-none text-white">
-                        SAVE {discountPct}%
-                    </Badge>
-                </>
-            )}
+        <div className="space-y-1">
+            <div className="flex items-end gap-3 flex-wrap">
+                <span className="text-4xl font-black text-primary leading-none">₹{effectivePrice.toLocaleString('en-IN')}</span>
+                {hasDiscount && (
+                    <>
+                        <span className="text-lg text-slate-400 line-through decoration-slate-300 font-bold mb-1">
+                            ₹{variant.price.toLocaleString('en-IN')}
+                        </span>
+                        <Badge className="mb-1.5 bg-green-500 hover:bg-green-600 font-black border-none text-white">
+                            SAVE {discountPct}%
+                        </Badge>
+                    </>
+                )}
+            </div>
+            {/* GST Indicator */}
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-1">
+                Inclusive of all taxes
+            </p>
         </div>
     )
 }

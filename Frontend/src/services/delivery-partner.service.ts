@@ -9,7 +9,22 @@ export interface DeliveryPartner {
     vehicleType: 'BIKE' | 'SCOOTER' | 'CAR' | 'VAN';
     vehicleNumber?: string;
     licenseNumber?: string;
-    warehouseId?: string | Warehouse;
+    warehouseIds?: (string | Warehouse)[];
+    bloodGroup?: string;
+    permanentAddress?: {
+        addressLine?: string;
+        city?: string;
+        state?: string;
+        country: string;
+        pincode?: string;
+    };
+    currentAddress?: {
+        addressLine?: string;
+        city?: string;
+        state?: string;
+        country: string;
+        pincode?: string;
+    };
     availabilityStatus: 'ONLINE' | 'OFFLINE' | 'BUSY';
     accountStatus: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
     currentLocation?: {
@@ -28,6 +43,8 @@ export interface DeliveryPartner {
     };
     createdAt: string;
     updatedAt: string;
+
+
 }
 
 export interface RegisterPartnerDto {
@@ -38,7 +55,22 @@ export interface RegisterPartnerDto {
     vehicleType?: string;
     vehicleNumber?: string;
     licenseNumber?: string;
-    warehouseId?: string;
+    warehouseIds?: string[];
+    bloodGroup?: string;
+    permanentAddress?: {
+        addressLine?: string;
+        city?: string;
+        state?: string;
+        country: string;
+        pincode?: string;
+    };
+    currentAddress?: {
+        addressLine?: string;
+        city?: string;
+        state?: string;
+        country: string;
+        pincode?: string;
+    };
 }
 
 export interface PartnersResponse {
@@ -66,6 +98,11 @@ export const deliveryPartnerService = {
 
     updateStatus: async (id: string, status: { accountStatus?: string; availabilityStatus?: string }): Promise<DeliveryPartner> => {
         const response = await axiosClient.patch<DeliveryPartner>(`/delivery-partners/${id}/status`, status);
+        return response.data;
+    },
+
+    update: async (id: string, data: Partial<RegisterPartnerDto>): Promise<DeliveryPartner> => {
+        const response = await axiosClient.patch<DeliveryPartner>(`/delivery-partners/${id}`, data);
         return response.data;
     },
 

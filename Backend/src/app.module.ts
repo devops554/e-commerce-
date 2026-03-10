@@ -8,15 +8,17 @@ import { ProductTypesModule } from './product-types/product-types.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { DeliveryModule } from './delivery/delivery.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
-import { RedisModule } from './redis/redis.module';
-import { CartsModule } from './carts/carts.module';
-import { BannerModule } from './banner/banner.module';
-import { EventsModule } from './events/events.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { SellersModule } from './sellers/sellers.module';
-import { WarehousesModule } from './warehouses/warehouses.module';
+import { ShipmentsModule } from './shipments/shipments.module';
 import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.module';
+import { WarehousesModule } from './warehouses/warehouses.module';
+import { SellersModule } from './sellers/sellers.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { EventsModule } from './events/events.module';
+import { BannerModule } from './banner/banner.module';
+import { RedisModule } from './redis/redis.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -39,13 +41,16 @@ import { DeliveryPartnersModule } from './delivery-partners/delivery-partners.mo
     PaymentsModule,
     CloudinaryModule,
     RedisModule,
-    CartsModule,
+    CategoriesModule,
     BannerModule,
     EventsModule,
     NotificationsModule,
     SellersModule,
     WarehousesModule,
     DeliveryPartnersModule,
+    ShipmentsModule,
+    DeliveryModule,
+    SettingsModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

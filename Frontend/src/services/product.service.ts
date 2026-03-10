@@ -75,6 +75,11 @@ export interface Product {
     };
     createdAt: string;
     updatedAt: string;
+    gst?: {
+        hsnCode: string;
+        gstRate: number;
+        includedInPrice: boolean;
+    };
 }
 
 export interface ProductVariant {

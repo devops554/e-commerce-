@@ -34,13 +34,14 @@ interface OrderItem {
 interface Props {
     item: OrderItem
     isLast?: boolean
+    action?: React.ReactNode
 }
 
 function getAttr(attributes: Attribute[] = [], name: string) {
     return attributes.find((a) => a.name === name)?.value ?? null
 }
 
-export function OrderItemCard({ item, isLast }: Props) {
+export function OrderItemCard({ item, isLast, action }: Props) {
     const [showAttrs, setShowAttrs] = useState(false)
 
     const variantImg = item.variant?.images?.[0]?.url
@@ -129,6 +130,13 @@ export function OrderItemCard({ item, isLast }: Props) {
                             Qty: <span className="font-semibold text-foreground">{item.quantity}</span>
                         </span>
                     </div>
+
+                    {/* Action button */}
+                    {action && (
+                        <div className="mt-3">
+                            {action}
+                        </div>
+                    )}
                 </div>
             </div>
 

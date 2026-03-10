@@ -13,7 +13,7 @@ import {
 import { useAuth } from "@/providers/AuthContext"
 import { cartService } from "@/services/cart.service"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 export const useCart = () => {
     const dispatch = useDispatch()
@@ -21,53 +21,63 @@ export const useCart = () => {
     const { user, isLoaded } = useAuth()
     const queryClient = useQueryClient()
 
-    // Sync remote cart to local state when logged in
+    // Track whether we've already synced once to avoid re-syncing on every mutation refetch
+    const hasSynced = useRef(false)
+
+    // Fetch remote cart only once when user logs in
     const { data: remoteCart, isLoading: isLoadingRemote } = useQuery({
         queryKey: ['cart'],
         queryFn: () => cartService.getCart(),
         enabled: isLoaded && !!user,
+        // Only fetch once — mutations will optimistically update local state
+        // without needing to refetch the entire cart each time
+        staleTime: Infinity,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
     })
 
-    // Update local state when remote cart is fetched
+    // Sync remote cart to local Redux state — only on first load
     useEffect(() => {
-        if (remoteCart && isLoaded && user) {
-            // remoteCart is an object { variantId: item }
-            const remoteItems = Object.values(remoteCart) as any[];
+        if (!remoteCart || !isLoaded || !user || hasSynced.current) return
 
-            // Map to frontend CartItem format
-            const formattedItems = remoteItems.map(item => ({
-                id: item.variantId, // id is used as the key in frontend
-                productId: item.productId,
-                variantId: item.variantId,
-                title: item.title || "Product",
-                price: Number(item.price) || 0,
-                quantity: Number(item.quantity) || 1,
-                image: item.image || ""
-            }));
+        hasSynced.current = true
 
-            const totalAmount = formattedItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const remoteItems = Object.values(remoteCart) as any[]
 
-            dispatch(setCart({
-                items: formattedItems,
-                totalAmount
-            }));
+        const formattedItems = remoteItems.map(item => ({
+            id: item.variantId,
+            productId: item.productId,
+            variantId: item.variantId,
+            title: item.title || "Product",
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 1,
+            image: item.image || ""
+        }))
+
+        const total = formattedItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
+
+        dispatch(setCart({ items: formattedItems, totalAmount: total }))
+    }, [remoteCart, isLoaded, user, dispatch])
+
+    // Reset sync flag on logout so next login re-syncs
+    useEffect(() => {
+        if (!user) {
+            hasSynced.current = false
         }
-    }, [remoteCart, isLoaded, user, dispatch]);
+    }, [user])
 
     const addItemMutation = useMutation({
-        mutationFn: ({ productId, variantId, quantity, title, price, image }: { productId: string, variantId: string, quantity: number, title?: string, price?: number, image?: string }) =>
-            cartService.addItem(productId, variantId, quantity, title, price, image),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
+        mutationFn: ({ productId, variantId, quantity, title, price, image }: {
+            productId: string, variantId: string, quantity: number,
+            title?: string, price?: number, image?: string
+        }) => cartService.addItem(productId, variantId, quantity, title, price, image),
+        // No invalidateQueries — we manage local state ourselves
     })
 
     const removeItemMutation = useMutation({
         mutationFn: (variantId: string) => cartService.removeItem(variantId),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
-    })
-
-    const clearCartMutation = useMutation({
-        mutationFn: () => cartService.clearCart(),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] })
+        // No invalidateQueries
     })
 
     const addToCart = (item: any) => {

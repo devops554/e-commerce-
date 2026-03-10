@@ -8,12 +8,20 @@ export interface CartItem {
     price: number;
     quantity: number;
     image: string;
+    gstRate?: number;
+    hsnCode?: string;
 }
 
 interface CartState {
     items: CartItem[];
     totalAmount: number;
 }
+
+const saveToStorage = (items: CartItem[], totalAmount: number) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('cart', JSON.stringify({ items, totalAmount }));
+    }
+};
 
 const getInitialState = (): CartState => {
     if (typeof window !== 'undefined') {
@@ -26,10 +34,7 @@ const getInitialState = (): CartState => {
             }
         }
     }
-    return {
-        items: [],
-        totalAmount: 0,
-    };
+    return { items: [], totalAmount: 0 };
 };
 
 const initialState: CartState = getInitialState();
@@ -49,16 +54,12 @@ const cartSlice = createSlice({
                 state.items.push(action.payload);
             }
             state.totalAmount = recalcTotal(state.items);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(state.items, state.totalAmount);
         },
         removeFromCart: (state, action: PayloadAction<string>) => {
             state.items = state.items.filter((item) => item.id !== action.payload);
             state.totalAmount = recalcTotal(state.items);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(state.items, state.totalAmount);
         },
         updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
             const item = state.items.find((item) => item.id === action.payload.id);
@@ -66,16 +67,12 @@ const cartSlice = createSlice({
                 item.quantity = action.payload.quantity;
             }
             state.totalAmount = recalcTotal(state.items);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(state.items, state.totalAmount);
         },
         clearCart: (state) => {
             state.items = [];
             state.totalAmount = 0;
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage([], 0);
         },
         decrementCart: (state, action: PayloadAction<{ variantId: string }>) => {
             const index = state.items.findIndex((item) => item.variantId === action.payload.variantId);
@@ -87,24 +84,17 @@ const cartSlice = createSlice({
                 }
             }
             state.totalAmount = recalcTotal(state.items);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(state.items, state.totalAmount);
         },
-        // Removes any stale items that are missing productId or variantId (e.g. added before migration)
         purgeInvalidItems: (state) => {
             state.items = state.items.filter(item => !!item.productId && !!item.variantId);
             state.totalAmount = recalcTotal(state.items);
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(state.items, state.totalAmount);
         },
         setCart: (state, action: PayloadAction<CartState>) => {
             state.items = action.payload.items;
             state.totalAmount = action.payload.totalAmount;
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('cart', JSON.stringify(state));
-            }
+            saveToStorage(action.payload.items, action.payload.totalAmount);
         }
     },
 });

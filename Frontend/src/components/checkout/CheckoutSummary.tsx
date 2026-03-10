@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator"
 import { ShoppingBag } from "lucide-react"
 import Image from "next/image"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { getOrderItemGst, calculateOrderTotals } from "@/utils/gst"
 
 interface CartItem {
     id: string
@@ -12,6 +13,8 @@ interface CartItem {
     price: number
     quantity: number
     image: string
+    gstRate?: number
+    hsnCode?: string
 }
 
 interface CheckoutSummaryProps {
@@ -43,7 +46,14 @@ export function CheckoutSummary({ items, totalAmount }: CheckoutSummaryProps) {
                                     <h4 className="line-clamp-1 text-xs font-bold text-slate-900 leading-tight tracking-tight group-hover:text-primary transition-colors">
                                         {item.title}
                                     </h4>
-                                    <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Qty: {item.quantity} × ₹{item.price}</p>
+                                    <p className="text-[11px] text-slate-500 font-semibold mt-0.5 flex flex-col">
+                                        <span>Qty: {item.quantity} × ₹{item.price}</span>
+                                        {item.gstRate && (
+                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                Incl. ₹{getOrderItemGst(item.price, item.gstRate, item.quantity).gstAmount} GST @{item.gstRate}%
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                                 <div className="text-sm font-bold text-slate-900 flex items-center pr-1">
                                     ₹{item.price * item.quantity}
@@ -54,22 +64,36 @@ export function CheckoutSummary({ items, totalAmount }: CheckoutSummaryProps) {
                 </ScrollArea>
 
                 <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                    <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        <span>Items Subtotal</span>
-                        <span className="text-slate-900">₹{totalAmount}</span>
-                    </div>
-                    <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        <span>Delivery Fee</span>
-                        <span className="text-green-600 font-bold">FREE</span>
-                    </div>
-                    <Separator className="bg-slate-200/40" />
-                    <div className="flex justify-between items-center pt-0.5">
-                        <span className="text-sm font-bold text-slate-900">Total Amount</span>
-                        <div className="text-right">
-                            <span className="text-xl font-bold text-primary tracking-tight">₹{finalAmount}</span>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Total Payable</p>
-                        </div>
-                    </div>
+                    {(() => {
+                        const { subTotal, totalGst } = calculateOrderTotals(items);
+                        return (
+                            <>
+                                <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>Subtotal (Taxable Value)</span>
+                                    <span className="text-slate-900">₹{subTotal.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>GST Total</span>
+                                    <span className="text-slate-900">₹{totalGst.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>Delivery Fee</span>
+                                    <span className="text-green-600 font-bold">FREE</span>
+                                </div>
+                                <Separator className="bg-slate-200/40" />
+                                <div className="flex justify-between items-center pt-0.5">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-900">Total Amount</span>
+                                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight italic">GST Included in price</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xl font-bold text-primary tracking-tight">₹{finalAmount.toLocaleString('en-IN')}</span>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Total Payable</p>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
             </CardContent>
         </Card>

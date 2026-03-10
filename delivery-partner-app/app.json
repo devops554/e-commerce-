@@ -21,7 +21,8 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-location"
+      "expo-location",
+      "expo-web-browser"
     ],
     "newArchEnabled": true,
     "scheme": "swift-deliver-partner"

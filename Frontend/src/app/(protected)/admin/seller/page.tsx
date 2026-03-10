@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from '@/components/ui/input'
-import { Eye, Search, Users, StoreIcon } from 'lucide-react'
+import { Eye, Search, Users, StoreIcon, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { useAllSellers } from '@/hooks/useSellers'
@@ -48,14 +48,21 @@ export default function AdminSellerListPage() {
                         )}
                     </p>
                 </div>
-                <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                        placeholder="Search sellers..."
-                        className="pl-10 h-11 rounded-xl border-none shadow-sm ring-1 ring-slate-200"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex items-center gap-3">
+                    <Link href="/admin/seller/new">
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl h-11 px-6 shadow-lg shadow-slate-100">
+                            <Plus className="mr-2 h-4 w-4" /> Add Seller
+                        </Button>
+                    </Link>
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                            placeholder="Search sellers..."
+                            className="pl-10 h-11 rounded-xl border-none shadow-sm ring-1 ring-slate-200"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 

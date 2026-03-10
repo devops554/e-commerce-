@@ -20,6 +20,9 @@ import MapNavigationScreen from '../screens/orders/MapNavigationScreen';
 import HistoryScreen from '../screens/orders/HistoryScreen';
 import WalletScreen from '../screens/wallet/WalletScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import UploadDocumentsScreen from '../screens/profile/UploadDocumentsScreen';
+import ViewDocumentScreen from '../screens/profile/ViewDocumentScreen';
 import { Colors, FontSize } from '../utils/theme';
 
 const Stack = createNativeStackNavigator();
@@ -155,6 +158,21 @@ function RootNavigator() {
             name="MapNavigation"
             component={MapNavigationScreen}
             options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="UploadDocuments"
+            component={UploadDocumentsScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="ViewDocument"
+            component={ViewDocumentScreen}
+            options={{ animation: 'slide_from_right' }}
           />
         </>
       )}

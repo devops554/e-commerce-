@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const publicRoutes = ['/',
+const publicRoutes = [
+    '/',
     '/auth/login',
     '/auth/register',
     '/product(.*)',
@@ -18,7 +19,9 @@ const publicRoutes = ['/',
 
 export function middleware(request: NextRequest) {
     const { nextUrl } = request;
-    const token = request.cookies.get('token')?.value;
+
+    // ✅ 'accessToken' — AuthContext se match karta hai
+    const token = request.cookies.get('accessToken')?.value;
 
     const isPublicRoute = publicRoutes.some((route) => {
         const regex = new RegExp(`^${route.replace('(.*)', '.*')}$`);
@@ -36,18 +39,14 @@ export function middleware(request: NextRequest) {
         }
     }
 
-    // 🔐 Not logged in → redirect to login
     if (!token && !isPublicRoute) {
         return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    // 🔁 Already logged in & going to login/register
     if (token && (nextUrl.pathname === '/auth/login' || nextUrl.pathname === '/auth/register')) {
-
         if (role === 'ADMIN' || role === 'SUBADMIN') {
             return NextResponse.redirect(new URL('/admin', request.url));
         }
-
         return NextResponse.redirect(new URL('/', request.url));
     }
 

@@ -23,6 +23,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -36,21 +38,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (storedToken && storedUser) {
             setAccessToken(storedToken);
             setUser(JSON.parse(storedUser));
-
-            // Set default auth header for axios
             axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         }
         setIsLoaded(true);
     }, []);
 
-    const login = async (newAccessToken: string, newRefreshToken: string, newUser: User, redirectTo: string = '/') => {
+    const login = async (
+        newAccessToken: string,
+        newRefreshToken: string,
+        newUser: User,
+        redirectTo: string = '/'
+    ) => {
         // 1. Set tokens and auth header immediately
         setAccessToken(newAccessToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-        Cookies.set('accessToken', newAccessToken, { expires: 7 });
-        Cookies.set('refreshToken', newRefreshToken, { expires: 7 });
 
-        // 2. Sync cart while still "guest-ish" in state but authorized in headers
+        // ✅ secure + sameSite flags — production mein cookie sahi se send hogi
+        Cookies.set('accessToken', newAccessToken, {
+            expires: 7,
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/',
+        });
+        Cookies.set('refreshToken', newRefreshToken, {
+            expires: 7,
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/',
+        });
+
+        // 2. Sync cart
         const savedCartStr = localStorage.getItem('cart');
         if (savedCartStr) {
             try {
@@ -62,20 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         quantity: item.quantity,
                         title: item.title,
                         price: item.price,
-                        image: item.image
+                        image: item.image,
                     }));
-
                     const { cartService } = await import('@/services/cart.service');
                     await cartService.syncCart(syncItems);
-                    // Clear local guest cart after sync to avoid double merging later
-                    // Or keep it as Redux will be updated by useCart's remote fetch soon
                 }
             } catch (err) {
-                console.error("Failed to sync cart after login", err);
+                console.error('Failed to sync cart after login', err);
             }
         }
 
-        // 3. Finally update user state and finish login
+        // 3. Update user state
         setUser(newUser);
         localStorage.setItem('user', JSON.stringify(newUser));
         router.push(redirectTo);
@@ -84,8 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = () => {
         setAccessToken(null);
         setUser(null);
-        Cookies.remove('accessToken');
-        Cookies.remove('refreshToken');
+        Cookies.remove('accessToken', { path: '/' });
+        Cookies.remove('refreshToken', { path: '/' });
         localStorage.removeItem('user');
         delete axios.defaults.headers.common['Authorization'];
         router.push('/auth/login');

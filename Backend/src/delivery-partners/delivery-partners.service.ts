@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -29,7 +30,7 @@ export class DeliveryPartnersService {
     @InjectModel(DeliveryPartner.name)
     private partnerModel: Model<DeliveryPartnerDocument>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(
     dto: RegisterDeliveryPartnerDto,
@@ -201,6 +202,16 @@ export class DeliveryPartnersService {
         : { ...partner.documents }
       : {};
     let hasDocUpdate = false;
+
+    // Handle account status and block reason
+    if (dto.accountStatus === 'BLOCKED' && !dto.blockReason) {
+      throw new BadRequestException('Block reason is required when blocking a partner');
+    }
+
+    if (dto.accountStatus === 'ACTIVE' || dto.accountStatus === 'INACTIVE') {
+      updateData.blockReason = '';
+    }
+
 
     // Handle individual fields
     if (dto.aadhaarNumber) {

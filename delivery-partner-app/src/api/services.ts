@@ -107,6 +107,22 @@ export const ordersAPI = {
     return data;
   },
 
+  requestPickupOtp: async (shipmentId: string): Promise<void> => {
+    await apiClient.post(`/shipments/${shipmentId}/pickup-otp`);
+  },
+
+  verifyPickupOtp: async (shipmentId: string, otp: string): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/verify-pickup`, { otp });
+  },
+
+  requestDeliveryOtp: async (shipmentId: string): Promise<void> => {
+    await apiClient.post(`/shipments/${shipmentId}/delivery-otp`);
+  },
+
+  verifyDeliveryOtp: async (shipmentId: string, otp: string): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/verify-delivery`, { otp });
+  },
+
   getOrderHistory: async (filter: 'today' | 'week' | 'month'): Promise<Order[]> => {
     const { data } = await apiClient.get<Order[]>(`/delivery/orders/history?filter=${filter}`);
     return data;

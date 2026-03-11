@@ -122,6 +122,40 @@ export const useFailDelivery = () => {
   });
 };
 
+export const useRequestPickupOtp = () => {
+  return useMutation({
+    mutationFn: (shipmentId: string) => ordersAPI.requestPickupOtp(shipmentId),
+  });
+};
+
+export const useVerifyPickupOtp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
+      ordersAPI.verifyPickupOtp(shipmentId, otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
+
+export const useRequestDeliveryOtp = () => {
+  return useMutation({
+    mutationFn: (shipmentId: string) => ordersAPI.requestDeliveryOtp(shipmentId),
+  });
+};
+
+export const useVerifyDeliveryOtp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
+      ordersAPI.verifyDeliveryOtp(shipmentId, otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
+
 export const useOrderHistory = (filter: 'today' | 'week' | 'month') =>
   useQuery({
     queryKey: QUERY_KEYS.orderHistory(filter),

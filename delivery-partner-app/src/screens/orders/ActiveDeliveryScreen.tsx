@@ -24,6 +24,9 @@ import {
   useFailDelivery,
   useRejectOrder,
   usePickupOrder,
+  useRequestDeliveryOtp,
+  useVerifyDeliveryOtp,
+  useRequestPickupOtp,
 } from '../../hooks/useQueries';
 import { Badge, Card, Divider } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
@@ -50,6 +53,13 @@ export default function ActiveDeliveryScreen() {
 
   const [failModalVisible, setFailModalVisible] = useState(false);
   const [failReason, setFailReason] = useState('');
+
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
+  const [otpValue, setOtpValue] = useState('');
+
+  const requestDeliveryOtp = useRequestDeliveryOtp();
+  const verifyDeliveryOtp = useVerifyDeliveryOtp();
+  const requestPickupOtp = useRequestPickupOtp();
 
   // We need shipmentId for API calls. 
   // Shipment object already has the _id
@@ -123,6 +133,29 @@ export default function ActiveDeliveryScreen() {
         },
       ]
     );
+  };
+
+  const handleRequestDeliveryOtp = async () => {
+    if (!shipmentId) return;
+    try {
+      await requestDeliveryOtp.mutateAsync(shipmentId);
+      Alert.alert('Success', 'OTP has been sent to the customer.');
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Failed to request OTP');
+    }
+  };
+
+  const handleVerifyDelivery = async () => {
+    if (!shipmentId || otpValue.length !== 6) return;
+    try {
+      await verifyDeliveryOtp.mutateAsync({ shipmentId, otp: otpValue });
+      setOtpModalVisible(false);
+      setOtpValue('');
+      Alert.alert('Success', 'Order delivered successfully!');
+      navigation.navigate('Home');
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Invalid OTP');
+    }
   };
 
   const handleFailDelivery = async () => {
@@ -263,6 +296,39 @@ export default function ActiveDeliveryScreen() {
           <Text style={styles.orderTotalSub}>Total incl. delivery ₹{order.deliveryFee}</Text>
         </Card>
 
+        {/* Pickup OTP Section */}
+        {(shipment.status === 'ACCEPTED' || shipment.status === 'PICKED_UP') && shipment.pickupOtp && (
+          <Card style={[styles.paymentCard, { backgroundColor: Colors.surfaceAlt, borderColor: Colors.primaryLight, borderWidth: 1 }]}>
+            <Text style={[styles.sectionLabel, { color: Colors.primary }]}>🔑 Pickup Verification OTP</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}>
+              <Text style={{ fontSize: 32, fontWeight: '900', color: Colors.textPrimary, letterSpacing: 4 }}>
+                {shipment.pickupOtp}
+              </Text>
+            </View>
+            {!shipment.pickupOtp && shipment.status === 'ACCEPTED' && (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    await requestPickupOtp.mutateAsync(shipmentId);
+                    Alert.alert('Success', 'Pickup OTP requested from Warehouse Manager.');
+                  } catch (err: any) {
+                    Alert.alert('Error', err?.response?.data?.message || 'Failed to request Pickup OTP');
+                  }
+                }}
+                style={{ marginTop: 15, padding: 12, backgroundColor: Colors.primary, borderRadius: BorderRadius.md, alignItems: 'center' }}
+                disabled={requestPickupOtp.isPending}
+              >
+                <Text style={{ color: Colors.white, fontWeight: '700' }}>
+                  {requestPickupOtp.isPending ? 'Requesting...' : 'Request Pickup OTP'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <Text style={{ fontSize: FontSize.xs, color: Colors.textSecondary, textAlign: 'center', marginTop: 10 }}>
+              Show this OTP to the Warehouse Manager during pickup
+            </Text>
+          </Card>
+        )}
+
         {/* Items */}
         <Card>
           <Text style={styles.sectionLabel}>📦 Order Items ({order.items.length})</Text>
@@ -366,8 +432,8 @@ export default function ActiveDeliveryScreen() {
               <Text style={styles.failBtnText}>✗ Failed</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={handleComplete}
-              disabled={completeDelivery.isPending}
+              onPress={() => setOtpModalVisible(true)}
+              disabled={verifyDeliveryOtp.isPending}
               activeOpacity={0.85}
               style={{ flex: 1 }}
             >
@@ -377,10 +443,10 @@ export default function ActiveDeliveryScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                {completeDelivery.isPending ? (
+                {verifyDeliveryOtp.isPending ? (
                   <ActivityIndicator color={Colors.white} />
                 ) : (
-                  <Text style={styles.actionBtnText}>✓ Mark Delivered</Text>
+                  <Text style={styles.actionBtnText}>✓ Verify & Deliver</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -432,6 +498,60 @@ export default function ActiveDeliveryScreen() {
                   <ActivityIndicator color={Colors.white} size="small" />
                 ) : (
                   <Text style={{ color: Colors.white, fontWeight: '800' }}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* OTP Modal */}
+      <Modal
+        visible={otpModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setOtpModalVisible(false)}
+      >
+        <View style={[styles.modalOverlay, { justifyContent: 'center', padding: 20 }]}>
+          <View style={[styles.modalCard, { borderRadius: 20 }]}>
+            <Text style={styles.modalTitle}>Delivery Verification</Text>
+            <Text style={styles.modalSub}>Enter the 6-digit OTP sent to the customer</Text>
+
+            <TextInput
+              style={[styles.modalInput, { minHeight: 60, fontSize: 24, textAlign: 'center', letterSpacing: 8, fontWeight: '800' }]}
+              placeholder="000000"
+              keyboardType="number-pad"
+              maxLength={6}
+              value={otpValue}
+              onChangeText={setOtpValue}
+            />
+
+            <TouchableOpacity
+              onPress={handleRequestDeliveryOtp}
+              style={{ alignSelf: 'center', marginBottom: 20 }}
+              disabled={requestDeliveryOtp.isPending}
+            >
+              <Text style={{ color: Colors.primary, fontWeight: '700' }}>
+                {requestDeliveryOtp.isPending ? 'Requesting...' : 'Resend OTP to Customer'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={() => { setOtpModalVisible(false); setOtpValue(''); }}
+                style={styles.modalCancelBtn}
+              >
+                <Text style={{ color: Colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleVerifyDelivery}
+                disabled={otpValue.length !== 6 || verifyDeliveryOtp.isPending}
+                style={[styles.modalConfirmBtn, { backgroundColor: Colors.success }, (otpValue.length !== 6 || verifyDeliveryOtp.isPending) && { opacity: 0.5 }]}
+              >
+                {verifyDeliveryOtp.isPending ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <Text style={{ color: Colors.white, fontWeight: '800' }}>Verify Delivery</Text>
                 )}
               </TouchableOpacity>
             </View>

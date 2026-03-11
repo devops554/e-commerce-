@@ -71,7 +71,7 @@ export class OrdersController {
     const isAdmin = [UserRole.ADMIN, UserRole.SUB_ADMIN].includes(
       req.user.role,
     );
-    if (!isAdmin && req.user.role !== UserRole.CUSTOMER) {
+    if (!isAdmin && req.user.role !== UserRole.CUSTOMER && req.user.role !== UserRole.MANAGER) {
       throw new UnauthorizedException('Access denied');
     }
 

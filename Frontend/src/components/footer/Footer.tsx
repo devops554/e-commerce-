@@ -16,6 +16,7 @@ import {
     CONTACT_ITEMS, SOCIAL_LINKS, PAYMENT_METHODS, SECURITY_CERTS,
     LEGAL_INFO, LEGAL_ADDRESS, BOTTOM_LINKS, COPYRIGHT, BRAND,
 } from './Footer.data';
+import Image from 'next/image';
 
 // ─── Animation Variants ───────────────────────────────
 const containerVariants: Variants = {
@@ -125,7 +126,7 @@ export const Footer = () => {
                         <motion.div variants={itemVariants} className="lg:col-span-3 flex flex-col items-center md:items-start gap-5 py-6 md:py-0 border-b border-slate-100 md:border-none mb-2 md:mb-0">
                             <Link href={BRAND.href}>
                                 <motion.h2 whileHover={{ scale: 1.02 }} className="text-4xl font-black tracking-tighter text-slate-900">
-                                    {BRAND.name}<span className="text-[#FF3269]">.</span>
+                                    <Image src={BRAND.img} alt="Kiranase" width={150} height={100} />
                                 </motion.h2>
                             </Link>
                             <p className="text-sm leading-relaxed text-slate-500 text-center md:text-left max-w-xs">

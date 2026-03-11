@@ -43,7 +43,7 @@ export class ShipmentsService {
     private deliveryPartnerModel: Model<DeliveryPartnerDocument>,
     private notificationsService: NotificationsService,
     private inventoryService: InventoryService,
-  ) {}
+  ) { }
 
   private generateTrackingNumber(): string {
     return (
@@ -51,6 +51,10 @@ export class ShipmentsService {
       Date.now().toString() +
       Math.random().toString(36).substring(2, 7).toUpperCase()
     );
+  }
+
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   async create(dto: CreateShipmentDto): Promise<ShipmentDocument> {
@@ -250,6 +254,147 @@ export class ShipmentsService {
       }
     }
 
+    await this.syncWithOrder(updatedShipment);
+    return updatedShipment;
+  }
+
+  async requestPickupOtp(shipmentId: string): Promise<{ message: string }> {
+    const shipment = await this.shipmentModel.findById(shipmentId);
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    if (shipment.status !== ShipmentStatus.ACCEPTED) {
+      throw new BadRequestException(
+        'Shipment must be ACCEPTED before requesting pickup OTP',
+      );
+    }
+
+    const otp = this.generateOtp();
+    shipment.pickupOtp = otp;
+    shipment.pickupOtpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    await shipment.save();
+
+    // Notify Delivery Partner
+    if (shipment.deliveryPartnerId) {
+      await this.notificationsService.create({
+        title: 'Pickup OTP',
+        message: `Your OTP for order pickup (Tracking: ${shipment.trackingNumber}) is ${otp}. Valid for 15 minutes.`,
+        type: NotificationType.SHIPMENT,
+        recipientRole: 'delivery_partner',
+        recipientId: shipment.deliveryPartnerId.toString(),
+        metadata: { shipmentId: shipment._id, otp },
+      });
+    }
+
+    return { message: 'OTP sent to delivery partner' };
+  }
+
+  async verifyPickupOtp(
+    shipmentId: string,
+    otp: string,
+  ): Promise<ShipmentDocument> {
+    const shipment = await this.shipmentModel.findById(shipmentId);
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    if (shipment.pickupOtp !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (
+      shipment.pickupOtpExpires &&
+      new Date() > new Date(shipment.pickupOtpExpires)
+    ) {
+      throw new BadRequestException('OTP expired');
+    }
+
+    shipment.status = ShipmentStatus.PICKED_UP;
+    shipment.pickedAt = new Date();
+    shipment.pickupOtp = undefined;
+    shipment.pickupOtpExpires = undefined;
+
+    const updatedShipment = await shipment.save();
+
+    // Trigger stock reduction
+    const order = await this.orderModel.findById(shipment.orderId);
+    if (order) {
+      for (const item of order.items) {
+        if (
+          item.warehouse?.toString() === shipment.warehouseId.toString() &&
+          item.status !== OrderStatus.CANCELLED
+        ) {
+          try {
+            await this.inventoryService.confirmDispatch(
+              item.variant.toString(),
+              shipment.warehouseId.toString(),
+              item.quantity,
+            );
+          } catch (error) {
+            this.logger.error(`Stock dispatch failed: ${error.message}`);
+          }
+        }
+      }
+    }
+
+    await this.syncWithOrder(updatedShipment);
+    return updatedShipment;
+  }
+
+  async requestDeliveryOtp(shipmentId: string): Promise<{ message: string }> {
+    const shipment = await this.shipmentModel
+      .findById(shipmentId)
+      .populate('orderId');
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    if (shipment.status !== ShipmentStatus.OUT_FOR_DELIVERY) {
+      throw new BadRequestException(
+        'Shipment must be OUT_FOR_DELIVERY before requesting delivery OTP',
+      );
+    }
+
+    const otp = this.generateOtp();
+    shipment.deliveryOtp = otp;
+    shipment.deliveryOtpExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await shipment.save();
+
+    // Notify Customer (Order User)
+    const order = shipment.orderId as any;
+    if (order && order.user) {
+      await this.notificationsService.create({
+        title: 'Delivery OTP',
+        message: `Your OTP for order delivery (Tracking: ${shipment.trackingNumber}) is ${otp}. Please share this with the delivery partner.`,
+        type: NotificationType.SHIPMENT,
+        recipientRole: 'customer',
+        recipientId: order.user.toString(),
+        metadata: { shipmentId: shipment._id, otp },
+      });
+    }
+
+    return { message: 'OTP sent to customer' };
+  }
+
+  async verifyDeliveryOtp(
+    shipmentId: string,
+    otp: string,
+  ): Promise<ShipmentDocument> {
+    const shipment = await this.shipmentModel.findById(shipmentId);
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    if (shipment.deliveryOtp !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (
+      shipment.deliveryOtpExpires &&
+      new Date() > new Date(shipment.deliveryOtpExpires)
+    ) {
+      throw new BadRequestException('OTP expired');
+    }
+
+    shipment.status = ShipmentStatus.DELIVERED;
+    shipment.deliveredAt = new Date();
+    shipment.deliveryOtp = undefined;
+    shipment.deliveryOtpExpires = undefined;
+
+    const updatedShipment = await shipment.save();
     await this.syncWithOrder(updatedShipment);
     return updatedShipment;
   }

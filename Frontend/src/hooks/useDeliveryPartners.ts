@@ -29,7 +29,7 @@ export function useRegisterPartner() {
 export function useUpdatePartnerStatus() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, status }: { id: string; status: { accountStatus?: string; availabilityStatus?: string } }) =>
+        mutationFn: ({ id, status }: { id: string; status: { accountStatus?: string; availabilityStatus?: string; blockReason?: string; documents?: any } }) =>
             deliveryPartnerService.updateStatus(id, status),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['delivery-partners'] });

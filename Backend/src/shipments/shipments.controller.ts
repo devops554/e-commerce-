@@ -24,7 +24,7 @@ import { DeliveryPartnerJwtGuard } from '../delivery-partners/delivery-partner.g
 
 @Controller('shipments')
 export class ShipmentsController {
-  constructor(private readonly shipmentsService: ShipmentsService) {}
+  constructor(private readonly shipmentsService: ShipmentsService) { }
 
   // ─── ADMIN & MANAGER ROUTES ───
 
@@ -108,6 +108,40 @@ export class ShipmentsController {
     @Body('reason') reason?: string,
   ) {
     return this.shipmentsService.cancelShipment(id, reason);
+  }
+
+  @Post(':id/pickup-otp')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async requestPickupOtp(@Param('id') id: string) {
+    return this.shipmentsService.requestPickupOtp(id);
+  }
+
+  @Patch(':id/verify-pickup')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async verifyPickupOtp(
+    @Param('id') id: string,
+    @Body() dto: { otp: string },
+  ) {
+    return this.shipmentsService.verifyPickupOtp(id, dto.otp);
+  }
+
+  @Post(':id/delivery-otp')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async requestDeliveryOtp(@Param('id') id: string) {
+    return this.shipmentsService.requestDeliveryOtp(id);
+  }
+
+  @Patch(':id/verify-delivery')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async verifyDeliveryOtp(
+    @Param('id') id: string,
+    @Body() dto: { otp: string },
+  ) {
+    return this.shipmentsService.verifyDeliveryOtp(id, dto.otp);
   }
 
   // ─── DELIVERY PARTNER ROUTES ───

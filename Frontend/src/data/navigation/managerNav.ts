@@ -5,6 +5,7 @@ import {
     History,
     Settings,
     Bike,
+    Bell,
 } from 'lucide-react'
 
 export const managerNavigation = [
@@ -19,7 +20,7 @@ export const managerNavigation = [
         icon: Package,
     },
     {
-        title: 'Fulfillment',
+        title: 'My Orders',
         href: '/manager/orders',
         icon: WarehouseIcon,
     },
@@ -32,6 +33,11 @@ export const managerNavigation = [
         title: 'Delivery Fleet',
         href: '/manager/delivery-partners',
         icon: Bike,
+    },
+    {
+        title: "Notifications",
+        href: "/manager/notifications",
+        icon: Bell,
     },
     {
         title: 'Settings',

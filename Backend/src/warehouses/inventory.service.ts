@@ -35,7 +35,7 @@ export class InventoryService {
     private readonly eventsGateway: EventsGateway,
     private readonly productsService: ProductsService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async adjustStock(adjustStockDto: AdjustStockDto): Promise<Inventory> {
     const { variantId, warehouseId, amount, source, skipNotification } =
@@ -461,6 +461,18 @@ export class InventoryService {
         recipientRole: 'admin',
         metadata: { productId, variantId, warehouseId, action, newQuantity },
       });
+
+      // Stock Alert for Manager
+      if (warehouse && (warehouse as any).managerId) {
+        await this.notificationsService.create({
+          title: `Stock ${action.charAt(0).toUpperCase() + action.slice(1)}: ${product?.title || 'Product'}`,
+          message: `Stock for variant ${variant?.sku || ''} has been ${action} in your warehouse (${warehouse.name}). New quantity: ${newQuantity}.`,
+          type: NotificationType.STOCK,
+          recipientRole: 'manager',
+          recipientId: (warehouse as any).managerId.toString(),
+          metadata: { productId, variantId, warehouseId, action, newQuantity },
+        });
+      }
     } catch (error) {
       this.logger.error('Failed to send stock notification:', error);
     }
@@ -510,9 +522,9 @@ export class InventoryService {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in km
   }

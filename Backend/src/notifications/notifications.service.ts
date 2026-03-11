@@ -12,7 +12,7 @@ export class NotificationsService {
     @InjectModel(Notification.name)
     private notificationModel: Model<Notification>,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   async create(data: {
     title: string;
@@ -44,7 +44,7 @@ export class NotificationsService {
       query.recipientRole = role;
     }
 
-    if (userId && role === 'customer') {
+    if (userId && (role === 'customer' || role === 'manager' || role === 'seller')) {
       query.recipientId = userId;
     }
     return this.notificationModel
@@ -62,7 +62,7 @@ export class NotificationsService {
       query.recipientRole = role;
     }
 
-    if (userId && role === 'customer') {
+    if (userId && (role === 'customer' || role === 'manager' || role === 'seller')) {
       query.recipientId = userId;
     }
     await this.notificationModel.updateMany(query, { isRead: true });

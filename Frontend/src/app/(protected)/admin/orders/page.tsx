@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react"
 import { useOrders } from "@/hooks/useOrders"
@@ -38,6 +38,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
     cancelled: { label: "Cancelled", variant: "destructive" },
     returned: { label: "Returned", variant: "outline" },
     failed_delivery: { label: "Delivery Failed", variant: "destructive" },
+    PENDING_REASSIGNMENT: { label: "Reassignment Req.", variant: "outline" },
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -52,9 +53,10 @@ const STATUS_COLOR: Record<string, string> = {
     cancelled: "bg-gray-100 text-gray-600",
     returned: "bg-stone-100 text-stone-600",
     failed_delivery: "bg-red-50 text-red-600",
+    PENDING_REASSIGNMENT: "bg-amber-100 text-amber-800",
 }
 
-const ALL_STATUSES: OrderStatus[] = ["created", "pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered", "failed", "cancelled", "returned", "failed_delivery"]
+const ALL_STATUSES: OrderStatus[] = ["created", "pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered", "failed", "cancelled", "returned", "failed_delivery", "PENDING_REASSIGNMENT"]
 
 import { useBreadcrumb } from "@/providers/BreadcrumbContext"
 
@@ -208,7 +210,7 @@ export default function AdminOrdersPage() {
                                                 </Button>
                                             </Link>
 
-                                            {order.orderStatus === 'created' && (
+                                            {/* {order.orderStatus === 'created' && (
                                                 <Button
                                                     size="sm"
                                                     className="h-8 rounded-lg bg-blue-500 hover:bg-blue-600 text-[10px] font-black uppercase tracking-wider"
@@ -279,7 +281,7 @@ export default function AdminOrdersPage() {
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
-                                            </Select>
+                                            </Select> */}
                                         </div>
                                     </TableCell>
                                 </TableRow>

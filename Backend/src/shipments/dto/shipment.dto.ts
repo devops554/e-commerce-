@@ -47,3 +47,9 @@ export class UpdateTrackingLocationDto {
   @IsNotEmpty()
   status: string;
 }
+
+export class VerifyOtpDto {
+  @IsString()
+  @IsNotEmpty()
+  otp: string;
+}

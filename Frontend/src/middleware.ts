@@ -16,6 +16,8 @@ const publicRoutes = [
     '/seller/login',
     '/delivery/signup',
     '/delivery/login',
+    '/robots.txt',
+    '/sitemap.xml',
 ];
 
 export function middleware(request: NextRequest) {

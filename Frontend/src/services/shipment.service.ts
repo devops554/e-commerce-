@@ -6,6 +6,8 @@ export enum ShipmentStatus {
     CONFIRMED = 'CONFIRMED',
     PACKED = 'PACKED',
     ASSIGNED_TO_DELIVERY = 'ASSIGNED_TO_DELIVERY',
+    ACCEPTED = 'ACCEPTED',
+    PICKED_UP = 'PICKED_UP',
     OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
     DELIVERED = 'DELIVERED',
     FAILED_DELIVERY = 'FAILED_DELIVERY',
@@ -69,6 +71,26 @@ export const shipmentService = {
 
     getTrackingHistory: async (id: string) => {
         const response = await axiosClient.get(`/shipments/${id}/tracking`);
+        return response.data;
+    },
+
+    requestPickupOtp: async (id: string) => {
+        const response = await axiosClient.post(`/shipments/${id}/pickup-otp`);
+        return response.data;
+    },
+
+    verifyPickupOtp: async (id: string, otp: string) => {
+        const response = await axiosClient.patch(`/shipments/${id}/verify-pickup`, { otp });
+        return response.data;
+    },
+
+    requestDeliveryOtp: async (id: string) => {
+        const response = await axiosClient.post(`/shipments/${id}/delivery-otp`);
+        return response.data;
+    },
+
+    verifyDeliveryOtp: async (id: string, otp: string) => {
+        const response = await axiosClient.patch(`/shipments/${id}/verify-delivery`, { otp });
         return response.data;
     }
 };

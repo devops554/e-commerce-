@@ -47,6 +47,9 @@ export class DeliveryPartner {
   })
   accountStatus: string;
 
+  @Prop()
+  blockReason: string;
+
   @Prop({
     type: {
       latitude: Number,

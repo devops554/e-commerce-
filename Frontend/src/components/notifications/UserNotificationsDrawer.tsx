@@ -32,7 +32,9 @@ export function UserNotificationsDrawer() {
                 <Button variant="ghost" size="icon" className="h-10 w-10 border border-slate-100 rounded-xl hover:bg-slate-50 relative group">
                     <Bell className="h-5 w-5 text-slate-600 transition-transform group-hover:rotate-12" />
                     {unreadCount > 0 && (
-                        <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-primary rounded-full ring-2 ring-white"></span>
+                        <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-primary text-[10px] font-bold text-white flex items-center justify-center rounded-full ring-2 ring-white">
+                            {unreadCount}
+                        </span>
                     )}
                 </Button>
             </SheetTrigger>

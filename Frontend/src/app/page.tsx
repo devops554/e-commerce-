@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+import { homeMetadata } from "@/seo";
+
+export const metadata: Metadata = homeMetadata;
 
 import { CategoryScroller } from "@/components/category/CategoryScroller"
 import { ProductTypeScroller } from "@/components/product-type/ProductTypeScroller"
@@ -32,4 +36,3 @@ export default function Home() {
     </main>
   )
 }
-

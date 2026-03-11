@@ -15,6 +15,8 @@ import { useWarehouses } from '@/hooks/useWarehouses'
 import { useReassignWarehouse } from '@/hooks/useOrders'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Search } from 'lucide-react'
 
 interface ReassignWarehouseDialogProps {
     orderId: string
@@ -27,6 +29,7 @@ export function ReassignWarehouseDialog({ orderId, oldWarehouseId, isOpen, onClo
     const { data: warehouses, isLoading: isWarehousesLoading } = useWarehouses()
     const reassignMutation = useReassignWarehouse()
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
 
     const handleReassign = async () => {
         if (!selectedWarehouseId) return
@@ -43,7 +46,12 @@ export function ReassignWarehouseDialog({ orderId, oldWarehouseId, isOpen, onClo
         }
     }
 
-    const filteredWarehouses = warehouses?.filter((w: any) => w._id !== oldWarehouseId) || []
+    const filteredWarehouses = warehouses?.filter((w: any) =>
+        w._id !== oldWarehouseId &&
+        (w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            w.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            w.state?.toLowerCase().includes(searchQuery.toLowerCase()))
+    ) || []
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -71,9 +79,20 @@ export function ReassignWarehouseDialog({ orderId, oldWarehouseId, isOpen, onClo
                     </div>
 
                     <div className="space-y-4">
-                        <label className="text-xs font-black text-slate-700 uppercase tracking-widest pl-1">
-                            Available Warehouses
-                        </label>
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest pl-1">
+                                Available Warehouses
+                            </label>
+                            <div className="relative w-48">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                                <Input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search warehouse..."
+                                    className="pl-8 h-8 text-xs border-slate-200 bg-white"
+                                />
+                            </div>
+                        </div>
 
                         {isWarehousesLoading ? (
                             <div className="flex flex-col items-center justify-center py-12 gap-3">

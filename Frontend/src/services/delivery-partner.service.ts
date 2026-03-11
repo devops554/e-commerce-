@@ -43,8 +43,7 @@ export interface DeliveryPartner {
     };
     createdAt: string;
     updatedAt: string;
-
-
+    blockReason?: string;
 }
 
 export interface RegisterPartnerDto {
@@ -96,7 +95,7 @@ export const deliveryPartnerService = {
         return response.data;
     },
 
-    updateStatus: async (id: string, status: { accountStatus?: string; availabilityStatus?: string }): Promise<DeliveryPartner> => {
+    updateStatus: async (id: string, status: { accountStatus?: string; availabilityStatus?: string; blockReason?: string; documents?: any }): Promise<DeliveryPartner> => {
         const response = await axiosClient.patch<DeliveryPartner>(`/delivery-partners/${id}/status`, status);
         return response.data;
     },

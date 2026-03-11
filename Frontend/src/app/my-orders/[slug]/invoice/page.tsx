@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 
 import { useInvoice } from '@/hooks/useInvoice'
 import { useParams, useRouter } from 'next/navigation'
@@ -128,7 +129,7 @@ export default function CustomerInvoicePage() {
                 className="max-w-5xl mx-auto bg-white shadow-xl rounded-[40px] overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none printable-invoice"
             >
                 {/* Invoice Header */}
-                <div className="px-12 py-10 border-b border-slate-100 bg-slate-50/50">
+                <div className="px-6 sm:px-12 py-8 sm:py-10 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex flex-col sm:flex-row justify-between gap-8">
                         <div>
                             <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-3 uppercase">Tax Invoice</h1>
@@ -152,7 +153,7 @@ export default function CustomerInvoicePage() {
                 </div>
 
                 {/* Billing Details */}
-                <div className="px-12 py-10 grid grid-cols-1 sm:grid-cols-2 gap-12 border-b border-slate-100">
+                <div className="px-6 sm:px-12 py-8 sm:py-10 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 border-b border-slate-100">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-[#a09070] mb-4">Billed To</p>
                         <h3 className="font-bold text-slate-900 text-lg">{buyer.fullName}</h3>
@@ -177,8 +178,8 @@ export default function CustomerInvoicePage() {
                 </div>
 
                 {/* Items Table */}
-                <div className="px-12 py-8">
-                    <table className="w-full text-left border-collapse">
+                <div className="px-6 sm:px-12 py-6 sm:py-8 overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                             <tr className="bg-slate-50 rounded-xl">
                                 <th className="py-4 pl-4 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-l-xl" colSpan={2}>
@@ -272,7 +273,7 @@ export default function CustomerInvoicePage() {
                 <div className="mx-12 border-t border-dashed border-slate-200" />
 
                 {/* Invoice Footer / Totals */}
-                <div className="px-12 py-10 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start gap-10">
+                <div className="px-6 sm:px-12 py-8 sm:py-10 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start gap-8 sm:gap-10">
                     {/* Tax Breakdown */}
                     <div className="max-w-xs space-y-5">
                         <div>

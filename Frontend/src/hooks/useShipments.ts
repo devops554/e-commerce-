@@ -58,3 +58,41 @@ export function useTrackingHistory(id: string) {
         enabled: !!id,
     });
 }
+
+export function useRequestPickupOtp() {
+    return useMutation({
+        mutationFn: (id: string) => shipmentService.requestPickupOtp(id),
+    });
+}
+
+export function useVerifyPickupOtp() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, otp }: { id: string, otp: string }) =>
+            shipmentService.verifyPickupOtp(id, otp),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['shipments'] });
+            queryClient.invalidateQueries({ queryKey: ['shipment', data._id] });
+            queryClient.invalidateQueries({ queryKey: ['order'] });
+        },
+    });
+}
+
+export function useRequestDeliveryOtp() {
+    return useMutation({
+        mutationFn: (id: string) => shipmentService.requestDeliveryOtp(id),
+    });
+}
+
+export function useVerifyDeliveryOtp() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, otp }: { id: string, otp: string }) =>
+            shipmentService.verifyDeliveryOtp(id, otp),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['shipments'] });
+            queryClient.invalidateQueries({ queryKey: ['shipment', data._id] });
+            queryClient.invalidateQueries({ queryKey: ['order'] });
+        },
+    });
+}

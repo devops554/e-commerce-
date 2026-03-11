@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { Colors, Spacing, BorderRadius, Shadow, FontSize } from '../../utils/theme';
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ interface BadgeProps {
     label: string;
     backgroundColor?: string;
     color?: string;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -26,7 +26,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
 interface CardProps {
     children: React.ReactNode;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const Card: React.FC<CardProps> = ({ children, style }) => (
@@ -38,7 +38,7 @@ export const Card: React.FC<CardProps> = ({ children, style }) => (
 // ─── Divider ──────────────────────────────────────────────────────────────────
 
 interface DividerProps {
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const Divider: React.FC<DividerProps> = ({ style }) => (
@@ -51,7 +51,7 @@ interface SkeletonProps {
     width?: number | string;
     height?: number | string;
     borderRadius?: number;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
@@ -74,7 +74,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 interface StatusDotProps {
     status: 'ONLINE' | 'OFFLINE' | 'BUSY' | string;
     size?: number;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const StatusDot: React.FC<StatusDotProps> = ({ status, size = 10, style }) => {
@@ -104,7 +104,7 @@ interface EmptyStateProps {
     icon: string;
     title: string;
     subtitle?: string;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, style }) => (

@@ -14,14 +14,15 @@ export const useProductTypes = (params: {
     });
 };
 
-export const useProductType = (idOrSlug: string) => {
+export const useProductType = (idOrSlug: string, options?: { initialData?: any }) => {
     return useQuery({
         queryKey: ['product-type', idOrSlug],
         queryFn: () => productTypeService.getOne(idOrSlug),
         enabled: !!idOrSlug,
+        // ✅ SSR data se hydrate hoga — loading skip hoga
+        initialData: options?.initialData ?? undefined,
     });
-};
-
+}
 export const useProductTypeActions = () => {
     const queryClient = useQueryClient();
 

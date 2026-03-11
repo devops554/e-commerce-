@@ -16,6 +16,7 @@ import { Mail, Lock, User as UserIcon, Phone, ShieldCheck, Github, ArrowRight, L
 import { ScrollArea } from '../ui/scroll-area';
 import { ForgotPasswordDialog } from './ForgotPasswordDialog';
 import { getErrorMessage } from '@/utils/error-handler';
+import Image from 'next/image';
 
 
 export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
@@ -118,9 +119,9 @@ export function LoginDialog({ trigger }: { trigger: React.ReactNode }) {
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ duration: 0.5 }}
-                            className="w-16 h-16 bg-linear-to-tr from-primary to-[#FF6B95] rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-primary/20"
+                            className="flex items-center justify-center mb-4   "
                         >
-                            <span className="text-3xl font-black text-white">B</span>
+                            <Image src="/photo/Kiranase-login-logo.png" alt="Kiranase-logo" width={200} height={100} className='w-50 h-20   flex items-center justify-center mb-4' />
                         </motion.div>
                         <DialogTitle className="text-3xl font-black tracking-tight text-slate-900 group">
                             Welcome Back<span className="text-[#FF3269]">.</span>

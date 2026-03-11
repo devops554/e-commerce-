@@ -21,11 +21,16 @@ export function useNotifications() {
 
     // Real-time update via Socket.io
     const handleNewNotification = useCallback((newNotification: Notification) => {
-        // Filter: Only add if it's for me OR my role
         const isForMe = newNotification.recipientId === user?.id?.toString();
         const isForMyRole = newNotification.recipientRole === user?.role;
 
-        if (!isForMe && !isForMyRole) return;
+        // Strict filtering: If recipientId exists, it MUST match the current user.
+        // If no recipientId, it must match the user's role.
+        if (newNotification.recipientId) {
+            if (!isForMe) return;
+        } else {
+            if (!isForMyRole) return;
+        }
 
         // Optimistically update the cache
         queryClient.setQueryData(['notifications'], (old: Notification[] = []) => {

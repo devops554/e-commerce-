@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useMemo } from 'react'
 import { useAuth } from '@/providers/AuthContext'

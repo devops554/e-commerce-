@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
@@ -87,7 +87,7 @@ const FulfilmentPage = () => {
                     <p className="text-slate-500 font-bold mt-1">Managing <span className="text-slate-900">{warehouse?.name || '...'}</span></p>
                 </div>
                 {/* Quick stats */}
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                     <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-2 text-center">
                         <p className="text-2xl font-black text-blue-600">{confirmOrders.length}</p>
                         <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">To Confirm</p>
@@ -104,7 +104,7 @@ const FulfilmentPage = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
+            <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
                 {TABS.map(tab => (
                     <button
                         key={tab.key}

@@ -95,9 +95,7 @@ export function Header() {
                         <div className="flex items-center gap-6 lg:gap-8">
                             {/* Logo */}
                             <Link href="/" className="flex items-center flex-shrink-0 transition-transform hover:scale-105 active:scale-95 group">
-                                <h1 className="text-2xl font-black tracking-tighter text-slate-900 lg:text-3xl">
-                                    Bivha<span className="text-primary group-hover:animate-pulse">.</span>
-                                </h1>
+                                <Image src="/photo/Kiranase-logo.png" alt="Logo" width={100} height={100} />
                             </Link>
 
                             {/* Modern Location Selector */}
@@ -163,14 +161,23 @@ export function Header() {
                                             </DropdownMenuLabel>
                                             <DropdownMenuSeparator className="bg-slate-100 mx-1" />
                                             <div className="grid gap-1 py-1">
-                                                {user.role === UserRole.ADMIN || user.role === UserRole.SUB_ADMIN ? (
+                                                {user.role === UserRole.ADMIN || user.role === UserRole.SUB_ADMIN || user.role === UserRole.MANAGER ? (
                                                     <DropdownMenuItem
                                                         className="px-3 py-2.5 rounded-xl cursor-pointer focus:bg-slate-50"
-                                                        onClick={() => router.push("/admin")}
+                                                        onClick={() => {
+                                                            if (user.role === UserRole.ADMIN) {
+                                                                router.push("/admin");
+                                                            } else if (user.role === UserRole.SUB_ADMIN) {
+                                                                router.push("/admin");
+                                                            } else if (user.role === UserRole.MANAGER) {
+                                                                router.push("/manager");
+                                                            }
+                                                        }}
                                                     >
                                                         <UserCircle className="mr-3 h-4 w-4 text-slate-500" />
                                                         <span className="text-sm font-semibold">Dashboard</span>
                                                     </DropdownMenuItem>
+
                                                 ) : (
                                                     <DropdownMenuItem
                                                         className="px-3 py-2.5 rounded-xl cursor-pointer focus:bg-slate-50"
@@ -184,15 +191,7 @@ export function Header() {
                                                     <ClipboardList className="mr-3 h-4 w-4 text-slate-500" />
                                                     <span onClick={() => router.push("/my-orders")} className="text-sm font-semibold">My Orders</span>
                                                 </DropdownMenuItem>
-                                                {user.role === UserRole.MANAGER && (
-                                                    <DropdownMenuItem
-                                                        className="px-3 py-2.5 rounded-xl cursor-pointer focus:bg-slate-50"
-                                                        onClick={() => router.push("/manager")}
-                                                    >
-                                                        <UserCircle className="mr-3 h-4 w-4 text-slate-500" />
-                                                        <span className="text-sm font-semibold">Dashboard</span>
-                                                    </DropdownMenuItem>
-                                                )}
+
                                             </div>
                                             <DropdownMenuSeparator className="bg-slate-100 mx-1" />
                                             <DropdownMenuItem onClick={handleLogout} className="px-3 py-2.5 rounded-xl text-red-600 focus:bg-red-50 focus:text-red-600 transition-colors cursor-pointer">

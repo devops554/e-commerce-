@@ -1,5 +1,4 @@
-// app/orders/[id]/page.tsx
-"use client"
+"use client";
 
 import { useOrderById } from '@/hooks/useOrders'
 import { useParams, useRouter } from 'next/navigation'
@@ -13,7 +12,7 @@ import { OrderItemCard } from '@/components/order/OrderItemCard'
 import { OrderShippingCard } from '@/components/order/OrderShippingCard'
 import { OrderPaymentCard } from '@/components/order/OrderPaymentCard'
 import { OrderMetaCard } from '@/components/order/OrderMetaCard'
-import { OrderHistoryCard } from '@/components/order/OrderHistoryCard'
+
 
 export default function OrderDetailsPage() {
     const params = useParams()

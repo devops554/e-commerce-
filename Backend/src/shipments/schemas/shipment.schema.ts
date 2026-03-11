@@ -50,6 +50,17 @@ export class Shipment {
 
   @Prop({ type: Date })
   deliveredAt: Date;
+  @Prop()
+  pickupOtp?: string;
+
+  @Prop({ type: Date })
+  pickupOtpExpires?: Date;
+
+  @Prop()
+  deliveryOtp?: string;
+
+  @Prop({ type: Date })
+  deliveryOtpExpires?: Date;
 }
 
 export const ShipmentSchema = SchemaFactory.createForClass(Shipment);

@@ -7,7 +7,7 @@ interface CallSupportBannerProps {
     phoneNumber?: string;
 }
 
-export const CallSupportBanner = ({ phoneNumber = "+91 7050 2012 01" }: CallSupportBannerProps) => {
+export const CallSupportBanner = ({ phoneNumber = "+91 8581 901 902" }: CallSupportBannerProps) => {
     const [ring, setRing] = useState(false);
 
     useEffect(() => {

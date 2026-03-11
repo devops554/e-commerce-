@@ -19,7 +19,7 @@ import { UserRole } from '../users/schemas/user.schema';
 
 @Controller('warehouses')
 export class WarehousesController {
-  constructor(private readonly warehousesService: WarehousesService) {}
+  constructor(private readonly warehousesService: WarehousesService) { }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
@@ -45,7 +45,7 @@ export class WarehousesController {
 
   // Admin specific manager warehouse
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   @Get('manager/:managerId')
   async findByManager(@Param('managerId') managerId: string) {
     return this.warehousesService.findByManager(managerId);

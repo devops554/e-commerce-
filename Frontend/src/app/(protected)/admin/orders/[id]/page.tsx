@@ -1,4 +1,7 @@
-"use client"
+"use client";
+
+
+
 
 import { useOrderById } from '@/hooks/useOrders'
 import { useShipments } from '@/hooks/useShipments'
@@ -176,6 +179,17 @@ export default function AdminOrderDetailsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+                    {order.orderStatus === 'PENDING_REASSIGNMENT' && (
+                        <Button
+                            size="sm"
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl h-10 px-4 shadow-lg shadow-amber-200/50"
+                            onClick={() => setReassignData({ oldWarehouseId: order.items[0]?.warehouse?._id || order.items[0]?.warehouse })}
+                        >
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            Reassign Warehouse
+                        </Button>
+                    )}
+                    <div className="h-8 w-px bg-slate-100 hidden sm:block"></div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-2">Status Control</p>
                     <Select
                         value={order.orderStatus}
@@ -194,7 +208,9 @@ export default function AdminOrderDetailsPage() {
                         </SelectContent>
 
                     </Select>
-                    <FaWhatsapp className='text-green-500' size={24} onClick={() => window.open(`https://wa.me/${order.shippingAddress.phone}`, '_blank')} />
+                    <Button variant="ghost" size="icon" className="h-10 w-10 text-green-500 hover:text-green-600 hover:bg-green-50 rounded-xl" onClick={() => window.open(`https://wa.me/${order.shippingAddress.phone}`, '_blank')}>
+                        <FaWhatsapp size={22} />
+                    </Button>
                 </div>
             </div>
 

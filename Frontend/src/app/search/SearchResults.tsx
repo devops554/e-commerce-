@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Search, PackageSearch, ChevronLeft, ChevronRight } from "lucide-react"
 import { useSearchProducts } from "@/hooks/useProducts"
 import ProductCard from "@/components/product/ProductCard"
-
 
 const LIMIT = 20
 
@@ -22,11 +21,25 @@ function ProductCardSkeleton() {
     )
 }
 
-export function SearchResults() {
+// ✅ query prop accept karo — server se aayega
+interface Props {
+    query?: string
+}
+
+export function SearchResults({ query: initialQuery }: Props) {
     const searchParams = useSearchParams()
     const router = useRouter()
-    const q = searchParams.get("q") ?? ""
+
+    // ✅ Server se aaya query use karo, fallback to client searchParams
+    const q = initialQuery ?? searchParams.get("q") ?? ""
+
+    // ✅ Page sync karo URL se properly
     const [page, setPage] = useState(() => parseInt(searchParams.get("page") ?? "1", 10))
+
+    // ✅ Query change hone par page reset karo
+    useEffect(() => {
+        setPage(1)
+    }, [q])
 
     const { data, isLoading, isError } = useSearchProducts(
         { search: q, page, limit: LIMIT, sort: "-createdAt" },
@@ -46,7 +59,6 @@ export function SearchResults() {
     }
 
     const getCardProps = (product: any) => {
-        // Prefer active variants; fall back to any variant if none are active
         const activeVariants: any[] = (product.variants ?? []).filter((v: any) => v.isActive !== false)
         const firstVariant = activeVariants[0] ?? product.variants?.[0]
         return {
@@ -70,16 +82,8 @@ export function SearchResults() {
 
     return (
         <div className="min-h-screen bg-[#f9f9f9]">
-            {/* Sticky search band */}
-            {/* <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
-                <div className="container mx-auto px-4 lg:px-8 py-3">
-                    <SearchBar placeholder="Search products..." inputClassName="h-11 bg-gray-50" />
-                </div>
-            </div> */}
-
             <div className="container mx-auto px-4 lg:px-8 py-6">
 
-                {/* Results meta */}
                 {q && !isLoading && data && (
                     <div className="mb-5 flex items-center justify-between flex-wrap gap-2">
                         <div>
@@ -100,7 +104,6 @@ export function SearchResults() {
                     </div>
                 )}
 
-                {/* Empty query */}
                 {!q && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <div className="flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 mb-4">
@@ -111,7 +114,6 @@ export function SearchResults() {
                     </div>
                 )}
 
-                {/* Loading skeleton */}
                 {isLoading && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4">
                         {Array.from({ length: 12 }).map((_, i) => (
@@ -120,7 +122,6 @@ export function SearchResults() {
                     </div>
                 )}
 
-                {/* Error state */}
                 {isError && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <p className="text-sm font-medium text-red-500">
@@ -129,7 +130,6 @@ export function SearchResults() {
                     </div>
                 )}
 
-                {/* Empty results */}
                 {!isLoading && !isError && q && products.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <div className="flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 mb-4">
@@ -142,7 +142,6 @@ export function SearchResults() {
                     </div>
                 )}
 
-                {/* Product grid */}
                 {!isLoading && products.length > 0 && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4">
@@ -151,7 +150,6 @@ export function SearchResults() {
                             ))}
                         </div>
 
-                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div className="mt-10 flex items-center justify-center gap-2">
                                 <button

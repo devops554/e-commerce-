@@ -143,6 +143,8 @@ export interface Shipment {
   distance?: number;                 // km — may be added by backend
   estimatedTime?: number;            // minutes
   assignedAt: string;
+  pickupOtp?: string;
+  deliveryOtp?: string;
   createdAt: string;
   updatedAt: string;
 }

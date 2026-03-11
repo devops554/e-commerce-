@@ -107,7 +107,9 @@ export function ConfirmOrdersTable({ orders, isMyItem, onConfirm, onBulkConfirm,
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <p className="text-xs text-slate-500 font-medium">{format(new Date(order.createdAt), 'MMM dd, yyyy')}</p>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        {format(new Date(order.createdAt), 'MMM dd, yyyy hh:mm a')}
+                                    </p>
                                 </TableCell>
                                 <TableCell className="text-right pr-6">
                                     <div className="flex flex-col items-end gap-2">
@@ -216,7 +218,9 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <p className="text-xs text-slate-500 font-medium">{format(new Date(order.createdAt), 'MMM dd, yyyy')}</p>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        {format(new Date(order.createdAt), 'MMM dd, yyyy hh:mm a')}
+                                    </p>
                                 </TableCell>
                                 <TableCell className="text-right pr-6">
                                     <div className="flex flex-col items-end gap-2">
@@ -324,7 +328,9 @@ export function DispatchedOrdersTable({ orders, isMyItem }: OrderTableProps) {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <p className="text-xs text-slate-500 font-medium">{format(new Date(order.createdAt), 'MMM dd, yyyy')}</p>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        {format(new Date(order.createdAt), 'MMM dd, yyyy hh:mm a')}
+                                    </p>
                                 </TableCell>
                                 <TableCell className="text-right pr-6">
                                     <div className="flex items-center justify-end gap-1.5">

@@ -6,6 +6,7 @@ import {
     Facebook, Twitter, Instagram, Youtube,
     AppWindow, Play,
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 // ─────────────────────────────────────────
 // Trust Bar
@@ -75,7 +76,7 @@ export const NAV_COLUMNS = [
             { label: 'Sustainability', href: '#' },
             { label: 'Investor Relations', href: '#' },
             { label: 'Partner with Us', href: '/partner-with-us' },
-            { label: 'Sell on Bivha', href: '#' },
+            { label: 'Sell on Kiranase', href: '#' },
             { label: 'Blog', href: '#' },
             { label: 'Sitemap', href: '#' },
         ],
@@ -86,10 +87,10 @@ export const NAV_COLUMNS = [
 // Contact Items
 // ─────────────────────────────────────────
 export const CONTACT_ITEMS = [
-    { icon: <Phone size={14} />, label: 'Call Us (9AM–9PM)', value: '+91 800 123 4567', href: 'tel:+918001234567' },
-    { icon: <Mail size={14} />, label: 'Email Support', value: 'support@bivha.com', href: 'mailto:support@bivha.com' },
-    { icon: <MapPin size={14} />, label: 'Head Office', value: 'Patna, Bihar – 800001', href: '#' },
-    { icon: <Clock size={14} />, label: 'Working Hours', value: 'Mon–Sun, 9AM–9PM', href: '#' },
+    { icon: <Phone size={14} />, label: 'Call Us (9AM–9PM)', value: '+91 8581 901 902', href: 'tel:+918581901902' },
+    { icon: <Mail size={14} />, label: 'Email Support', value: 'care@kiranase.com', href: 'mailto:care@kiranase.com' },
+    // { icon: <MapPin size={14} />, label: 'Head Office', value: 'Kiranase, Patna, Bihar – 800001', href: '#' },
+    // { icon: <Clock size={14} />, label: 'Working Hours', value: 'Mon–Sun, 9AM–9PM', href: '#' },
 ];
 
 // ─────────────────────────────────────────
@@ -100,6 +101,7 @@ export const SOCIAL_LINKS = [
     { Icon: Twitter, color: '#1DA1F2', label: 'Twitter', href: '#' },
     { Icon: Instagram, color: '#E1306C', label: 'Instagram', href: '#' },
     { Icon: Youtube, color: '#FF0000', label: 'YouTube', href: '#' },
+    { Icon: FaWhatsapp, color: '#25D366', label: 'WhatsApp', href: '#' },
 ];
 
 // ─────────────────────────────────────────
@@ -141,14 +143,15 @@ export const BOTTOM_LINKS = [
     { label: 'Grievance Officer', href: '#' },
 ];
 
-export const COPYRIGHT = '© 2026 Bivha Technology Pvt. Ltd. — All Rights Reserved.';
+export const COPYRIGHT = '© 2026 Kiranase — All Rights Reserved.';
 
 // ─────────────────────────────────────────
 // Brand Info
 // ─────────────────────────────────────────
+
 export const BRAND = {
-    name: 'Bivha',
-    tagline: 'Freshness delivered in 10 minutes. Premium grocery shopping designed for your busy life.',
+    img: '/photo/Kiranase-logo.png',
+    tagline: 'Kiranase delivers fresh groceries at prices cheaper than your local bazaar.Order from 7000+ products across 10,000+ pincodes in India.',
     rating: '4.9',
     reviews: '12,400+',
     href: '/',

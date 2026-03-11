@@ -165,8 +165,16 @@ export class UpdateDeliveryPartnerDto {
   currentAddress?: AddressDto;
 
   @IsOptional()
+  @IsEnum(['ACTIVE', 'INACTIVE', 'BLOCKED'])
+  accountStatus?: string;
+
+  @IsOptional()
   @IsEnum(['ONLINE', 'OFFLINE', 'BUSY'])
   availabilityStatus?: string;
+
+  @IsOptional()
+  @IsString()
+  blockReason?: string;
 
   @IsOptional()
   @IsString()

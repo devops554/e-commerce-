@@ -4,8 +4,8 @@ export const BASE_URL = "https://www.kiranase.com";
 
 export const DEFAULT_OG_IMAGE = {
     url: "/photo/Kiranase-logo.png",
-    width: 1200,
-    height: 630,
+    width: 512,   // ← logo ka actual size daalo
+    height: 512,  // ← actual size
     alt: "Kiranase - Fresh Groceries Delivered in 30 Minutes",
 };
 

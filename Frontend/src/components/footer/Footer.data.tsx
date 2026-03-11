@@ -101,7 +101,7 @@ export const SOCIAL_LINKS = [
     { Icon: Twitter, color: '#1DA1F2', label: 'Twitter', href: '#' },
     { Icon: Instagram, color: '#E1306C', label: 'Instagram', href: '#' },
     { Icon: Youtube, color: '#FF0000', label: 'YouTube', href: '#' },
-    { Icon: FaWhatsapp, color: '#25D366', label: 'WhatsApp', href: 'https://wa.me/918581901902' },
+    { Icon: FaWhatsapp, color: '#25D366', label: 'WhatsApp', href: 'https://wa.me/+918581901902' },
 ];
 
 // ─────────────────────────────────────────

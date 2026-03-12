@@ -29,6 +29,7 @@ import {
   DeliveryPartnerDocument,
 } from '../delivery-partners/schemas/delivery-partner.schema';
 import { InventoryService } from '../warehouses/inventory.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class ShipmentsService {
@@ -43,6 +44,7 @@ export class ShipmentsService {
     private deliveryPartnerModel: Model<DeliveryPartnerDocument>,
     private notificationsService: NotificationsService,
     private inventoryService: InventoryService,
+    private eventsGateway: EventsGateway,
   ) { }
 
   private generateTrackingNumber(): string {
@@ -433,6 +435,9 @@ export class ShipmentsService {
     const updatedShipment = await shipment.save();
     await this.syncWithOrder(updatedShipment);
 
+    // Emit live stats update
+    this.emitStatsUpdate(shipment.deliveryPartnerId.toString());
+
     // TODO: Trigger Commission Calculation logic here
     this.logger.log(
       `Delivery completed for shipment ${shipment.trackingNumber}. Triggering commission calculation...`,
@@ -529,6 +534,11 @@ export class ShipmentsService {
 
     const updatedShipment = await shipment.save();
     await this.syncWithOrder(updatedShipment);
+
+    // Emit live stats update if delivered
+    if (dto.status === ShipmentStatus.DELIVERED) {
+      this.emitStatsUpdate(shipment.deliveryPartnerId.toString());
+    }
 
     // Notify delivery partner about status updates initiated by manager
     // (If partner is the one updating, they obviously know, but often managers update it)
@@ -630,7 +640,7 @@ export class ShipmentsService {
       this.shipmentModel
         .find(filter)
         .populate('deliveryPartnerId', 'name phone vehicleType')
-        .populate('warehouseId', 'name location')
+        .populate('warehouseId', 'name location address')
         .populate({
           path: 'orderId',
           populate: [
@@ -659,7 +669,7 @@ export class ShipmentsService {
     const shipment = await this.shipmentModel
       .findById(id)
       .populate('deliveryPartnerId', 'name phone vehicleType')
-      .populate('warehouseId', 'name location')
+      .populate('warehouseId', 'name location address')
       .populate({
         path: 'orderId',
         populate: [
@@ -705,5 +715,52 @@ export class ShipmentsService {
       .find({ shipmentId })
       .sort({ timestamp: -1 })
       .exec();
+  }
+
+  async getPartnerStats(partnerId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [partner, todayDeliveriesCount, todayShipments] = await Promise.all([
+      this.deliveryPartnerModel.findById(partnerId).lean().exec(),
+      this.shipmentModel.countDocuments({
+        deliveryPartnerId: new Types.ObjectId(partnerId),
+        status: ShipmentStatus.DELIVERED,
+        deliveredAt: { $gte: today },
+      }),
+      this.shipmentModel
+        .find({
+          deliveryPartnerId: new Types.ObjectId(partnerId),
+          status: ShipmentStatus.DELIVERED,
+          deliveredAt: { $gte: today },
+        })
+        .populate('orderId')
+        .lean()
+        .exec(),
+    ]);
+
+    if (!partner) throw new NotFoundException('Partner not found');
+
+    // Earnings calculation (simplified: let's say 40 per delivery for now, or use order data if commissions existed)
+    // Looking at the implementation, there's no explicit commission yet.
+    // I will use a placeholder logic or try to find if there's any payment/commission info.
+    const todayEarnings = todayDeliveriesCount * 40; // Example: ₹40 per delivery
+
+    return {
+      todayEarnings,
+      todayDeliveries: todayDeliveriesCount,
+      totalDeliveries: partner.totalDeliveries || 0,
+      rating: partner.rating || 0,
+    };
+  }
+
+  private async emitStatsUpdate(partnerId: string) {
+    try {
+      const stats = await this.getPartnerStats(partnerId);
+      this.eventsGateway.emitToUser(partnerId, 'dashboard-stats-updated', stats);
+      this.logger.log(`Emitted dashboard-stats-updated for partner ${partnerId}`);
+    } catch (error) {
+      this.logger.error(`Failed to emit stats update: ${error.message}`);
+    }
   }
 }

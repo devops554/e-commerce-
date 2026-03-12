@@ -34,6 +34,9 @@ export interface DeliveryPartner {
     };
     totalDeliveries: number;
     rating: number;
+    activeOrders?: number;
+    availableOrders?: number;
+    completedOrders?: number;
     documents?: {
         aadhaarNumber?: string;
         aadhaarImage?: string;
@@ -85,7 +88,7 @@ export const deliveryPartnerService = {
         return response.data;
     },
 
-    getAll: async (params: { page?: number; limit?: number; warehouseId?: string }): Promise<PartnersResponse> => {
+    getAll: async (params: { page?: number; limit?: number; warehouseId?: string, search?: string }): Promise<PartnersResponse> => {
         const response = await axiosClient.get<PartnersResponse>('/delivery-partners', { params });
         return response.data;
     },

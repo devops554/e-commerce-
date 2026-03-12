@@ -194,8 +194,8 @@ export class OrdersService {
               postalCode: shippingAddress.postalCode,
               city: shippingAddress.city,
               state: shippingAddress.state,
-              latitude: shippingAddress.latitude,
-              longitude: shippingAddress.longitude,
+              latitude: shippingAddress.location?.latitude,
+              longitude: shippingAddress.location?.longitude,
             },
           );
         if (!inventorySlot) {
@@ -1179,27 +1179,51 @@ export class OrdersService {
     }
   }
 
-  async getWarehouseOrders(warehouseId: string) {
-    return this.orderModel
-      .find({
-        'items.warehouse': new Types.ObjectId(warehouseId),
-        orderStatus: {
-          $in: [
-            OrderStatus.CONFIRMED,
-            OrderStatus.PENDING,
-            OrderStatus.PACKED,
-            OrderStatus.SHIPPED,
-            OrderStatus.OUT_FOR_DELIVERY,
-            OrderStatus.DELIVERED,
-          ],
-        },
-        isDeleted: { $ne: true },
-      })
-      .populate('user', 'name email')
-      .populate('items.product')
-      .populate('items.variant')
-      .sort({ createdAt: -1 })
-      .exec();
+  async getWarehouseOrders(warehouseId: string, page = 1, limit = 10, search?: string) {
+    const skip = (page - 1) * limit;
+    const filter: any = {
+      'items.warehouse': new Types.ObjectId(warehouseId),
+      orderStatus: {
+        $in: [
+          OrderStatus.CONFIRMED,
+          OrderStatus.PENDING,
+          OrderStatus.PACKED,
+          OrderStatus.SHIPPED,
+          OrderStatus.OUT_FOR_DELIVERY,
+          OrderStatus.DELIVERED,
+        ],
+      },
+      isDeleted: { $ne: true },
+    };
+
+    if (search) {
+      filter.$or = [
+        { orderId: { $regex: search, $options: 'i' } },
+        { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
+        { 'shippingAddress.phone': { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .populate('user', 'name email')
+        .populate('items.product')
+        .populate('items.variant')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.orderModel.countDocuments(filter),
+    ]);
+
+    return {
+      orders: orders as unknown as Order[],
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async deleteOrder(id: string) {

@@ -21,7 +21,10 @@ export default function MapNavigationScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
-  const { data: order } = useActiveOrder();
+  const { data: activeOrderData } = useActiveOrder();
+  const activeShipments = Array.isArray(activeOrderData) ? activeOrderData : (activeOrderData?.data || []);
+  const shipment = activeShipments.length > 0 ? activeShipments[0] : null;
+  const order = shipment?.orderId as any; // Populated Order object
   const mapRef = useRef<MapView>(null);
 
   const [partnerLocation, setPartnerLocation] = useState<{
@@ -33,10 +36,11 @@ export default function MapNavigationScreen() {
 
   // Mocked customer location from order shippingAddress
   // In production, backend should provide coordinates
-  const customerLocation = order?.shippingAddress && (order.shippingAddress as any).latitude
+  const shippingAddress = order?.shippingAddress;
+  const customerLocation = shippingAddress && shippingAddress.latitude
     ? {
-      latitude: (order.shippingAddress as any).latitude,
-      longitude: (order.shippingAddress as any).longitude,
+      latitude: shippingAddress.latitude,
+      longitude: shippingAddress.longitude,
     }
     : {
       latitude: 28.6139 + (Math.random() - 0.5) * 0.05,
@@ -84,8 +88,9 @@ export default function MapNavigationScreen() {
   }, []);
 
   const openGoogleMaps = () => {
-    if (!order) return;
+    if (!order || !order.shippingAddress) return;
     const { street, city } = order.shippingAddress;
+    if (!street || !city) return;
     const query = encodeURIComponent(`${street}, ${city}`);
     const url =
       Platform.OS === 'ios'
@@ -123,11 +128,11 @@ export default function MapNavigationScreen() {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          {order && (
+          {order && typeof order === 'object' && (
             <>
               <Text style={styles.headerTitle}>#{typeof order.orderId === 'string' ? order.orderId : 'ID Error'}</Text>
               <Text style={styles.headerSub} numberOfLines={1}>
-                📍 {order.shippingAddress.street}, {order.shippingAddress.city}
+                📍 {order.shippingAddress?.street || 'No Street'}, {order.shippingAddress?.city || ''}
               </Text>
             </>
           )}
@@ -167,7 +172,7 @@ export default function MapNavigationScreen() {
           {/* Customer marker */}
           <Marker
             coordinate={customerLocation}
-            title={order?.user.name || 'Customer'}
+            title={order?.user?.name || 'Customer'}
             description={order?.shippingAddress.street}
           >
             <View style={styles.customerMarker}>
@@ -189,15 +194,15 @@ export default function MapNavigationScreen() {
 
       {/* Bottom Controls */}
       <View style={styles.bottomPanel}>
-        {order && (
+        {order && typeof order === 'object' && (
           <View style={styles.deliveryInfo}>
             <View style={styles.deliveryInfoRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.deliveryLabel}>CUSTOMER</Text>
-                <Text style={styles.deliveryValue}>{order.user.name}</Text>
+                <Text style={styles.deliveryValue}>{order?.user?.name || 'Customer'}</Text>
               </View>
               <TouchableOpacity
-                onPress={() => Linking.openURL(`tel:${order.user.phone}`)}
+                onPress={() => order?.user?.phone && Linking.openURL(`tel:${order.user.phone}`)}
                 style={styles.callSmallBtn}
               >
                 <Text style={{ fontSize: 18 }}>📞 Call</Text>
@@ -208,7 +213,7 @@ export default function MapNavigationScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.deliveryLabel}>ADDRESS</Text>
                 <Text style={styles.deliveryValue} numberOfLines={2}>
-                  {order.shippingAddress.street}, {order.shippingAddress.city}
+                  {order.shippingAddress?.street || 'No Street'}, {order.shippingAddress?.city || ''}
                 </Text>
               </View>
             </View>

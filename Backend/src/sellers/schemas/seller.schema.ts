@@ -141,7 +141,7 @@ SellerSchema.pre('save', async function () {
   }
 });
 
-SellerSchema.pre('findOneAndUpdate', async function () {
+SellerSchema.pre('findOneAndReplace', async function () {
   const update = this.getUpdate() as any;
   if (update?.gstNumber?.length >= 2) {
     update.stateCode = update.gstNumber.slice(0, 2);

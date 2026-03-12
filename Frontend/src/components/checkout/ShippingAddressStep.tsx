@@ -56,6 +56,7 @@ export function ShippingAddressStep({
                             state: addr.state,
                             postalCode: addr.postalCode,
                             country: addr.country,
+                            location: addr.location,
                         })
                         // Auto-proceed to payment step
                         setStep("payment")
@@ -78,6 +79,7 @@ export function ShippingAddressStep({
                             state: addr.state,
                             postalCode: addr.postalCode,
                             country: addr.country,
+                            location: addr.location,
                         })
                         setShowAddressForm(true)
                     }}

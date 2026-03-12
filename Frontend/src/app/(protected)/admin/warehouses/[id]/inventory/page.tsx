@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useWarehouse, useWarehouses } from '@/hooks/useWarehouses'
 import { useWarehouseInventory, useAdjustStock, useTransferStock, useAdminReceiveStock } from '@/hooks/useInventory'
+import { useDebounce } from '@/hooks/useDebounce'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Boxes } from 'lucide-react'
@@ -23,8 +24,16 @@ const AdminWarehouseInventoryPage = () => {
     const router = useRouter()
 
     /* ── Data ── */
+    const [page, setPage] = useState(1)
+    const [searchTerm, setSearchTerm] = useState('')
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
     const { data: warehouse, isLoading: warehouseLoading } = useWarehouse(warehouseId)
-    const { data: inventory, isLoading: inventoryLoading } = useWarehouseInventory(warehouseId)
+    const { data: inventoryResponse, isLoading: inventoryLoading } = useWarehouseInventory(warehouseId, {
+        page,
+        limit: 10,
+        search: debouncedSearch
+    })
     const { data: allWarehouses } = useWarehouses()
 
     /* ── Mutations ── */
@@ -32,8 +41,10 @@ const AdminWarehouseInventoryPage = () => {
     const transferMutation = useTransferStock()
     const receiveMutation = useAdminReceiveStock(warehouseId)
 
-    /* ── Table search ── */
-    const [searchTerm, setSearchTerm] = useState('')
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setPage(1)
+    }, [debouncedSearch])
 
     /* ── Receive dialog ── */
     const [receiveOpen, setReceiveOpen] = useState(false)
@@ -136,9 +147,11 @@ const AdminWarehouseInventoryPage = () => {
         <div className="space-y-6 pb-10">
             <InventoryTable
                 warehouse={warehouse}
-                inventory={inventory}
+                inventoryResponse={inventoryResponse}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
+                page={page}
+                onPageChange={setPage}
             // Admin is view-only
             // onReceiveClick={() => setReceiveOpen(true)}
             // onAdjustClick={openAdjust}

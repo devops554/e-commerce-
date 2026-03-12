@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -21,6 +21,8 @@ import {
   UpdateLocationDto,
 } from './dto/delivery-partner.dto';
 import { encrypt, decrypt } from '../common/utils/crypto.util';
+import { EventsGateway } from '../events/events.gateway';
+import { Shipment, ShipmentDocument, ShipmentStatus } from '../shipments/schemas/shipment.schema';
 
 @Injectable()
 export class DeliveryPartnersService {
@@ -29,7 +31,10 @@ export class DeliveryPartnersService {
   constructor(
     @InjectModel(DeliveryPartner.name)
     private partnerModel: Model<DeliveryPartnerDocument>,
+    @InjectModel(Shipment.name)
+    private shipmentModel: Model<ShipmentDocument>,
     private jwtService: JwtService,
+    private eventsGateway: EventsGateway,
   ) { }
 
   async register(
@@ -121,6 +126,18 @@ export class DeliveryPartnersService {
       );
     }
 
+    // Auto-set the partner to ONLINE upon successful login
+    if (partner.availabilityStatus !== 'ONLINE') {
+        partner.availabilityStatus = 'ONLINE';
+        await partner.save();
+
+        // Broadcast real-time websocket update
+        this.eventsGateway.emitEvent('delivery-partner-status-updated', {
+          partnerId: partner._id,
+          status: 'ONLINE',
+        });
+    }
+
     return this.generateToken(partner);
   }
 
@@ -148,10 +165,18 @@ export class DeliveryPartnersService {
     page?: number;
     limit?: number;
     warehouseId?: string;
+    search?: string;
   }) {
-    const { page = 1, limit = 10, warehouseId } = query;
+    const { page = 1, limit = 10, warehouseId, search } = query;
     const filter: any = {};
     if (warehouseId) filter.warehouseIds = warehouseId;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { vehicleType: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const [partners, total] = await Promise.all([
       this.partnerModel
@@ -164,8 +189,67 @@ export class DeliveryPartnersService {
       this.partnerModel.countDocuments(filter),
     ]);
 
+    const ACTIVE_STATUSES = [
+      ShipmentStatus.ASSIGNED_TO_DELIVERY,
+      ShipmentStatus.ACCEPTED,
+      ShipmentStatus.PICKED_UP,
+      ShipmentStatus.OUT_FOR_DELIVERY,
+    ];
+
+    // Fetch stats for all partners on this page in one batch
+    const partnerIds = partners.map((p) => p._id);
+    const warehouseIds = [...new Set(partners.flatMap((p) => 
+      (p.warehouseIds || [])
+        .map((w: any) => typeof w === 'object' ? w._id?.toString() : w?.toString())
+        .filter((id): id is string => !!id && Types.ObjectId.isValid(id))
+    ))];
+
+    const [activeShipments, completedShipments, availableShipments] = await Promise.all([
+      // Active shipments grouped by partner
+      this.shipmentModel.aggregate([
+        { $match: { deliveryPartnerId: { $in: partnerIds }, status: { $in: ACTIVE_STATUSES } } },
+        { $group: { _id: '$deliveryPartnerId', count: { $sum: 1 } } },
+      ]),
+      // Completed shipments grouped by partner
+      this.shipmentModel.aggregate([
+        { $match: { deliveryPartnerId: { $in: partnerIds }, status: ShipmentStatus.DELIVERED } },
+        { $group: { _id: '$deliveryPartnerId', count: { $sum: 1 } } },
+      ]),
+      // Available (unassigned) shipments by warehouse
+      warehouseIds.length > 0
+        ? this.shipmentModel.aggregate([
+            { $match: { warehouseId: { $in: warehouseIds.map((id) => new Types.ObjectId(id)) }, status: ShipmentStatus.ORDER_PLACED, deliveryPartnerId: null } },
+            { $group: { _id: '$warehouseId', count: { $sum: 1 } } },
+          ])
+        : Promise.resolve([]),
+    ]);
+
+    const activeMap: Record<string, number> = {};
+    activeShipments.forEach((s: any) => { activeMap[s._id.toString()] = s.count; });
+    const completedMap: Record<string, number> = {};
+    completedShipments.forEach((s: any) => { completedMap[s._id.toString()] = s.count; });
+    const availableByWarehouse: Record<string, number> = {};
+    availableShipments.forEach((s: any) => { availableByWarehouse[s._id.toString()] = s.count; });
+
+    const enrichedPartners = partners.map((p) => {
+      const partnerObj = this.decryptPartner(p);
+      const warehouseIdsForPartner: string[] = p.warehouseIds.map((w: any) =>
+        typeof w === 'object' ? w._id.toString() : w.toString()
+      );
+      const availableCount = warehouseIdsForPartner.reduce<number>(
+        (sum, wid) => sum + (availableByWarehouse[wid] || 0),
+        0,
+      );
+      return {
+        ...partnerObj,
+        activeOrders: activeMap[p._id.toString()] || 0,
+        completedOrders: completedMap[p._id.toString()] || (partnerObj.totalDeliveries || 0),
+        availableOrders: availableCount,
+      };
+    });
+
     return {
-      data: partners.map((p) => this.decryptPartner(p)),
+      data: enrichedPartners,
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -273,6 +357,15 @@ export class DeliveryPartnersService {
     if (!updatedPartner) {
       throw new NotFoundException('Delivery partner not found');
     }
+
+    // Broadcast real-time websocket update if status changed
+    if (updateData.availabilityStatus) {
+      this.eventsGateway.emitEvent('delivery-partner-status-updated', {
+        partnerId: updatedPartner._id,
+        status: updatedPartner.availabilityStatus,
+      });
+    }
+
     this.logger.log(`Partner ${id} updated successfully`);
     return this.decryptPartner(updatedPartner);
   }
@@ -293,7 +386,7 @@ export class DeliveryPartnersService {
             },
           },
         },
-        { new: true },
+        { returnDocument: 'after' },
       )
       .select('-password')
       .populate('warehouseIds')

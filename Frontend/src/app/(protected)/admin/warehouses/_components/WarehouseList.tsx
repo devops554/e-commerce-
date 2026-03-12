@@ -13,6 +13,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from '@/components/ui/input'
 import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
     Search, Plus, MoreHorizontal, Pencil, Trash2,
     MapPin, Phone, Mail, Building2, Package, CheckCircle2,
     AlertCircle, Hammer, Boxes
@@ -25,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation'
 import { useWarehouses, useWarehouseActions, Warehouse } from '@/hooks/useWarehouses'
+import { useDebounce } from '@/hooks/useDebounce'
 import { WarehouseDialog } from './WarehouseDialog'
 import {
     AlertDialog,
@@ -39,18 +49,30 @@ import {
 
 export default function WarehouseList() {
     const router = useRouter()
-    const { data: warehouses = [], isLoading } = useWarehouses()
-    const { deleteWarehouse, setDefaultWarehouse } = useWarehouseActions()
     const [searchTerm, setSearchTerm] = useState('')
+    const [page, setPage] = useState(1)
+    const limit = 10
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
+    const { data, isLoading } = useWarehouses({
+        page,
+        limit,
+        search: debouncedSearch
+    })
+
+    const warehouses = data?.warehouses || []
+    const totalPages = data?.totalPages || 0
+    const totalItems = data?.total || 0
+
+    const { deleteWarehouse, setDefaultWarehouse } = useWarehouseActions()
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
-    const filteredWarehouses = warehouses.filter((wh: Warehouse) =>
-        wh.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        wh.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        wh.address.city.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Reset to page 1 when search changes
+    React.useEffect(() => {
+        setPage(1)
+    }, [debouncedSearch])
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -132,7 +154,7 @@ export default function WarehouseList() {
                                     <TableCell></TableCell>
                                 </TableRow>
                             ))
-                        ) : filteredWarehouses.length === 0 ? (
+                        ) : warehouses.length === 0 ? (
                             <TableRow className="border-none">
                                 <TableCell colSpan={5} className="py-24 text-center">
                                     <div className="flex flex-col items-center gap-4">
@@ -154,7 +176,7 @@ export default function WarehouseList() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredWarehouses.map((wh: Warehouse) => (
+                            warehouses.map((wh: Warehouse) => (
                                 <TableRow key={wh._id} className="hover:bg-slate-50/30 border-slate-50 transition-colors">
                                     <TableCell className="py-6 pl-8">
                                         <div className="flex items-start gap-3">
@@ -252,6 +274,71 @@ export default function WarehouseList() {
                         )}
                     </TableBody>
                 </Table>
+
+                {/* Pagination Controls */}
+                {!isLoading && totalPages > 1 && (
+                    <div className="flex items-center justify-between px-8 py-6 border-t border-slate-50">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {warehouses.length} of {totalItems} facilities
+                        </p>
+                        <Pagination className="mx-0 w-fit">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setPage(Math.max(1, page - 1));
+                                        }}
+                                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                                    if (
+                                        p === 1 ||
+                                        p === totalPages ||
+                                        (p >= page - 1 && p <= page + 1)
+                                    ) {
+                                        return (
+                                            <PaginationItem key={p}>
+                                                <PaginationLink
+                                                    href="#"
+                                                    isActive={page === p}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setPage(p);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {p}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    } else if (p === page - 2 || p === page + 2) {
+                                        return (
+                                            <PaginationItem key={p}>
+                                                <PaginationEllipsis />
+                                            </PaginationItem>
+                                        );
+                                    }
+                                    return null;
+                                })}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setPage(Math.min(totalPages, page + 1));
+                                        }}
+                                        className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </div>
 
             <WarehouseDialog

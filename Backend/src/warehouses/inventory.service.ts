@@ -165,12 +165,52 @@ export class InventoryService {
     return { message: 'Stock transferred successfully', amount, variantId };
   }
 
-  async getWarehouseInventory(warehouseId: string): Promise<Inventory[]> {
-    return this.inventoryModel
-      .find({ warehouse: new Types.ObjectId(warehouseId) })
-      .populate('product')
-      .populate('variant')
-      .exec();
+  async getWarehouseInventory(params: {
+    warehouseId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{ items: Inventory[]; total: number; page: number; limit: number; totalPages: number }> {
+    const { warehouseId, page = 1, limit = 20, search } = params;
+    const skip = (page - 1) * limit;
+
+    const filter: any = { warehouse: new Types.ObjectId(warehouseId) };
+
+    if (search) {
+      const variants = await this.variantModel.find({
+        sku: { $regex: search, $options: 'i' }
+      }).select('_id').exec();
+      const variantIds = variants.map(v => v._id);
+
+      const products = await this.inventoryModel.db.model('Product').find({
+        title: { $regex: search, $options: 'i' }
+      }).select('_id').exec();
+      const productIds = products.map(p => p._id);
+
+      filter.$or = [
+        { variant: { $in: variantIds } },
+        { product: { $in: productIds } }
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.inventoryModel
+        .find(filter)
+        .populate('product')
+        .populate('variant')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.inventoryModel.countDocuments(filter),
+    ]);
+
+    return {
+      items: items as Inventory[],
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findWarehouseWithStock(
@@ -432,14 +472,50 @@ export class InventoryService {
     }
   }
 
-  async getHistory(warehouseId: string) {
-    return this.historyModel
-      .find({ warehouse: new Types.ObjectId(warehouseId) })
-      .populate('product', 'title')
-      .populate('variant', 'sku')
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .exec();
+  async getHistory(params: {
+    warehouseId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{ data: StockHistoryDocument[]; total: number; page: number; limit: number; totalPages: number }> {
+    const { warehouseId, page = 1, limit = 20, search } = params;
+    const skip = (page - 1) * limit;
+
+    const filter: any = { warehouse: new Types.ObjectId(warehouseId) };
+
+    if (search) {
+      const variants = await this.variantModel.find({
+        sku: { $regex: search, $options: 'i' }
+      }).select('_id').exec();
+      const variantIds = variants.map(v => v._id);
+
+      filter.$or = [
+        { variant: { $in: variantIds } },
+        { type: { $regex: search, $options: 'i' } },
+        { source: { $regex: search, $options: 'i' } },
+        { notes: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.historyModel
+        .find(filter)
+        .populate('product', 'title')
+        .populate('variant', 'sku')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.historyModel.countDocuments(filter),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   private async sendStockNotification(
@@ -500,14 +576,20 @@ export class InventoryService {
   }
 
   // Manager-scoped: get their own warehouse inventory
-  async getManagerWarehouseInventory(managerId: string): Promise<Inventory[]> {
+  async getManagerWarehouseInventory(params: {
+    managerId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{ items: Inventory[]; total: number; page: number; limit: number; totalPages: number }> {
+    const { managerId, page, limit, search } = params;
     const warehouse = await this.warehouseModel.findOne({
       managerId: new Types.ObjectId(managerId),
     });
     if (!warehouse) {
       throw new NotFoundException('No warehouse assigned to this manager');
     }
-    return this.getWarehouseInventory(String(warehouse._id));
+    return this.getWarehouseInventory({ warehouseId: String(warehouse._id), page, limit, search });
   }
 
   private calculateDistance(

@@ -1,6 +1,6 @@
 // src/screens/orders/HistoryScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOrderHistory } from '../../hooks/useQueries';
 import { Order } from '../../types';
-import { Badge, EmptyState } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
 import {
   formatCurrency,
@@ -23,71 +25,221 @@ import {
   isCOD,
 } from '../../utils/helpers';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 type FilterType = 'today' | 'week' | 'month';
 
-const FILTERS: { label: string; value: FilterType }[] = [
-  { label: 'Today', value: 'today' },
-  { label: 'This Week', value: 'week' },
-  { label: 'This Month', value: 'month' },
+// ── Filter config ─────────────────────────────────────────────────────────────
+const FILTERS: { label: string; value: FilterType; icon: IoniconsName }[] = [
+  { label: 'Today', value: 'today', icon: 'sunny-outline' },
+  { label: 'This Week', value: 'week', icon: 'calendar-outline' },
+  { label: 'This Month', value: 'month', icon: 'stats-chart-outline' },
 ];
 
+// ── History Card ──────────────────────────────────────────────────────────────
+const HistoryCard = ({
+  order,
+  index,
+  onPress,
+}: {
+  order: Order;
+  index: number;
+  onPress: () => void;
+}) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 340, delay: index * 55, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 300, delay: index * 55, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const statusColor = getOrderStatusColor(order.orderStatus);
+  const statusLabel = getOrderStatusLabel(order.orderStatus);
+  const cod = isCOD(order.paymentMethod);
+  const earning = order.shippingCharge ?? order.deliveryFee ?? 0;
+  const orderId = typeof order.orderId === 'string' ? order.orderId.slice(-8) : 'Error';
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={styles.card}>
+
+        {/* Left accent bar */}
+        <View style={[styles.cardAccent, { backgroundColor: statusColor }]} />
+
+        <View style={styles.cardBody}>
+          {/* Top row */}
+          <View style={styles.cardTopRow}>
+            <Text style={styles.orderId}>#{orderId}</Text>
+            <View style={styles.dateRow}>
+              <Ionicons name="time-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
+            </View>
+          </View>
+
+          {/* Address */}
+          <View style={styles.addrRow}>
+            <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
+            <Text style={styles.orderAddr} numberOfLines={1}>
+              {order.shippingAddress.city}, {order.shippingAddress.state}
+            </Text>
+          </View>
+
+          {/* Bottom badges */}
+          <View style={styles.cardBadgeRow}>
+            {/* Status */}
+            <View style={[styles.badge, { backgroundColor: statusColor + '18', borderColor: statusColor + '40' }]}>
+              <View style={[styles.badgeDot, { backgroundColor: statusColor }]} />
+              <Text style={[styles.badgeText, { color: statusColor }]}>{statusLabel}</Text>
+            </View>
+
+            {/* Payment */}
+            <View style={[
+              styles.badge,
+              {
+                backgroundColor: cod ? '#FEF3C7' : '#D1FAE5',
+                borderColor: cod ? '#F59E0B40' : '#10B98140',
+              }
+            ]}>
+              <Ionicons
+                name={cod ? 'cash-outline' : 'checkmark-circle-outline'}
+                size={11}
+                color={cod ? '#D97706' : '#059669'}
+              />
+              <Text style={[styles.badgeText, { color: cod ? '#D97706' : '#059669' }]}>
+                {cod ? 'COD' : 'Paid'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Right earning */}
+        <View style={styles.cardRight}>
+          <Text style={styles.earningAmount}>{formatCurrency(earning)}</Text>
+          <Text style={styles.earningLabel}>Earned</Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={{ marginTop: 4 }} />
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function HistoryScreen() {
   const navigation = useNavigation<any>();
   const [filter, setFilter] = useState<FilterType>('today');
   const { data: orders, isLoading } = useOrderHistory(filter);
 
-  const totalEarnings =
-    orders?.reduce((sum, o) => sum + (o.deliveryFee ?? 0), 0) ?? 0;
+  const headerFade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(headerFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Delivery History</Text>
-        <View style={{ width: 36 }} />
-      </View>
+  const totalEarnings = orders?.reduce((sum, o) => sum + (o.shippingCharge ?? o.deliveryFee ?? 0), 0) ?? 0;
+  const filterLabel = filter === 'today' ? 'today' : filter === 'week' ? 'this week' : 'this month';
 
-      {/* Filter Tabs */}
+  const ListHeader = () => (
+    <>
+      {/* Filter tabs */}
       <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            onPress={() => setFilter(f.value)}
-            style={[styles.filterTab, filter === f.value && styles.filterTabActive]}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filter === f.value && styles.filterTextActive,
-              ]}
+        {FILTERS.map((f) => {
+          const active = filter === f.value;
+          return (
+            <TouchableOpacity
+              key={f.value}
+              onPress={() => setFilter(f.value)}
+              style={[styles.filterTab, active && styles.filterTabActive]}
+              activeOpacity={0.8}
             >
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Ionicons
+                name={f.icon}
+                size={14}
+                color={active ? Colors.white : Colors.textSecondary}
+              />
+              <Text style={[styles.filterText, active && styles.filterTextActive]}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* Summary */}
+      {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
+          <View style={[styles.summaryIconWrap, { backgroundColor: Colors.primary + '15' }]}>
+            <Ionicons name="bicycle" size={18} color={Colors.primary} />
+          </View>
           <Text style={styles.summaryValue}>{orders?.length ?? 0}</Text>
           <Text style={styles.summaryLabel}>Deliveries</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
+          <View style={[styles.summaryIconWrap, { backgroundColor: Colors.success + '15' }]}>
+            <Ionicons name="cash" size={18} color={Colors.success} />
+          </View>
           <Text style={[styles.summaryValue, { color: Colors.success }]}>
             {formatCurrency(totalEarnings)}
           </Text>
           <Text style={styles.summaryLabel}>Earned</Text>
         </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryItem}>
+          <View style={[styles.summaryIconWrap, { backgroundColor: '#F59E0B15' }]}>
+            <Ionicons name="star" size={18} color="#F59E0B" />
+          </View>
+          <Text style={styles.summaryValue}>
+            {orders?.length ? (totalEarnings / orders.length).toFixed(0) : '0'}
+          </Text>
+          <Text style={styles.summaryLabel}>Avg. Earn</Text>
+        </View>
       </View>
 
-      {/* List */}
+      {/* Section label */}
+      <View style={styles.sectionHeader}>
+        <Ionicons name="receipt-outline" size={15} color={Colors.primary} />
+        <Text style={styles.sectionTitle}>Orders — {filterLabel}</Text>
+        {orders && orders.length > 0 && (
+          <View style={styles.countChip}>
+            <Text style={styles.countChipText}>{orders.length}</Text>
+          </View>
+        )}
+      </View>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.safe}>
+
+      {/* ── Header ── */}
+      <Animated.View style={{ opacity: headerFade }}>
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryLight || '#818CF8']}
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.headerDecor} />
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.white} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerLabel}>DELIVERY PARTNER</Text>
+              <Text style={styles.headerTitle}>Delivery History</Text>
+            </View>
+            <View style={styles.headerIconWrap}>
+              <Ionicons name="time" size={20} color={Colors.white} />
+            </View>
+          </View>
+        </LinearGradient>
+      </Animated.View>
+
+      {/* ── List ── */}
       {isLoading ? (
-        <View style={styles.loading}>
+        <View style={styles.loadingWrap}>
           <ActivityIndicator color={Colors.primary} size="large" />
         </View>
       ) : (
@@ -96,16 +248,22 @@ export default function HistoryScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={<ListHeader />}
           ListEmptyComponent={
-            <EmptyState
-              icon="📋"
-              title="No deliveries yet"
-              subtitle={`No orders completed ${filter === 'today' ? 'today' : filter === 'week' ? 'this week' : 'this month'}`}
-            />
+            <View style={styles.emptyWrap}>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="receipt-outline" size={44} color={Colors.primary} />
+              </View>
+              <Text style={styles.emptyTitle}>No deliveries yet</Text>
+              <Text style={styles.emptySubtitle}>
+                No orders completed {filterLabel}
+              </Text>
+            </View>
           }
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <HistoryCard
               order={item}
+              index={index}
               onPress={() => navigation.navigate('OrderDetail', { orderId: item._id })}
             />
           )}
@@ -115,109 +273,124 @@ export default function HistoryScreen() {
   );
 }
 
-const HistoryCard = ({ order, onPress }: { order: Order; onPress: () => void }) => {
-  const statusColor = getOrderStatusColor(order.orderStatus);
-
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.92} style={styles.card}>
-      <View style={styles.cardLeft}>
-        <View style={[styles.statusIndicator, { backgroundColor: statusColor }]} />
-        <View style={{ flex: 1 }}>
-          <View style={styles.cardTopRow}>
-            <Text style={styles.orderId}>#{typeof order.orderId === 'string' ? order.orderId : 'ID Error'}</Text>
-            <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
-          </View>
-          <Text style={styles.orderAddr} numberOfLines={1}>
-            📍 {order.shippingAddress.city}, {order.shippingAddress.state}
-          </Text>
-          <View style={styles.cardBottomRow}>
-            <Badge
-              label={getOrderStatusLabel(order.orderStatus)}
-              backgroundColor={`${statusColor}18`}
-              color={statusColor}
-            />
-            <Badge
-              label={isCOD(order.paymentMethod) ? '💵 COD' : '💳 Paid'}
-              backgroundColor={isCOD(order.paymentMethod) ? Colors.warningLight : Colors.successLight}
-              color={isCOD(order.paymentMethod) ? Colors.warning : Colors.success}
-            />
-          </View>
-        </View>
-      </View>
-      <View style={styles.cardRight}>
-        <Text style={styles.earningAmount}>{formatCurrency(order.deliveryFee ?? 0)}</Text>
-        <Text style={styles.earningLabel}>Earned</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
+
+  // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.md,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' },
-  backArrow: { fontSize: 24, color: Colors.textPrimary, lineHeight: 26, textAlign: 'center', marginTop: -2 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
-  filterRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    paddingTop: 8,
-    marginTop: 8,
-    gap: 8,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+    overflow: 'hidden',
+  },
+  headerDecor: {
+    position: 'absolute', width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.07)', top: -60, right: -40,
+  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  backBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerLabel: { fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: '700', letterSpacing: 1.2 },
+  headerTitle: { fontSize: FontSize.xl, fontWeight: '900', color: Colors.white, letterSpacing: -0.3, marginTop: 2 },
+  headerIconWrap: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  // Filter
+  filterRow: {
+    flexDirection: 'row', gap: 8,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md, paddingBottom: Spacing.sm,
   },
   filterTab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    backgroundColor: Colors.background,
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 5,
+    paddingVertical: 9, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.white, ...Shadow.sm,
   },
   filterTabActive: { backgroundColor: Colors.primary },
-  filterText: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
+  filterText: { fontSize: 12, fontWeight: '700', color: Colors.textSecondary },
   filterTextActive: { color: Colors.white },
+
+  // Summary
   summaryRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.md,
-    marginBottom: Spacing.sm,
+    flexDirection: 'row', backgroundColor: Colors.white,
+    marginHorizontal: Spacing.md, borderRadius: 18,
+    paddingVertical: Spacing.md, marginBottom: Spacing.sm,
     ...Shadow.sm,
   },
-  summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: { fontSize: FontSize.xl, fontWeight: '900', color: Colors.textPrimary },
-  summaryLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2, fontWeight: '600' },
-  summaryDivider: { width: 1, backgroundColor: Colors.border },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { padding: Spacing.md, gap: 10, paddingBottom: 40 },
+  summaryItem: { flex: 1, alignItems: 'center', gap: 4 },
+  summaryIconWrap: {
+    width: 36, height: 36, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 2,
+  },
+  summaryValue: { fontSize: FontSize.lg, fontWeight: '900', color: Colors.textPrimary },
+  summaryLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '600' },
+  summaryDivider: { width: 1, backgroundColor: Colors.border, marginVertical: 8 },
+
+  // Section header
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: Spacing.md, marginBottom: Spacing.sm,
+  },
+  sectionTitle: { flex: 1, fontSize: FontSize.md, fontWeight: '800', color: Colors.textPrimary },
+  countChip: {
+    backgroundColor: Colors.primary + '18',
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
+  },
+  countChipText: { fontSize: 11, fontWeight: '800', color: Colors.primary },
+
+  // List
+  list: { paddingBottom: 40 },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  // Empty
+  emptyWrap: {
+    alignItems: 'center', paddingTop: 40,
+    paddingHorizontal: 40, gap: 12,
+  },
+  emptyIconWrap: {
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: Colors.primary + '12',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
+  },
+  emptyTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
+  emptySubtitle: { fontSize: FontSize.sm, color: Colors.textSecondary, textAlign: 'center' },
+
+  // Card
   card: {
     backgroundColor: Colors.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    ...Shadow.sm,
+    marginHorizontal: Spacing.md, marginBottom: 10,
+    borderRadius: 18,
+    flexDirection: 'row', alignItems: 'stretch',
+    overflow: 'hidden', ...Shadow.sm,
   },
-  cardLeft: { flex: 1, flexDirection: 'row', gap: 12 },
-  statusIndicator: { width: 4, borderRadius: 2, minHeight: 60 },
-  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  orderId: { fontSize: FontSize.md, fontWeight: '800', color: Colors.textPrimary },
+  cardAccent: { width: 4 },
+  cardBody: { flex: 1, padding: 14, gap: 6 },
+  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  orderId: { fontSize: FontSize.md, fontWeight: '900', color: Colors.textPrimary, letterSpacing: -0.2 },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   orderDate: { fontSize: FontSize.xs, color: Colors.textMuted },
-  orderAddr: { fontSize: FontSize.xs, color: Colors.textSecondary, marginBottom: 8 },
-  cardBottomRow: { flexDirection: 'row', gap: 6 },
-  cardRight: { alignItems: 'flex-end' },
-  earningAmount: { fontSize: FontSize.md, fontWeight: '800', color: Colors.success },
-  earningLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  orderAddr: { flex: 1, fontSize: FontSize.xs, color: Colors.textSecondary },
+  cardBadgeRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 8, borderWidth: 1,
+  },
+  badgeDot: { width: 6, height: 6, borderRadius: 3 },
+  badgeText: { fontSize: 10, fontWeight: '800' },
+  cardRight: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingRight: 14, paddingLeft: 8, gap: 2,
+  },
+  earningAmount: { fontSize: FontSize.md, fontWeight: '900', color: Colors.success },
+  earningLabel: { fontSize: 9, color: Colors.textSecondary, fontWeight: '600' },
 });

@@ -6,6 +6,7 @@ import {
   UseGuards,
   Req,
   Logger,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
@@ -27,8 +28,14 @@ export class NotificationsController {
     UserRole.CUSTOMER,
     UserRole.MANAGER,
   )
-  async getNotifications(@Req() req: any) {
-    return this.notificationsService.findAll(req.user.role, req.user.id);
+  async getNotifications(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = page ? parseInt(page) : 1;
+    const l = limit ? parseInt(limit) : 50;
+    return this.notificationsService.findAll(req.user.role, req.user._id, p, l);
   }
 
   @Patch(':id/read')
@@ -50,6 +57,6 @@ export class NotificationsController {
     UserRole.MANAGER,
   )
   async markAllAsRead(@Req() req: any) {
-    return this.notificationsService.markAllAsRead(req.user.role, req.user.id);
+    return this.notificationsService.markAllAsRead(req.user.role, req.user._id);
   }
 }

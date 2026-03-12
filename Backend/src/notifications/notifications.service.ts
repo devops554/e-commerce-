@@ -1,3 +1,5 @@
+// src/notifications/notifications.service.ts
+
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -27,52 +29,84 @@ export class NotificationsService {
     const saved = await notification.save();
 
     this.logger.log(
-      `New notification created: ${data.title} for ${data.recipientRole}`,
+      `New notification created: ${data.title} for ${data.recipientRole}${data.recipientId ? ` (${data.recipientId})` : ''}`,
     );
 
-    // Emit real-time event
-    this.eventsGateway.emitEvent('notification.received', saved);
+    // ✅ recipientId hai toh sirf us user ko bhejo
+    if (data.recipientId) {
+      this.eventsGateway.emitToUser(
+        data.recipientId,
+        'notification.received',
+        saved,
+      );
+    } else {
+      // Admin/manager jaise role-based — sabko bhejo
+      this.eventsGateway.emitEvent('notification.received', saved);
+    }
 
     return saved;
   }
 
-  async findAll(role: string, userId?: string, limit = 50) {
+  async findAll(role: string, userId?: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
     const query: any = {};
+
     if (role === 'subadmin') {
       query.recipientRole = { $in: ['admin', 'subadmin'] };
     } else {
       query.recipientRole = role;
     }
 
-    if (userId && (role === 'customer' || role === 'manager' || role === 'seller')) {
+    if (
+      userId &&
+      (role === 'customer' ||
+        role === 'manager' ||
+        role === 'seller' ||
+        role === 'delivery_partner')
+    ) {
       query.recipientId = userId;
     }
-    return this.notificationModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .exec();
+
+    const [notifications, total] = await Promise.all([
+      this.notificationModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.notificationModel.countDocuments(query),
+    ]);
+
+    return {
+      notifications,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async markAllAsRead(role: string, userId?: string) {
     const query: any = { isRead: false };
+
     if (role === 'subadmin') {
       query.recipientRole = { $in: ['admin', 'subadmin'] };
     } else {
       query.recipientRole = role;
     }
 
-    if (userId && (role === 'customer' || role === 'manager' || role === 'seller')) {
+    if (
+      userId &&
+      (role === 'customer' ||
+        role === 'manager' ||
+        role === 'seller' ||
+        role === 'delivery_partner')
+    ) {
       query.recipientId = userId;
     }
+
     await this.notificationModel.updateMany(query, { isRead: true });
     return { message: 'All notifications marked as read' };
-  }
-
-  async deleteOldNotifications(days = 30) {
-    const date = new Date();
-    date.setDate(date.getDate() - days);
-    await this.notificationModel.deleteMany({ createdAt: { $lt: date } });
   }
 
   async markAsRead(id: string) {
@@ -83,5 +117,11 @@ export class NotificationsService {
     notification.isRead = true;
     await notification.save();
     return notification;
+  }
+
+  async deleteOldNotifications(days = 30) {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    await this.notificationModel.deleteMany({ createdAt: { $lt: date } });
   }
 }

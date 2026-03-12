@@ -17,8 +17,20 @@ const getIcon = (type: string) => {
     }
 }
 
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+
 export default function ManagerNotificationsPage() {
-    const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications()
+    const [page, setPage] = useState(1)
+    const limit = 10
+    const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading, totalPages, total } = useNotifications({ page, limit })
     const [filter, setFilter] = useState<'all' | 'unread' | 'order' | 'stock'>('all')
 
     const filteredNotifications = notifications.filter(n => {
@@ -98,83 +110,152 @@ export default function ManagerNotificationsPage() {
                     </Card>
                 </div>
 
-                <div className="lg:col-span-3 space-y-4">
+                <div className="lg:col-span-3 space-y-6">
                     {isLoading ? (
                         Array(6).fill(0).map((_, i) => (
                             <Card key={i} className="border-none shadow-sm rounded-3xl animate-pulse h-24 bg-white/50" />
                         ))
-                    ) : filteredNotifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-                            <div className="p-6 bg-slate-50 rounded-full mb-6 relative">
-                                <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl scale-150" />
-                                <Bell className="h-12 w-12 text-slate-200 relative" />
-                            </div>
-                            <h3 className="text-lg font-black text-slate-900 italic">No notifications found</h3>
-                            <p className="text-slate-400 font-medium text-sm mt-1">Try changing your filter settings</p>
-                        </div>
                     ) : (
-                        <div className="space-y-4">
-                            {filteredNotifications.map((notification: Notification) => (
-                                <Card
-                                    key={notification._id}
-                                    className={`border-none transition-all duration-300 rounded-3xl overflow-hidden group hover:shadow-2xl hover:shadow-slate-200/50 relative cursor-pointer ${!notification.isRead ? 'bg-white ring-2 ring-primary/5' : 'bg-white opacity-80 hover:opacity-100'
-                                        }`}
-                                    onClick={() => !notification.isRead && markAsRead(notification._id)}
-                                >
-                                    <CardContent className="p-6">
-                                        <div className="flex items-start gap-5">
-                                            <div className={`p-4 rounded-2xl transition-transform group-hover:scale-110 duration-500 ${!notification.isRead ? 'bg-primary/10 shadow-inner' : 'bg-slate-50'}`}>
-                                                {getIcon(notification.type)}
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <h4 className={`text-lg tracking-tight ${!notification.isRead ? 'font-black text-slate-900 italic' : 'font-bold text-slate-600'}`}>
-                                                            {notification.title}
-                                                        </h4>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                                <Clock className="h-3 w-3" />
-                                                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                                                            </div>
-                                                            <span className="w-1 h-1 bg-slate-300 rounded-full" />
-                                                            <span className={`text-[10px] font-black uppercase tracking-tighter ${notification.type === 'order' ? 'text-primary' : (notification.type === 'stock' ? 'text-orange-500' : 'text-blue-500')
-                                                                }`}>
-                                                                {notification.type} alert
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {!notification.isRead && (
-                                                        <span className="h-3 w-3 bg-primary rounded-full animate-pulse shadow-[0_0_12px_rgba(255,50,105,0.5)]" />
-                                                    )}
-                                                </div>
-
-                                                <p className="text-sm text-slate-500 font-medium mt-3 leading-relaxed">
-                                                    {notification.message}
-                                                </p>
-
-                                                {(() => {
-                                                    const link = notification.link || (notification.type === 'stock' ? '/manager/inventory' : null);
-                                                    return link ? (
-                                                        <div className="flex items-center justify-end mt-4">
-                                                            <Button asChild variant="ghost" className="h-10 rounded-xl hover:bg-primary/5 text-primary font-black text-xs uppercase tracking-widest gap-2">
-                                                                <Link href={link}>
-                                                                    View Details
-                                                                </Link>
-                                                            </Button>
-                                                        </div>
-                                                    ) : null;
-                                                })()}
-                                            </div>
+                        <>
+                            <div className="space-y-4">
+                                {filteredNotifications.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                                        <div className="p-6 bg-slate-50 rounded-full mb-6 relative">
+                                            <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl scale-150" />
+                                            <Bell className="h-12 w-12 text-slate-200 relative" />
                                         </div>
-                                    </CardContent>
-                                    {!notification.isRead && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
-                                    )}
-                                </Card>
-                            ))}
-                        </div>
+                                        <h3 className="text-lg font-black text-slate-900 italic">No notifications found</h3>
+                                        <p className="text-slate-400 font-medium text-sm mt-1">Try changing your filter settings</p>
+                                    </div>
+                                ) : (
+                                    filteredNotifications.map((notification: Notification) => (
+                                        <Card
+                                            key={notification._id}
+                                            className={`border-none transition-all duration-300 rounded-3xl overflow-hidden group hover:shadow-2xl hover:shadow-slate-200/50 relative cursor-pointer ${!notification.isRead ? 'bg-white ring-2 ring-primary/5' : 'bg-white opacity-80 hover:opacity-100'
+                                                }`}
+                                            onClick={() => !notification.isRead && markAsRead(notification._id)}
+                                        >
+                                            <CardContent className="p-6">
+                                                <div className="flex items-start gap-5">
+                                                    <div className={`p-4 rounded-2xl transition-transform group-hover:scale-110 duration-500 ${!notification.isRead ? 'bg-primary/10 shadow-inner' : 'bg-slate-50'}`}>
+                                                        {getIcon(notification.type)}
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div>
+                                                                <h4 className={`text-lg tracking-tight ${!notification.isRead ? 'font-black text-slate-900 italic' : 'font-bold text-slate-600'}`}>
+                                                                    {notification.title}
+                                                                </h4>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                        <Clock className="h-3 w-3" />
+                                                                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                                                    </div>
+                                                                    <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                                                                    <span className={`text-[10px] font-black uppercase tracking-tighter ${notification.type === 'order' ? 'text-primary' : (notification.type === 'stock' ? 'text-orange-500' : 'text-blue-500')
+                                                                        }`}>
+                                                                        {notification.type} alert
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {!notification.isRead && (
+                                                                <span className="h-3 w-3 bg-primary rounded-full animate-pulse shadow-[0_0_12px_rgba(255,50,105,0.5)]" />
+                                                            )}
+                                                        </div>
+
+                                                        <p className="text-sm text-slate-500 font-medium mt-3 leading-relaxed">
+                                                            {notification.message}
+                                                        </p>
+
+                                                        {(() => {
+                                                            const link = notification.link || (notification.type === 'stock' ? '/manager/inventory' : null);
+                                                            return link ? (
+                                                                <div className="flex items-center justify-end mt-4">
+                                                                    <Button asChild variant="ghost" className="h-10 rounded-xl hover:bg-primary/5 text-primary font-black text-xs uppercase tracking-widest gap-2">
+                                                                        <Link href={link}>
+                                                                            View Details
+                                                                        </Link>
+                                                                    </Button>
+                                                                </div>
+                                                            ) : null;
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                            {!notification.isRead && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
+                                            )}
+                                        </Card>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between px-6 py-4 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Showing {filteredNotifications.length} of {total} alerts
+                                    </p>
+                                    <Pagination className="mx-0 w-fit">
+                                        <PaginationContent>
+                                            <PaginationItem>
+                                                <PaginationPrevious
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setPage(p => Math.max(1, p - 1));
+                                                    }}
+                                                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                />
+                                            </PaginationItem>
+
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                                                if (
+                                                    p === 1 ||
+                                                    p === totalPages ||
+                                                    (p >= page - 1 && p <= page + 1)
+                                                ) {
+                                                    return (
+                                                        <PaginationItem key={p}>
+                                                            <PaginationLink
+                                                                href="#"
+                                                                isActive={page === p}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    setPage(p);
+                                                                }}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                {p}
+                                                            </PaginationLink>
+                                                        </PaginationItem>
+                                                    );
+                                                } else if (p === page - 2 || p === page + 2) {
+                                                    return (
+                                                        <PaginationItem key={p}>
+                                                            <PaginationEllipsis />
+                                                        </PaginationItem>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+
+                                            <PaginationItem>
+                                                <PaginationNext
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setPage(p => Math.min(totalPages, p + 1));
+                                                    }}
+                                                    className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                />
+                                            </PaginationItem>
+                                        </PaginationContent>
+                                    </Pagination>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

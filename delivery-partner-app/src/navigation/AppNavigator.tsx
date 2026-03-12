@@ -1,13 +1,16 @@
 // src/navigation/AppNavigator.tsx
 
 import React, { useEffect } from 'react';
+import { useNotificationStore } from '../store/notificationStore';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
-import { authAPI } from '../api/services';
+import { authAPI, locationAPI } from '../api/services';
+import { socketService } from '../services/socketService';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 // Auth screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -18,40 +21,62 @@ import AvailableOrdersScreen from '../screens/orders/AvailableOrdersScreen';
 import ActiveDeliveryScreen from '../screens/orders/ActiveDeliveryScreen';
 import MapNavigationScreen from '../screens/orders/MapNavigationScreen';
 import HistoryScreen from '../screens/orders/HistoryScreen';
+import FullMapScreen from '../screens/orders/FullMapScreen';
+import NotificationsScreen from '../screens/orders/NotificationsScreen';
 import WalletScreen from '../screens/wallet/WalletScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import UploadDocumentsScreen from '../screens/profile/UploadDocumentsScreen';
 import ViewDocumentScreen from '../screens/profile/ViewDocumentScreen';
 import { Colors, FontSize } from '../utils/theme';
+import ActiveOrdersListScreen from '../screens/orders/Activeorderslistscreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // ─── Tab Icons ────────────────────────────────────────────────────────────────
 
-const TabIcon = ({ icon, label, focused }: { icon: string; label: string; focused: boolean }) => (
-  <View style={{ alignItems: 'center', justifyContent: 'center', height: 50, paddingTop: 4 }}>
-    <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.6 }}>{icon}</Text>
-    <Text
-      style={{
-        fontSize: 10,
-        fontWeight: focused ? '800' : '600',
-        color: focused ? Colors.primary : Colors.textMuted,
-        marginTop: 2,
-      }}
-    >
+const TabIcon = ({
+  name,
+  nameFocused,
+  label,
+  focused,
+  badge,
+}: {
+  name: React.ComponentProps<typeof Ionicons>['name'];
+  nameFocused: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  focused: boolean;
+  badge?: number;
+}) => (
+  <View style={styles.tabItem}>
+    <View style={[styles.tabIconWrap, focused && styles.tabIconWrapActive]}>
+      <View>
+        <Ionicons
+          name={focused ? nameFocused : name}
+          size={22}
+          color={focused ? Colors.primary : Colors.textMuted}
+        />
+        {badge && badge > 0 ? (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        ) : null}
+      </View>
+    </View>
+    <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
       {label}
     </Text>
   </View>
 );
 
-// ─── Main Tab Navigator ────────────────────────────────────────────────────────
+// ─── Main Tab Navigator ───────────────────────────────────────────────────────
 
 function MainTabs() {
   const insets = useSafeAreaInsets();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10);
-  const tabHeight = 60 + bottomPadding;
+  const tabHeight = 64 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -65,66 +90,115 @@ function MainTabs() {
           borderTopColor: Colors.border,
           height: tabHeight,
           paddingBottom: bottomPadding,
-          paddingTop: 8,
+          paddingTop: 6,
+          elevation: 12,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
         },
       }}
     >
+      {/* ✅ Home is first — loads as default tab */}
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="🏠" label="Home" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="home-outline"
+              nameFocused="home"
+              label="Home"
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="AvailableOrders"
         component={AvailableOrdersScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="📋" label="Orders" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="receipt-outline"
+              nameFocused="receipt"
+              label="Orders"
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="🕐" label="History" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="time-outline"
+              nameFocused="time"
+              label="History"
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Wallet"
         component={WalletScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="💳" label="Wallet" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="wallet-outline"
+              nameFocused="wallet"
+              label="Wallet"
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="👤" label="Profile" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="person-circle-outline"
+              nameFocused="person-circle"
+              label="Profile"
+              focused={focused}
+            />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 }
 
-// ─── Root Navigator ────────────────────────────────────────────────────────────
+// ─── Root Navigator ───────────────────────────────────────────────────────────
 
 function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
   const loadStoredAuth = useAuthStore((s) => s.loadStoredAuth);
   const updatePartner = useAuthStore((s) => s.updatePartner);
-  const setAuth = useAuthStore((s) => s.setAuth);
 
   useEffect(() => {
     (async () => {
       const hasToken = await loadStoredAuth();
       if (hasToken) {
         try {
-          // Hydrate partner profile on auto-login
           const profile = await authAPI.getProfile();
           updatePartner(profile);
+          socketService.connect();
+
+          if (profile.availabilityStatus !== 'ONLINE') {
+            try {
+              const updatedProfile = await locationAPI.updateAvailability('ONLINE');
+              updatePartner({ availabilityStatus: updatedProfile.availabilityStatus });
+            } catch (err) {
+              console.log('[Auto-Online] Failed:', err);
+            }
+          }
         } catch (e) {
           // token expired — handled by axios interceptor
         }
@@ -137,7 +211,7 @@ function RootNavigator() {
       <View style={styles.splash}>
         <Text style={styles.splashLogo}>🛵</Text>
         <Text style={styles.splashName}>SwiftDeliver</Text>
-        <ActivityIndicator color={Colors.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={Colors.white} style={{ marginTop: 40 }} />
       </View>
     );
   }
@@ -152,11 +226,16 @@ function RootNavigator() {
           <Stack.Screen
             name="ActiveDelivery"
             component={ActiveDeliveryScreen}
-            options={{ animation: 'slide_from_right' }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="MapNavigation"
             component={MapNavigationScreen}
+            options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="FullMap"
+            component={FullMapScreen}
             options={{ animation: 'slide_from_bottom' }}
           />
           <Stack.Screen
@@ -174,13 +253,23 @@ function RootNavigator() {
             component={ViewDocumentScreen}
             options={{ animation: 'slide_from_right' }}
           />
+          <Stack.Screen
+            name="ActiveOrdersList"
+            component={ActiveOrdersListScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{ headerShown: false }}
+          />
         </>
       )}
     </Stack.Navigator>
   );
 }
 
-// ─── App Navigator ─────────────────────────────────────────────────────────────
+// ─── App Navigator ────────────────────────────────────────────────────────────
 
 export default function AppNavigator() {
   return (
@@ -191,6 +280,58 @@ export default function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
+  // ── Tab Bar ──────────────────────────────────────────────
+  tabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    paddingTop: 2,
+    gap: 3,
+  },
+  tabIconWrap: {
+    width: 44,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconWrapActive: {
+    backgroundColor: Colors.primary + '18', // ~10% opacity tint
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textMuted,
+    letterSpacing: 0.1,
+  },
+  tabLabelActive: {
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+
+  // ── Badge ────────────────────────────────────────────────
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: Colors.danger,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: Colors.white,
+    zIndex: 10,
+  },
+  badgeText: {
+    color: Colors.white,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+
+  // ── Splash ───────────────────────────────────────────────
   splash: {
     flex: 1,
     backgroundColor: Colors.primary,

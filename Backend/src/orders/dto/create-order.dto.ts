@@ -20,8 +20,7 @@ class ShippingAddressDto {
   @IsString() @IsNotEmpty() state: string;
   @IsString() @IsNotEmpty() postalCode: string;
   @IsString() @IsNotEmpty() country: string;
-  @IsNumber() @IsOptional() latitude?: number;
-  @IsNumber() @IsOptional() longitude?: number;
+  @IsObject() @IsOptional() location?: { latitude: number; longitude: number };
 }
 
 class OrderItemDto {

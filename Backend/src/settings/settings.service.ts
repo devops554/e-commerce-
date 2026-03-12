@@ -47,7 +47,7 @@ export class SettingsService implements OnModuleInit {
     data: Partial<StoreConfig>,
   ): Promise<StoreConfigDocument | null> {
     return this.storeConfigModel
-      .findOneAndUpdate(
+      .findOneAndReplace(
         { configKey: this.CONFIG_KEY },
         { $set: data },
         { new: true },

@@ -22,7 +22,9 @@
     "plugins": [
       "expo-secure-store",
       "expo-location",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-audio",
+      "expo-video"
     ],
     "newArchEnabled": true,
     "scheme": "swift-deliver-partner"

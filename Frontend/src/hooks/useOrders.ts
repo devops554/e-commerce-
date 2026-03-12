@@ -9,10 +9,10 @@ import { clearCart } from "@/store/slices/cartSlice";
 import { UseQueryResult } from "@tanstack/react-query";
 import { OrdersResponse } from "@/services/order.service";
 
-export const useWarehouseOrders = (warehouseId: string) => {
+export const useWarehouseOrders = (warehouseId: string, params: { page?: number; limit?: number; search?: string } = {}) => {
     return useQuery({
-        queryKey: ['warehouse-orders', warehouseId],
-        queryFn: () => orderService.getWarehouseOrders(warehouseId),
+        queryKey: ['warehouse-orders', warehouseId, params],
+        queryFn: () => orderService.getWarehouseOrders(warehouseId, params),
         enabled: !!warehouseId,
     });
 };

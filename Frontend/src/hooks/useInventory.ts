@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryService, AdjustStockDto, TransferStockDto } from "@/services/inventory.service";
 import { toast } from "sonner";
 
-export const useWarehouseInventory = (warehouseId: string) => {
+export const useWarehouseInventory = (warehouseId: string, params: { page?: number; limit?: number; search?: string } = {}) => {
     return useQuery({
-        queryKey: ['warehouse-inventory', warehouseId],
-        queryFn: () => inventoryService.getWarehouseInventory(warehouseId),
+        queryKey: ['warehouse-inventory', warehouseId, params],
+        queryFn: () => inventoryService.getWarehouseInventory(warehouseId, params),
         enabled: !!warehouseId,
     });
 };
@@ -17,6 +17,7 @@ export const useAdjustStock = () => {
         mutationFn: (data: AdjustStockDto) => inventoryService.adjustStock(data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['warehouse-inventory', variables.warehouseId] });
+            queryClient.invalidateQueries({ queryKey: ['manager-warehouse-inventory'] });
             toast.success("Stock adjusted successfully");
         },
         onError: (error: any) => {
@@ -33,6 +34,7 @@ export const useTransferStock = () => {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['warehouse-inventory', variables.fromWarehouseId] });
             queryClient.invalidateQueries({ queryKey: ['warehouse-inventory', variables.toWarehouseId] });
+            queryClient.invalidateQueries({ queryKey: ['manager-warehouse-inventory'] });
             toast.success("Stock transferred successfully");
         },
         onError: (error: any) => {
@@ -41,18 +43,18 @@ export const useTransferStock = () => {
     });
 };
 
-export const useStockHistory = (warehouseId: string | undefined) => {
+export const useStockHistory = (warehouseId: string | undefined, params: { page?: number; limit?: number; search?: string } = {}) => {
     return useQuery({
-        queryKey: ['stock-history', warehouseId],
-        queryFn: () => inventoryService.getHistory(warehouseId as string),
+        queryKey: ['stock-history', warehouseId, params],
+        queryFn: () => inventoryService.getHistory(warehouseId as string, params),
         enabled: !!warehouseId,
     });
 };
 
-export const useManagerWarehouseInventory = () => {
+export const useManagerWarehouseInventory = (params: { page?: number; limit?: number; search?: string } = {}) => {
     return useQuery({
-        queryKey: ['manager-warehouse-inventory'],
-        queryFn: () => inventoryService.getManagerWarehouseInventory(),
+        queryKey: ['manager-warehouse-inventory', params],
+        queryFn: () => inventoryService.getManagerWarehouseInventory(params),
     });
 };
 

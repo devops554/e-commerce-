@@ -1,24 +1,21 @@
 "use client";
 
-
 import React, { useEffect, useState } from 'react'
 import { useOrderById, useDispatchItem, useCancelOrder } from '@/hooks/useOrders'
 import { useShipments } from '@/hooks/useShipments'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+const LiveTrackingMap = dynamic(() => import('@/components/manager/LiveTrackingMap'), { ssr: false })
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import {
-    ArrowLeft, Loader2, AlertCircle, ShoppingBag,
-    User, Phone, MapPin, Check, XCircle, Truck, Hash, Calendar, Info, Package,
-    BadgeCheck, ChevronRight
+    ArrowLeft, Loader2, AlertCircle, ShoppingBag, Truck, ChevronRight,
+    XCircle
 } from 'lucide-react'
 import { FaWhatsapp } from "react-icons/fa"
-import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatusCard } from '@/components/order/OrderStatusCard'
-import { OrderItemCard } from '@/components/order/OrderItemCard'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
 import { AssignPartnerDialog } from '@/components/admin/AssignPartnerDialog'
@@ -41,112 +38,19 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 
-// ─── Item status → action config ────────────────────────────────────────────
-function ItemActionCell({
-    item,
-    orderStatus,
-    onConfirm,
-    isPending,
-}: {
-    item: any
-    orderStatus: string
-    onConfirm: (variantId: string) => void
-    isPending: boolean
-}) {
-    const s = (item.status ?? '').toLowerCase()
-    const os = (orderStatus ?? '').toLowerCase()
+// Extracted sub-components
+import { ItemActionCell, getNextStepConfig } from './_components/OrderActionComponents'
+import { DeliveryDetails } from './_components/DeliveryDetails'
+import { LogisticsCard } from './_components/LogisticsCard'
+import { WarehousePackingList } from './_components/WarehousePackingList'
+import { OrderMetaCard } from './_components/OrderMetaCard'
 
-    // ── Terminal / read-only badges ──────────────────────────────────────────
-    if (['shipped', 'delivered'].includes(s)) {
-        return (
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-black px-4 py-2 rounded-xl gap-1.5 whitespace-nowrap">
-                <Check className="h-3.5 w-3.5" />
-                {s.toUpperCase()}
-            </Badge>
-        )
-    }
-    if (s === 'cancelled') {
-        return (
-            <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-100 font-black px-4 py-2 rounded-xl gap-1.5 whitespace-nowrap">
-                <XCircle className="h-3.5 w-3.5" />
-                CANCELLED
-            </Badge>
-        )
-    }
-    if (s === 'pending_reassignment') {
-        return (
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 font-black px-4 py-2 rounded-xl gap-1.5 whitespace-nowrap">
-                <AlertCircle className="h-3.5 w-3.5" />
-                Reassignment Pending
-            </Badge>
-        )
-    }
-    if (s === 'packed') {
-        return (
-            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-black px-4 py-2 rounded-xl gap-1.5 whitespace-nowrap">
-                <Package className="h-3.5 w-3.5" />
-                PACKED
-            </Badge>
-        )
-    }
-    if (s === 'confirmed') {
-        return (
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 font-black px-4 py-2 rounded-xl gap-1.5 whitespace-nowrap">
-                <BadgeCheck className="h-3.5 w-3.5" />
-                CONFIRMED
-            </Badge>
-        )
-    }
-
-    // ── Order-level block ────────────────────────────────────────────────────
-    if (['cancelled', 'delivered'].includes(os)) {
-        return (
-            <Badge variant="outline" className="bg-slate-50 text-slate-400 border-slate-200 font-bold px-4 py-2 rounded-xl whitespace-nowrap">
-                No Action
-            </Badge>
-        )
-    }
-
-    // ── Active: pending / processing / anything else → Confirm button ────────
-    return (
-        <Button
-            className="bg-slate-900 hover:bg-black text-white font-black px-5 rounded-xl h-10 shadow-md shadow-slate-200 gap-2 transition-all active:scale-95 whitespace-nowrap"
-            onClick={() => onConfirm(item.variant._id)}
-            disabled={isPending}
-        >
-            {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                <Check className="h-4 w-4" />
-            )}
-            Confirm Item
-        </Button>
-    )
-}
-
-// ─── Next-step CTA shown in the header ──────────────────────────────────────
-function getNextStepConfig(shipmentStatus?: string) {
-    switch (shipmentStatus) {
-        case ShipmentStatus.ORDER_PLACED:
-            return { label: 'Mark as Packed', icon: <Package className="w-4 h-4" />, color: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' }
-        case ShipmentStatus.PACKED:
-        case ShipmentStatus.ASSIGNED_TO_DELIVERY:
-        case ShipmentStatus.ACCEPTED:
-            return { label: 'Handover to Partner', icon: <Truck className="w-4 h-4" />, color: 'bg-violet-600 hover:bg-violet-700 shadow-violet-200' }
-        case ShipmentStatus.PICKED_UP:
-            return { label: 'Start Delivery', icon: <Truck className="w-4 h-4" />, color: 'bg-sky-600 hover:bg-sky-700 shadow-sky-200' }
-        case ShipmentStatus.OUT_FOR_DELIVERY:
-            return { label: 'Complete Delivery', icon: <Check className="w-4 h-4" />, color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' }
-        default:
-            return null
-    }
-}
-
-// ─── Page ────────────────────────────────────────────────────────────────────
 export default function ManagerOrderDetailsPage() {
     const params = useParams()
     const router = useRouter()
+    const searchParams = useSearchParams()
     const orderId = params.id as string
+    const [activeTab, setActiveTab] = useState<'details' | 'tracking'>(searchParams.get('tab') === 'tracking' ? 'tracking' : 'details')
     const { setBreadcrumbs } = useBreadcrumb()
 
     const { data: warehouse, isLoading: isWarehouseLoading } = useManagerWarehouse()
@@ -209,7 +113,10 @@ export default function ManagerOrderDetailsPage() {
                 case ShipmentStatus.ASSIGNED_TO_DELIVERY:
                 case ShipmentStatus.ACCEPTED:
                 case ShipmentStatus.PACKED:
-                    if (!partner) { setIsAssignDialogOpen(true); return }
+                    if (!partner) {
+                        setIsAssignDialogOpen(true)
+                        return
+                    }
                     await requestPickupOtpMutation.mutateAsync(shipment._id)
                     setOtpDialog({ open: true, type: 'pickup' })
                     toast.success('Pickup OTP sent to partner')
@@ -273,8 +180,6 @@ export default function ManagerOrderDetailsPage() {
     )
 
     const isCancellable = !['cancelled', 'delivered', 'shipped'].includes(order.orderStatus)
-
-    // Count items by status for the summary bar
     const confirmedCount = warehouseItems.filter((i: any) => ['confirmed', 'packed', 'shipped', 'delivered'].includes((i.status ?? '').toLowerCase())).length
     const totalCount = warehouseItems.length
 
@@ -345,7 +250,6 @@ export default function ManagerOrderDetailsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    {/* Dynamic next-step CTA with colour per status */}
                     {nextStep && (
                         <Button
                             onClick={handleStatusTransition}
@@ -371,276 +275,102 @@ export default function ManagerOrderDetailsPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column */}
-                <div className="lg:col-span-2 space-y-6">
-                    <OrderStatusCard
-                        orderStatus={order.orderStatus}
-                        totalAmount={order.totalAmount}
-                        createdAt={order.createdAt}
-                        orderId={order.orderId}
-                        cancelReason={order.cancelReason}
-                        cancelAt={order.cancelAt}
-                        cancelBy={order.cancelBy}
+            {/* Sub-navigation Tabs */}
+            {shipment && shipment.status !== 'ORDER_PLACED' && shipment.status !== 'PACKED' && (
+                <div className="flex items-center gap-6 border-b border-slate-200 mt-2 mb-6">
+                    <button
+                        onClick={() => setActiveTab('details')}
+                        className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'details' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        Order Details
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('tracking')}
+                        className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'tracking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        Live Tracking
+                    </button>
+                </div>
+            )}
+
+            {activeTab === 'details' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                        <OrderStatusCard
+                            orderStatus={order.orderStatus}
+                            totalAmount={order.totalAmount}
+                            createdAt={order.createdAt}
+                            orderId={order.orderId}
+                            cancelReason={order.cancelReason}
+                            cancelAt={order.cancelAt}
+                            cancelBy={order.cancelBy}
+                        />
+
+                        <LogisticsCard
+                            shipment={shipment}
+                            partner={partner}
+                            onAssignPartner={() => setIsAssignDialogOpen(true)}
+                            onViewPartner={(id) => router.push(`/manager/delivery-partners/${id}`)}
+                        />
+
+                        <WarehousePackingList
+                            warehouseItems={warehouseItems}
+                            confirmedCount={confirmedCount}
+                            totalCount={totalCount}
+                            orderStatus={order.orderStatus}
+                            onConfirm={handleConfirm}
+                            isDispatching={dispatchMutation.isPending}
+                        />
+                    </div>
+
+                    <div className="space-y-6">
+                        <DeliveryDetails order={order} />
+                        <OrderMetaCard order={order} />
+                    </div>
+                </div>
+            ) : (
+                <div className="w-full h-[500px] lg:h-[600px] bg-slate-100 rounded-3xl border border-slate-200 overflow-hidden relative shadow-sm mt-4">
+                    <LiveTrackingMap
+                        warehouseLoc={warehouse?.location}
+                        customerLoc={order?.shippingAddress}
+                        partnerLoc={partner?.currentLocation}
+                        partnerName={partner?.name}
                     />
 
-                    {/* Logistics Card */}
-                    <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
-                        <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between">
-                            <CardTitle className="text-base font-black flex items-center gap-2 text-slate-900">
-                                <Truck className="w-5 h-5 text-indigo-500" />
-                                Logistics & Assignment
-                            </CardTitle>
-                            {shipment && (
-                                <Badge className={`font-bold capitalize ${shipment.status === 'DELIVERED' ? 'bg-green-100 text-green-700' : shipment.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}>
-                                    {shipment.status.replace(/_/g, ' ')}
-                                </Badge>
-                            )}
-                        </CardHeader>
-                        <CardContent className="px-6 py-6 font-medium">
-                            {!shipment ? (
-                                <div className="flex flex-col items-center justify-center py-6 text-slate-500 gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                                        <Info className="w-6 h-6 text-slate-300" />
-                                    </div>
-                                    <p className="text-sm font-bold text-slate-400">No delivery partner assigned to this order yet.</p>
-                                    <Button onClick={() => router.push('/manager/orders')} variant="outline" size="sm" className="rounded-xl font-black bg-white border-slate-200">Go to Assignment List</Button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-5">
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Assigned Delivery Partner</span>
-                                            {!partner ? (
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="flex items-center gap-3 bg-rose-50/50 p-3 rounded-2xl border border-rose-100">
-                                                        <AlertCircle className="w-5 h-5 text-rose-500" />
-                                                        <p className="text-xs font-bold text-rose-600">No partner assigned</p>
-                                                    </div>
-                                                    <Button onClick={() => setIsAssignDialogOpen(true)} className="rounded-xl bg-slate-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 w-full">Assign Partner Now</Button>
-                                                </div>
-                                            ) : (
-                                                <div onClick={() => router.push(`/manager/delivery-partners/${partner._id}`)} className="flex cursor-pointer items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                                                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-                                                        <User className="w-5 h-5 text-indigo-600" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-black text-slate-900 truncate">{partner.name || 'N/A'}</p>
-                                                        <p className="text-[10px] text-slate-500 font-bold">{partner.phone || 'No phone'}</p>
-                                                    </div>
-                                                    <div className="ml-auto flex items-center gap-1">
-                                                        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 cursor-pointer text-green-500" onClick={() => partner.phone && window.open(`https://wa.me/${partner.phone}`, '_blank')}><FaWhatsapp size={18} /></Button>
-
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Tracking Number</span>
-                                            <div className="flex items-center gap-2 text-sm font-mono font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-fit">
-                                                <Hash className="w-3.5 h-3.5 text-slate-400" />
-                                                {shipment.trackingNumber}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-5">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Assigned On</span>
-                                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                                                    <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                                                    {shipment.assignedAt ? format(new Date(shipment.assignedAt), 'MMM dd, HH:mm') : 'Pending'}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Picked Up</span>
-                                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                                                    <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                                                    {shipment.pickedAt ? format(new Date(shipment.pickedAt), 'MMM dd, HH:mm') : 'Pending'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest block">Dispatch Agent</span>
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
-                                                <Check className={`w-4 h-4 ${shipment.deliveredAt ? 'text-green-600' : 'text-slate-300'}`} />
-                                                {shipment.deliveredAt
-                                                    ? `Delivered on ${format(new Date(shipment.deliveredAt), 'MMM dd, yyyy HH:mm')}`
-                                                    : shipment.status === 'OUT_FOR_DELIVERY' ? 'Order is out for delivery'
-                                                        : shipment.status === 'ACCEPTED' ? 'Partner accepted, awaiting pickup'
-                                                            : shipment.status === 'ASSIGNED_TO_DELIVERY' ? 'Awaiting partner acceptance'
-                                                                : 'Awaiting pickup from warehouse'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* ── Warehouse Packing List ── */}
-                    <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
-                        {/* HEADER */}
-                        <CardHeader className="pb-3 px-4 sm:px-6 pt-5 sm:pt-6 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
-                            <CardTitle className="text-sm sm:text-base font-black flex items-center gap-2 text-slate-900">
-                                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                                Warehouse Packing List
-                            </CardTitle>
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                                {/* Progress pill */}
-                                {totalCount > 0 && (
-                                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-2.5 py-1 shadow-sm">
-
-                                        <div className="flex gap-0.5">
-                                            {warehouseItems.map((_: any, idx: number) => {
-                                                const st = (warehouseItems[idx].status ?? '').toLowerCase()
-                                                const done = ['confirmed', 'packed', 'shipped', 'delivered'].includes(st)
-
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className={`h-1.5 w-3 sm:w-4 rounded-full ${done ? 'bg-emerald-400' : 'bg-slate-200'
-                                                            }`}
-                                                    />
-                                                )
-                                            })}
-                                        </div>
-
-                                        <span className="text-[10px] font-black text-slate-500">
-                                            {confirmedCount}/{totalCount}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <Badge className="bg-white text-slate-600 border-slate-200 font-bold text-xs sm:text-sm">
-                                    {totalCount} Items
-                                </Badge>
-
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-6 w-[90%] md:w-80 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-[400] border border-slate-100">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-black text-slate-900 text-sm flex items-center gap-1.5">
+                                <Truck className="w-4 h-4 text-indigo-500" /> Live Status
+                            </h4>
+                            <Badge className="bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] uppercase font-black tracking-widest border-none">
+                                En Route
+                            </Badge>
+                        </div>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Partner</p>
+                                <p className="text-sm font-black text-slate-800">{partner?.name || 'Assigned Partner'}</p>
                             </div>
-                        </CardHeader>
-
-                        {/* CONTENT */}
-                        <CardContent className="px-4 sm:px-6 py-5 sm:py-6 space-y-5">
-
-                            {warehouseItems.length === 0 ? (
-                                <div className="text-center py-6 text-slate-500 font-medium">
-                                    No items in this order are assigned to your warehouse.
-                                </div>
-                            ) : (
-                                warehouseItems.map((item: any, i: number) => (
-                                    <div
-                                        key={item._id ?? i}
-                                        className="relative group flex flex-col sm:flex-row sm:items-start sm:justify-between border-b border-slate-100 pb-5 last:border-0 last:pb-0 gap-3 sm:gap-4"
-                                    >
-
-                                        {/* Product Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <OrderItemCard
-                                                item={item}
-                                                isLast={i === warehouseItems.length - 1}
-                                            />
-                                        </div>
-
-                                        {/* Action */}
-                                        <div className="sm:shrink-0 sm:self-center mt-2 sm:mt-0 w-full sm:w-auto">
-                                            <ItemActionCell
-                                                item={item}
-                                                orderStatus={order.orderStatus}
-                                                onConfirm={handleConfirm}
-                                                isPending={dispatchMutation.isPending}
-                                            />
-                                        </div>
-
-                                    </div>
-                                ))
-                            )}
-
-                        </CardContent>
-                    </Card>
+                            <div>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Destination</p>
+                                <p className="text-xs font-bold text-slate-700 truncate">{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            )}
 
-                {/* Right Column */}
-                <div className="space-y-6">
-                    <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
-                        <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100">
-                            <CardTitle className="text-base font-black flex items-center gap-2 text-slate-900">
-                                <User className="w-5 h-5 text-slate-400" />
-                                Delivery Details
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-6 py-5 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                                    <User className="w-5 h-5 text-slate-500" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-black text-slate-900">{order.shippingAddress?.fullName}</p>
-                                </div>
-                            </div>
-                            <Separator className="bg-slate-100" />
-                            <div className="flex items-center gap-3 text-slate-600">
-                                <Phone className="w-4 h-4 text-slate-400" />
-                                <span className="text-xs font-bold font-mono">{order.shippingAddress?.phone}</span>
-                            </div>
-                            <div
-                                className="bg-slate-50 rounded-xl p-4 border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors group"
-                                onClick={() => {
-                                    const { latitude, longitude, street, city, state, postalCode } = order.shippingAddress
-                                    const url = latitude && longitude
-                                        ? `https://www.google.com/maps?q=${latitude},${longitude}`
-                                        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${city}, ${state}, ${postalCode}`)}`
-                                    window.open(url, '_blank')
-                                }}
-                            >
-                                <div className="flex gap-2">
-                                    <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5 group-hover:text-blue-500 transition-colors" />
-                                    <p className="text-xs text-slate-600 font-medium leading-relaxed group-hover:text-blue-600 transition-colors">
-                                        {order.shippingAddress?.street},<br />
-                                        {order.shippingAddress?.landmark && <>{order.shippingAddress.landmark},<br /></>}
-                                        {order.shippingAddress?.city}, {order.shippingAddress?.state}<br />
-                                        {order.shippingAddress?.postalCode} - {order.shippingAddress?.country}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden bg-white">
-                        <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100">
-                            <CardTitle className="text-base font-black text-slate-900">Order Meta</CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-6 py-5">
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500 font-medium">Placed On</span>
-                                    <span className="font-bold text-slate-900">{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500 font-medium">Payment</span>
-                                    <span className={`font-bold text-xs px-2 py-0.5 rounded-full ${(order as any).paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                        {(order as any).paymentStatus || 'pending'}
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            {
-                shipment && (
-                    <AssignPartnerDialog
-                        isOpen={isAssignDialogOpen}
-                        onClose={() => setIsAssignDialogOpen(false)}
-                        shipmentId={shipment._id}
-                        warehouseId={warehouse._id}
-                        trackingNumber={shipment.trackingNumber}
-                    />
-                )
-            }
+            {shipment && (
+                <AssignPartnerDialog
+                    isOpen={isAssignDialogOpen}
+                    onClose={() => setIsAssignDialogOpen(false)}
+                    shipmentId={shipment._id}
+                    warehouseId={warehouse._id}
+                    trackingNumber={shipment.trackingNumber}
+                />
+            )}
 
             <OTPVerificationDialog
                 isOpen={otpDialog.open}
@@ -653,6 +383,6 @@ export default function ManagerOrderDetailsPage() {
                     : 'Ask the customer for the OTP sent to their phone/app.'
                 }
             />
-        </div >
+        </div>
     )
 }

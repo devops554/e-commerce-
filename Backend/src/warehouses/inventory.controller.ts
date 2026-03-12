@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { AdjustStockDto, TransferStockDto } from './dto/inventory.dto';
@@ -33,14 +34,34 @@ export default class InventoryController {
 
   @Get('warehouse/:id')
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
-  async getWarehouseInventory(@Param('id') id: string) {
-    return this.inventoryService.getWarehouseInventory(id);
+  async getWarehouseInventory(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.inventoryService.getWarehouseInventory({
+      warehouseId: id,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      search,
+    });
   }
 
   @Get('warehouse/:id/history')
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
-  async getWarehouseHistory(@Param('id') id: string) {
-    return this.inventoryService.getHistory(id);
+  async getWarehouseHistory(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.inventoryService.getHistory({
+      warehouseId: id,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      search,
+    });
   }
 
   // Manager receives stock into their own warehouse (warehouseId auto-resolved)
@@ -51,7 +72,7 @@ export default class InventoryController {
     @Body() body: { variantId: string; amount: number; source?: string },
   ) {
     return this.inventoryService.managerReceiveStock(
-      req.user.id,
+      req.user._id,
       body.variantId,
       body.amount,
       body.source,
@@ -61,7 +82,17 @@ export default class InventoryController {
   // Manager gets inventory for their own warehouse
   @Get('manager/my-warehouse')
   @Roles(UserRole.MANAGER)
-  async getMyWarehouseInventory(@Req() req: any) {
-    return this.inventoryService.getManagerWarehouseInventory(req.user.id);
+  async getMyWarehouseInventory(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.inventoryService.getManagerWarehouseInventory({
+      managerId: req.user._id,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      search,
+    });
   }
 }

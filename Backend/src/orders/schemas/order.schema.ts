@@ -166,6 +166,7 @@ export class Order extends Document {
       state: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
+      location: { type: { latitude: Number, longitude: Number } },
     },
     required: true,
   })
@@ -178,6 +179,7 @@ export class Order extends Document {
     state: string;
     postalCode: string;
     country: string;
+    location?: { latitude: number; longitude: number };
   };
 
   @Prop()

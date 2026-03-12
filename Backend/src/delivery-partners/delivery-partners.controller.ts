@@ -23,12 +23,16 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { DeliveryPartnerJwtGuard } from './delivery-partner.guard';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Controller('delivery-partners')
 export class DeliveryPartnersController {
   private readonly logger = new Logger(DeliveryPartnersController.name);
 
-  constructor(private readonly deliveryService: DeliveryPartnersService) {}
+  constructor(
+    private readonly deliveryService: DeliveryPartnersService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   // ─── PARTNER AUTHENTICATION ───
 
@@ -50,6 +54,27 @@ export class DeliveryPartnersController {
   @Patch('me/location')
   async updateMyLocation(@Req() req: any, @Body() dto: UpdateLocationDto) {
     return this.deliveryService.updateLocation(req.deliveryPartner._id, dto);
+  }
+
+  // ✅ Delivery partner notifications — uses partner JWT, NOT user JWT
+  @UseGuards(DeliveryPartnerJwtGuard)
+  @Get('me/notifications')
+  async getMyNotifications(@Req() req: any) {
+    const partnerId = req.deliveryPartner._id.toString();
+    return this.notificationsService.findAll('delivery_partner', partnerId);
+  }
+
+  @UseGuards(DeliveryPartnerJwtGuard)
+  @Patch('me/notifications/:id/read')
+  async markNotificationRead(@Param('id') id: string) {
+    return this.notificationsService.markAsRead(id);
+  }
+
+  @UseGuards(DeliveryPartnerJwtGuard)
+  @Patch('me/notifications/read-all')
+  async markAllNotificationsRead(@Req() req: any) {
+    const partnerId = req.deliveryPartner._id.toString();
+    return this.notificationsService.markAllAsRead('delivery_partner', partnerId);
   }
 
   @UseGuards(DeliveryPartnerJwtGuard)
@@ -93,8 +118,9 @@ export class DeliveryPartnersController {
     @Query('page') page: number,
     @Query('limit') limit: number,
     @Query('warehouseId') warehouseId?: string,
+    @Query('search') search?: string,
   ) {
-    return this.deliveryService.findAll({ page, limit, warehouseId });
+    return this.deliveryService.findAll({ page, limit, warehouseId, search });
   }
 
   @Get(':id')

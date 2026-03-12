@@ -3,10 +3,10 @@ import { warehouseService, type Warehouse } from '../services/warehouse.service'
 export type { Warehouse };
 import { toast } from 'sonner';
 
-export const useWarehouses = () => {
+export const useWarehouses = (params?: { page?: number; limit?: number; search?: string }) => {
     return useQuery({
-        queryKey: ['warehouses'],
-        queryFn: () => warehouseService.getAll(),
+        queryKey: ['warehouses', params],
+        queryFn: () => warehouseService.getAll(params),
     });
 };
 

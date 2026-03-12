@@ -361,3 +361,141 @@ export function DispatchedOrdersTable({ orders, isMyItem }: OrderTableProps) {
         </>
     )
 }
+
+// ─── Order Tracker View (Live Tracking) ──────────────────────────────────────
+
+export function OrderTrackerView({ orders, isMyItem }: OrderTableProps) {
+    const router = useRouter()
+    if (orders.length === 0) return <EmptyState label="No Tracking Active" />
+
+    // Simplified live tracking view - manager can see orders out for delivery
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                    <TableHead className="font-bold text-slate-600 w-[130px]">Order ID</TableHead>
+                    <TableHead className="font-bold text-slate-600">Customer &amp; Destination</TableHead>
+                    <TableHead className="font-bold text-slate-600">Active Delivery Items</TableHead>
+                    <TableHead className="font-bold text-slate-600">Assigned Partner</TableHead>
+                    <TableHead className="font-bold text-slate-600 text-right pr-6">Trace</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {orders.map((order: any) => {
+                    const trackingItems = order.items.filter(isMyItem).filter((i: any) => i.status?.toLowerCase() === 'shipped')
+                    return (
+                        <TableRow key={order._id} className="hover:bg-slate-50/50 transition-colors">
+                            <TableCell>
+                                <p className="font-black text-slate-900 text-xs font-mono">{order.orderId}</p>
+                            </TableCell>
+                            <TableCell>
+                                <div>
+                                    <p className="font-bold text-slate-800 text-sm">{(order.user as any)?.name || order.shippingAddress?.fullName}</p>
+                                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-medium">
+                                        <MapPin className="h-3 w-3 shrink-0" />
+                                        {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.postalCode}
+                                    </p>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col gap-1.5">
+                                    {trackingItems.map((item: any, idx: number) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <p className="text-xs font-bold text-slate-800 truncate max-w-[150px]">{item.title}</p>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${STATUS_COLOR[item.status?.toLowerCase()] ?? 'bg-slate-100 text-slate-700'}`}>
+                                                {item.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                {/* Need shipment data populated by backend for the real partner details */}
+                                <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-600 font-medium">Delivery Partner Active</span>
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-right pr-6">
+                                <Button
+                                    size="sm"
+                                    onClick={() => router.push(`/manager/orders/${order._id}?tab=tracking`)}
+                                    className="h-7 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] px-3 rounded-lg shadow-sm"
+                                >
+                                    <MapPin className="h-3 w-3 mr-1" /> Trace Order
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    )
+                })}
+            </TableBody>
+        </Table>
+    )
+}
+
+// ─── Completed Orders View (History) ─────────────────────────────────────────
+
+export function CompletedOrdersView({ orders, isMyItem }: OrderTableProps) {
+    const router = useRouter()
+    if (orders.length === 0) return <EmptyState label="No Completed Orders" />
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                    <TableHead className="font-bold text-slate-600 w-[130px]">Order ID</TableHead>
+                    <TableHead className="font-bold text-slate-600">Delivered To</TableHead>
+                    <TableHead className="font-bold text-slate-600">Delivered Items</TableHead>
+                    <TableHead className="font-bold text-slate-600">Delivery Date</TableHead>
+                    <TableHead className="font-bold text-slate-600 text-right pr-6">Details</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {orders.map((order: any) => {
+                    const deliveredItems = order.items.filter(isMyItem).filter((i: any) => i.status?.toLowerCase() === 'delivered')
+                    return (
+                        <TableRow key={order._id} className="hover:bg-slate-50/50 transition-colors">
+                            <TableCell>
+                                <p className="font-black text-slate-900 text-xs font-mono">{order.orderId}</p>
+                            </TableCell>
+                            <TableCell>
+                                <div>
+                                    <p className="font-bold text-slate-800 text-sm">{(order.user as any)?.name || order.shippingAddress?.fullName}</p>
+                                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-medium">
+                                        <MapPin className="h-3 w-3 shrink-0" />
+                                        {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.postalCode}
+                                    </p>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col gap-1.5">
+                                    {deliveredItems.map((item: any, idx: number) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <p className="text-xs font-bold text-slate-800 truncate max-w-[150px]">{item.title}</p>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${STATUS_COLOR['delivered']}`}>
+                                                Delivered
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    {format(new Date(order.updatedAt || order.createdAt), 'MMM dd, yyyy hh:mm a')}
+                                </p>
+                            </TableCell>
+                            <TableCell className="text-right pr-6">
+                                <Button
+                                    variant="outline" size="icon"
+                                    className="rounded-xl h-8 w-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                    onClick={() => router.push(`/manager/orders/${order._id}`)}
+                                >
+                                    <Check className="w-4 h-4" />
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    )
+                })}
+            </TableBody>
+        </Table>
+    )
+}

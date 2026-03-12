@@ -17,8 +17,14 @@ Notifications.setNotificationHandler({
 
 class NotificationService {
   private expoPushToken: string | null = null;
+  private isRegistered = false; // ✅ prevent duplicate registration calls
 
   async registerForPushNotifications(): Promise<string | null> {
+    // ✅ Skip if already registered
+    if (this.isRegistered && this.expoPushToken) {
+      return this.expoPushToken;
+    }
+
     if (!Device.isDevice) {
       console.warn('[Notifications] Must use physical device for push notifications');
       return null;
@@ -37,16 +43,32 @@ class NotificationService {
       return null;
     }
 
+    // ✅ SDK 53+: appOwnership check removed (deprecated), use dev client detection instead
+    const isExpoGo = Constants.executionEnvironment === 'storeClient';
+    if (isExpoGo) {
+      console.warn(
+        '[Notifications] Push notifications not supported in Expo Go SDK 53+. Use a development build.'
+      );
+      return null;
+    }
+
     try {
-      if (Constants.appOwnership === 'expo') {
-        console.warn('[Notifications] Push notifications not fully supported in Expo Go SDK 53+. Bypassing token fetch.');
+      // ✅ projectId is required for getExpoPushTokenAsync in SDK 53+
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ??
+        Constants.easConfig?.projectId;
+
+      if (!projectId) {
+        console.warn('[Notifications] Missing EAS projectId in app config. Push token cannot be fetched.');
         return null;
       }
 
-      const token = (await Notifications.getExpoPushTokenAsync()).data;
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
       this.expoPushToken = token;
+      this.isRegistered = true;
       console.log('[Notifications] Expo push token:', token);
 
+      // ✅ Android notification channel setup
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('orders', {
           name: 'Order Notifications',
@@ -54,26 +76,48 @@ class NotificationService {
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#1A1F5E',
           sound: 'default',
+          enableVibrate: true,
+          showBadge: true,
+        });
+
+        // ✅ Separate channel for OTP — high priority, no sound override
+        await Notifications.setNotificationChannelAsync('otp', {
+          name: 'OTP Notifications',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 100],
+          sound: 'default',
         });
       }
 
       return token;
     } catch (error) {
-      console.warn('[Notifications] Failed to get push token (expected in Expo Go SDK 54+):', error);
+      console.warn('[Notifications] Failed to get push token:', error);
       return null;
     }
   }
 
-  async scheduleLocalNotification(title: string, body: string, data?: Record<string, unknown>): Promise<void> {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data: data ?? {},
-        sound: 'default',
-      },
-      trigger: null, // immediate
-    });
+  async scheduleLocalNotification(
+    title: string,
+    body: string,
+    data?: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: data ?? {},
+          sound: 'default',
+          // ✅ Use correct channel on Android
+          ...(Platform.OS === 'android' && {
+            categoryIdentifier: data?.type === 'OTP' ? 'otp' : 'orders',
+          }),
+        },
+        trigger: null, // immediate
+      });
+    } catch (error) {
+      console.warn('[Notifications] scheduleLocalNotification failed:', error);
+    }
   }
 
   async notifyNewOrder(orderId: string, amount: number): Promise<void> {
@@ -90,6 +134,16 @@ class NotificationService {
       `Order #${orderId} has been assigned to you`,
       { type: 'ORDER_ASSIGNED', orderId }
     );
+  }
+
+  // ✅ New: dismiss all delivered notifications (e.g. on logout or app focus)
+  async dismissAllNotifications(): Promise<void> {
+    await Notifications.dismissAllNotificationsAsync();
+  }
+
+  // ✅ New: reset badge count
+  async resetBadgeCount(): Promise<void> {
+    await Notifications.setBadgeCountAsync(0);
   }
 
   getExpoPushToken(): string | null {

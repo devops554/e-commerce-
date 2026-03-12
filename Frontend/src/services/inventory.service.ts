@@ -28,9 +28,25 @@ export interface TransferStockDto {
     source?: string;
 }
 
+export interface PaginatedInventory {
+    items: InventoryItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface PaginatedHistory {
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export const inventoryService = {
-    getWarehouseInventory: async (warehouseId: string): Promise<InventoryItem[]> => {
-        const response = await axiosClient.get<InventoryItem[]>(`/inventory/warehouse/${warehouseId}`);
+    getWarehouseInventory: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string }): Promise<PaginatedInventory> => {
+        const response = await axiosClient.get<PaginatedInventory>(`/inventory/warehouse/${warehouseId}`, { params });
         return response.data;
     },
 
@@ -44,8 +60,8 @@ export const inventoryService = {
         return response.data;
     },
 
-    getHistory: async (warehouseId: string): Promise<any[]> => {
-        const response = await axiosClient.get<any[]>(`/inventory/warehouse/${warehouseId}/history`);
+    getHistory: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string }): Promise<PaginatedHistory> => {
+        const response = await axiosClient.get<PaginatedHistory>(`/inventory/warehouse/${warehouseId}/history`, { params });
         return response.data;
     },
 
@@ -56,8 +72,8 @@ export const inventoryService = {
     },
 
     // Manager-scoped: get their own warehouse inventory
-    getManagerWarehouseInventory: async (): Promise<InventoryItem[]> => {
-        const response = await axiosClient.get<InventoryItem[]>('/inventory/manager/my-warehouse');
+    getManagerWarehouseInventory: async (params?: { page?: number; limit?: number; search?: string }): Promise<PaginatedInventory> => {
+        const response = await axiosClient.get<PaginatedInventory>('/inventory/manager/my-warehouse', { params });
         return response.data;
     },
 };

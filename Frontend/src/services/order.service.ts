@@ -228,8 +228,8 @@ export const orderService = {
         return response.data;
     },
 
-    getWarehouseOrders: async (warehouseId: string): Promise<Order[]> => {
-        const response = await axiosClient.get<Order[]>(`/orders/warehouse/${warehouseId}`);
+    getWarehouseOrders: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string }): Promise<OrdersResponse> => {
+        const response = await axiosClient.get<OrdersResponse>(`/orders/warehouse/${warehouseId}`, { params });
         return response.data;
     },
 

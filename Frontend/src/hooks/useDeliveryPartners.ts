@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deliveryPartnerService, RegisterPartnerDto } from '@/services/delivery-partner.service';
 
-export function useDeliveryPartners(params: { page?: number; limit?: number; warehouseId?: string } = {}) {
+export function useDeliveryPartners(params: { page?: number; limit?: number; warehouseId?: string; search?: string } = {}) {
     return useQuery({
         queryKey: ['delivery-partners', params],
         queryFn: () => deliveryPartnerService.getAll(params),

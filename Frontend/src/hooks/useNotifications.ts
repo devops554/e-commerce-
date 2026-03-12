@@ -6,16 +6,27 @@ import { useSocket } from './useSocket'
 import { useCallback } from 'react'
 import { useAuth } from '@/providers/AuthContext'
 
-export function useNotifications() {
+export function useNotifications(params: { page?: number; limit?: number } = {}) {
     const queryClient = useQueryClient();
 
-    const { data: notifications = [], isLoading } = useQuery({
-        queryKey: ['notifications'],
-        queryFn: notificationService.getNotifications,
+    const { data, isLoading } = useQuery({
+        queryKey: ['notifications', params],
+        queryFn: () => notificationService.getNotifications(params),
         refetchOnWindowFocus: true,
     });
 
-    const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+    const notifications = data?.notifications || [];
+    const total = data?.total || 0;
+    const totalPages = data?.totalPages || 0;
+
+    // Use a separate query for unread count to keep it accurate regardless of pagination
+    const { data: unreadData } = useQuery({
+        queryKey: ['notifications', 'unread-count'],
+        queryFn: () => notificationService.getNotifications({ limit: 100 }), // Fetch more to count unread
+        select: (data) => data.notifications.filter(n => !n.isRead).length
+    });
+
+    const unreadCount = unreadData ?? 0;
 
     const { user } = useAuth();
 
@@ -24,44 +35,36 @@ export function useNotifications() {
         const isForMe = newNotification.recipientId === user?.id?.toString();
         const isForMyRole = newNotification.recipientRole === user?.role;
 
-        // Strict filtering: If recipientId exists, it MUST match the current user.
-        // If no recipientId, it must match the user's role.
         if (newNotification.recipientId) {
             if (!isForMe) return;
         } else {
             if (!isForMyRole) return;
         }
 
-        // Optimistically update the cache
-        queryClient.setQueryData(['notifications'], (old: Notification[] = []) => {
-            // Check if already exists to avoid duplicates
-            if (old.some((n: Notification) => n._id === newNotification._id)) return old;
-            return [newNotification, ...old];
-        });
-    }, [queryClient]);
+        // Invalidate both current page and unread count
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }, [queryClient, user]);
 
     useSocket('notification.received', handleNewNotification);
 
     const markAsReadMutation = useMutation({
         mutationFn: notificationService.markAsRead,
-        onSuccess: (updated: Notification) => {
-            queryClient.setQueryData(['notifications'], (old: Notification[] = []) =>
-                old.map((n: Notification) => n._id === updated._id ? updated : n)
-            );
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
         }
     });
 
     const markAllAsReadMutation = useMutation({
         mutationFn: notificationService.markAllAsRead,
         onSuccess: () => {
-            queryClient.setQueryData(['notifications'], (old: Notification[] = []) =>
-                old.map((n: Notification) => ({ ...n, isRead: true }))
-            );
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
         }
     });
 
     return {
         notifications,
+        total,
+        totalPages,
         unreadCount,
         markAsRead: markAsReadMutation.mutate,
         markAllAsRead: markAllAsReadMutation.mutate,

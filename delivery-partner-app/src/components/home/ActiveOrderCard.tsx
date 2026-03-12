@@ -38,11 +38,11 @@ export const ActiveOrderCard = ({ order, onPress }: ActiveOrderCardProps) => (
 
             <View style={styles.activeOrderMiddle}>
                 <View style={styles.activeOrderInfo}>
-                    <Text style={styles.activeOrderCustomer}>👤 {order.user.name}</Text>
+                    <Text style={styles.activeOrderCustomer}>👤 {order.user?.name || 'Customer'}</Text>
                     <Text style={styles.activeOrderPayment}>
-                        {isCOD(order.paymentMethod) ? '💵 Collect: ' : '✅ Paid: '}
+                        {isCOD(order.paymentMethod) ? '💵 TO COLLECT: ' : '✅ Paid: '}
                         <Text style={{ fontWeight: '800' }}>
-                            {formatCurrency(order.totalAmount + (order.deliveryFee || 0))}
+                            {formatCurrency(order.totalAmount || 0)}
                         </Text>
                     </Text>
                 </View>
@@ -50,7 +50,7 @@ export const ActiveOrderCard = ({ order, onPress }: ActiveOrderCardProps) => (
 
             <View style={styles.activeOrderBottom}>
                 <Text style={styles.activeOrderAddr} numberOfLines={2}>
-                    📍 {order.shippingAddress.street}, {order.shippingAddress.city}
+                    📍 {order.shippingAddress?.street || 'No Street'}, {order.shippingAddress?.city || ''}
                 </Text>
                 <Text style={styles.activeOrderArrow}>→</Text>
             </View>

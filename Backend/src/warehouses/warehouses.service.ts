@@ -76,13 +76,48 @@ export class WarehousesService {
   }
 
   // Get all warehouses
-  async findAll(): Promise<Warehouse[]> {
+  async findAll(
+    page = 1,
+    limit = 20,
+    search?: string,
+  ): Promise<{
+    warehouses: Warehouse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     try {
-      return await this.warehouseModel
-        .find()
-        .populate('managerId', '-password')
-        .lean()
-        .exec();
+      const skip = (page - 1) * limit;
+      const filter: any = {};
+
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { code: { $regex: search, $options: 'i' } },
+          { 'address.city': { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const [warehouses, total] = await Promise.all([
+        this.warehouseModel
+          .find(filter)
+          .populate('managerId', '-password')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        this.warehouseModel.countDocuments(filter),
+      ]);
+
+      return {
+        warehouses: warehouses as unknown as Warehouse[],
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     } catch {
       throw new InternalServerErrorException('Failed to fetch warehouses');
     }

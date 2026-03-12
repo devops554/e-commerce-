@@ -30,12 +30,15 @@ const ManagerOverview = () => {
         setBreadcrumbs([{ label: 'Manager Dashboard' }])
     }, [setBreadcrumbs])
 
+    // ✅ Fix: inventory is { items: [], total, page, ... } not a plain array
+    const inventoryItems = inventory?.items ?? []
+
     const stats = useMemo(() => {
-        if (!inventory) return { totalItems: 0, lowStockCount: 0 }
-        const totalItems = inventory.length
-        const lowStockCount = inventory.filter(item => item.quantity < 10).length
+        if (!inventoryItems.length) return { totalItems: 0, lowStockCount: 0 }
+        const totalItems = inventoryItems.length
+        const lowStockCount = inventoryItems.filter((item: any) => item.quantity < 10).length
         return { totalItems, lowStockCount }
-    }, [inventory])
+    }, [inventoryItems])
 
     if (isWarehouseLoading || isInventoryLoading) {
         return <div className="space-y-6">
@@ -203,7 +206,7 @@ const ManagerOverview = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {inventory?.slice(0, 5).map((item) => (
+                                {inventoryItems.slice(0, 5).map((item: any) => (
                                     <tr key={item._id} className="border-b border-slate-100 last:border-none hover:bg-white transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
@@ -224,7 +227,7 @@ const ManagerOverview = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {(!inventory || inventory.length === 0) && (
+                                {inventoryItems.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-bold text-sm">
                                             No inventory items found in this warehouse.

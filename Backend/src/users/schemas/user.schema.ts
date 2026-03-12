@@ -48,6 +48,9 @@ export class Address {
 
   @Prop({ default: false })
   isDefault: boolean;
+
+  @Prop({ type: { latitude: Number, longitude: Number } })
+  location?: { latitude: number; longitude: number };
 }
 
 export const AddressSchema = SchemaFactory.createForClass(Address);

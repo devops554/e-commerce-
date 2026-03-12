@@ -73,6 +73,12 @@ export class DeliveryController {
     };
   }
 
+  @Get('dashboard/stats')
+  async getStats(@Req() req: any) {
+    const partnerId = req.deliveryPartner._id.toString();
+    return this.shipmentsService.getPartnerStats(partnerId);
+  }
+
   // ─── ORDERS / SHIPMENTS ───
 
   @Get('orders/available')
@@ -88,7 +94,7 @@ export class DeliveryController {
   @Get('orders/active')
   async getActiveOrder(@Req() req: any) {
     const partnerId = req.deliveryPartner._id.toString();
-    // Return any shipment that is currently "in progress" for this partner
+    // Return all shipments that are currently "in progress" for this partner
     const shipments = await this.shipmentsService.findAll({
       deliveryPartnerId: partnerId,
       status: {
@@ -99,7 +105,24 @@ export class DeliveryController {
         ],
       } as any,
     });
-    return shipments.data[0] || null;
+    return shipments.data; // Now returning Array of Shipments
+  }
+
+  @Get('shipments/:id')
+  async getShipmentById(@Req() req: any, @Param('id') id: string) {
+    const partnerId = req.deliveryPartner._id.toString();
+    const shipment = await this.shipmentsService.findById(id);
+
+    // Verify ownership
+    const sPartnerId =
+      shipment.deliveryPartnerId?._id?.toString() ||
+      shipment.deliveryPartnerId?.toString();
+
+    if (sPartnerId !== partnerId) {
+      throw new NotFoundException('Shipment not assigned to you');
+    }
+
+    return shipment;
   }
 
   @Post('orders/accept')

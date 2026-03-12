@@ -40,8 +40,8 @@ export interface Warehouse {
 }
 
 export const warehouseService = {
-    getAll: async () => {
-        const response = await axiosClient.get('/warehouses');
+    getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+        const response = await axiosClient.get('/warehouses', { params });
         return response.data;
     },
 

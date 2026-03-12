@@ -11,14 +11,18 @@ import {
 } from './schemas/delivery-partner.schema';
 import { DeliveryPartnerJwtGuard } from './delivery-partner.guard';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { Shipment, ShipmentSchema } from '../shipments/schemas/shipment.schema';
 
 @Module({
   imports: [
     UsersModule, // Required for RolesGuard to inject UsersService
+    NotificationsModule, // ✅ Required for NotificationsService injection
     PassportModule,
     ConfigModule, // Added to make ConfigService available
     MongooseModule.forFeature([
       { name: DeliveryPartner.name, schema: DeliveryPartnerSchema },
+      { name: Shipment.name, schema: ShipmentSchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

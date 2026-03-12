@@ -17,6 +17,9 @@ interface Address {
     postalCode: string;
     country: string;
     isDefault: boolean;
+    location?: { latitude: number; longitude: number };
+
+
 }
 
 interface SavedAddressesProps {

@@ -12,9 +12,17 @@ export interface Notification {
     metadata?: any;
 }
 
+export interface NotificationsResponse {
+    notifications: Notification[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export const notificationService = {
-    getNotifications: async () => {
-        const response = await axiosClient.get<Notification[]>('/notifications');
+    getNotifications: async (params?: { page?: number; limit?: number }) => {
+        const response = await axiosClient.get<NotificationsResponse>('/notifications', { params });
         return response.data;
     },
 

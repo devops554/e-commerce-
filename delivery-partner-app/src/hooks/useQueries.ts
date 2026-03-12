@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authAPI, ordersAPI, locationAPI, walletAPI, dashboardAPI } from '../api/services';
 import { useAuthStore } from '../store/authStore';
 import { LoginCredentials, Order, Shipment } from '../types';
+import { socketService } from '../services/socketService';
 
 export const QUERY_KEYS = {
   profile: ['profile'],
@@ -25,6 +26,8 @@ export const useLoginMutation = () => {
     mutationFn: (credentials: LoginCredentials) => authAPI.login(credentials),
     onSuccess: async (data) => {
       await setAuth(data.partner, data.accessToken, data.refreshToken);
+      // ✅ Connect socket AFTER setAuth so partner._id is in store
+      socketService.connect();
     },
   });
 };
@@ -49,10 +52,10 @@ export const useAvailableOrders = () =>
     staleTime: 5_000,
   });
 
-export const useActiveOrder = () =>
-  useQuery<Shipment | null>({
-    queryKey: QUERY_KEYS.activeOrder,
-    queryFn: ordersAPI.getActiveOrder,
+export const useActiveOrder = (params?: { page?: number; limit?: number; search?: string }) =>
+  useQuery<{ data: Shipment[]; total: number; page: number; limit: number; totalPages: number } | Shipment[]>({
+    queryKey: [...QUERY_KEYS.activeOrder, params],
+    queryFn: () => ordersAPI.getActiveOrder(params),
     refetchInterval: 15_000,
   });
 
@@ -170,6 +173,25 @@ export const useOrderDetail = (orderId: string) =>
     enabled: !!orderId,
   });
 
+
+export const useShipmentById = (shipmentId: string) => {
+  return useQuery({
+    queryKey: ['shipment', shipmentId],
+    queryFn: () => ordersAPI.getShipmentById(shipmentId),
+    enabled: !!shipmentId,
+  });
+};
+
+// The list screen uses useActiveOrders() which returns an array of shipments.
+// Add this to your hooks/useQueries.ts:
+
+export const useActiveOrders = (params?: { page?: number; limit?: number; search?: string }) => {
+  return useQuery({
+    queryKey: ['activeOrders', params],
+    queryFn: () => ordersAPI.getActiveOrder(params),
+  });
+};;
+
 // ─── Location ─────────────────────────────────────────────────────────────────
 
 export const useUpdateLocation = () =>
@@ -214,3 +236,5 @@ export const useDashboardStats = () =>
     queryFn: dashboardAPI.getStats,
     refetchInterval: 30_000,
   });
+
+

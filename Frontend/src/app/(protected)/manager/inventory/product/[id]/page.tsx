@@ -97,7 +97,7 @@ const ProductDetailPage = () => {
         )
     }
 
-    const productInventory = inventory?.filter(item =>
+    const productInventory = inventory?.items?.filter(item =>
         String(item.product?._id || item.product) === String(product._id)
     ) || []
 
@@ -119,7 +119,7 @@ const ProductDetailPage = () => {
         ? Math.round((warehouse.capacity.usedCapacity / warehouse.capacity.totalCapacity) * 100)
         : 0
 
-    const filteredHistory = history?.filter((h: any) =>
+    const filteredHistory = history?.data?.filter((h: any) =>
         String(h.product?._id || h.product) === String(product._id)
     ) || []
 
@@ -171,7 +171,7 @@ const ProductDetailPage = () => {
                         icon: <History className="h-5 w-5 text-blue-600" />,
                         bg: 'bg-blue-50',
                         label: 'Received',
-                        value: inventory?.filter(inv => String(inv.product?._id || inv.product) === String(product._id))
+                        value: inventory?.items?.filter(inv => String(inv.product?._id || inv.product) === String(product._id))
                             .reduce((sum, inv) => sum + (inv.totalReceived || 0), 0) || 0,
                         sub: 'Life-time total',
                     },
@@ -179,7 +179,7 @@ const ProductDetailPage = () => {
                         icon: <ArrowRight className="h-5 w-5 text-purple-600" />,
                         bg: 'bg-purple-50',
                         label: 'Dispatched',
-                        value: inventory?.filter(inv => String(inv.product?._id || inv.product) === String(product._id))
+                        value: inventory?.items?.filter(inv => String(inv.product?._id || inv.product) === String(product._id))
                             .reduce((sum, inv) => sum + (inv.totalDispatched || 0), 0) || 0,
                         sub: 'Life-time total',
                     },

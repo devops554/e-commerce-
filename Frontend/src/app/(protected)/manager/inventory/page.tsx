@@ -15,21 +15,32 @@ import { AdjustTransferDialog } from './_components/AdjustTransferDialog'
 
 type ActionType = 'adjust' | 'transfer'
 
+import { useDebounce } from '@/hooks/useDebounce'
+
 const InventoryPage = () => {
     const { setBreadcrumbs } = useBreadcrumb()
 
+    /* ── Search & Pagination State ── */
+    const [searchTerm, setSearchTerm] = useState('')
+    const debouncedSearch = useDebounce(searchTerm, 500)
+    const [page, setPage] = useState(1)
+    const limit = 10
+
     /* ── Data ── */
     const { data: warehouse, isLoading: warehouseLoading } = useManagerWarehouse()
-    const { data: inventory, isLoading: inventoryLoading } = useManagerWarehouseInventory()
+    const { data: inventoryResponse, isLoading: inventoryLoading } = useManagerWarehouseInventory({
+        page,
+        limit,
+        search: debouncedSearch
+    })
     const { data: allWarehouses } = useWarehouses()
+
+    console.log(inventoryResponse, "inventoryResponse")
 
     /* ── Mutations ── */
     const adjustMutation = useAdjustStock()
     const transferMutation = useTransferStock()
     const receiveMutation = useManagerReceiveStock()
-
-    /* ── Table search ── */
-    const [searchTerm, setSearchTerm] = useState('')
 
     /* ── Receive dialog ── */
     const [receiveOpen, setReceiveOpen] = useState(false)
@@ -48,6 +59,11 @@ const InventoryPage = () => {
             { label: 'Inventory' },
         ])
     }, [setBreadcrumbs])
+
+    // Reset page when search changes
+    useEffect(() => {
+        setPage(1)
+    }, [debouncedSearch])
 
     /* ── Handlers ── */
     const openAdjust = (item: InventoryItem) => {
@@ -127,9 +143,11 @@ const InventoryPage = () => {
         <div className="space-y-6">
             <InventoryTable
                 warehouse={warehouse}
-                inventory={inventory}
+                inventoryResponse={inventoryResponse}
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
+                page={page}
+                onPageChange={setPage}
                 onReceiveClick={() => setReceiveOpen(true)}
                 onAdjustClick={openAdjust}
                 onTransferClick={openTransfer}

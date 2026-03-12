@@ -24,6 +24,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
 import { Loader2, Search, Package, ChevronLeft, ChevronRight, Eye, CheckCircle2, Truck } from "lucide-react"
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -290,33 +299,68 @@ export default function AdminOrdersPage() {
                     </Table>
                 )}
             </div>
-
             {/* Pagination */}
             {data && data.totalPages > 1 && (
-                <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm text-slate-500 font-medium">
-                        Page {data.page} of {data.totalPages} · {data.total} orders
+                <div className="flex items-center justify-between px-8 py-6 border-t border-slate-50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Showing {orders.length} of {data.total} orders
                     </p>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="rounded-xl"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
-                            disabled={page === data.totalPages}
-                            className="rounded-xl"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    <Pagination className="mx-0 w-fit">
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setPage(Math.max(1, page - 1));
+                                    }}
+                                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                            </PaginationItem>
+
+                            {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => {
+                                if (
+                                    p === 1 ||
+                                    p === data.totalPages ||
+                                    (p >= page - 1 && p <= page + 1)
+                                ) {
+                                    return (
+                                        <PaginationItem key={p}>
+                                            <PaginationLink
+                                                href="#"
+                                                isActive={page === p}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setPage(p);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                {p}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    );
+                                } else if (p === page - 2 || p === page + 2) {
+                                    return (
+                                        <PaginationItem key={p}>
+                                            <PaginationEllipsis />
+                                        </PaginationItem>
+                                    );
+                                }
+                                return null;
+                            })}
+
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setPage(Math.min(data.totalPages, page + 1));
+                                    }}
+                                    className={page === data.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
                 </div>
             )}
         </div>

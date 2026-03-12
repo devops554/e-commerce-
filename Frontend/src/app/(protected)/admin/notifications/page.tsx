@@ -4,9 +4,18 @@ import { useNotifications } from "@/hooks/useNotifications"
 import { Bell, Package, AlertTriangle, Info, CheckCheck, Clock, Search, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Notification } from "@/services/notification.service"
 
 const getIcon = (type: string) => {
@@ -18,14 +27,24 @@ const getIcon = (type: string) => {
 }
 
 export default function NotificationsPage() {
-    const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications()
+    const [page, setPage] = useState(1)
     const [filter, setFilter] = useState<'all' | 'unread' | 'order' | 'stock'>('all')
+
+    const { notifications, total, totalPages, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications({
+        page,
+        limit: 10
+    })
 
     const filteredNotifications = notifications.filter(n => {
         if (filter === 'unread') return !n.isRead;
         if (filter === 'all') return true;
         return n.type === filter;
     })
+
+    // Reset to page 1 when filter changes
+    useEffect(() => {
+        setPage(1)
+    }, [filter])
 
     return (
         <div className="p-6 md:p-10 space-y-8 max-w-6xl mx-auto">
@@ -80,8 +99,8 @@ export default function NotificationsPage() {
                                     key={tab.id}
                                     onClick={() => setFilter(tab.id as any)}
                                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-200 group ${filter === tab.id
-                                            ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                            : 'text-slate-600 hover:bg-white hover:shadow-md'
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
+                                        : 'text-slate-600 hover:bg-white hover:shadow-md'
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -175,6 +194,70 @@ export default function NotificationsPage() {
                                     )}
                                 </Card>
                             ))}
+                        </div>
+                    )}
+
+                    {!isLoading && totalPages > 1 && (
+                        <div className="flex items-center justify-between px-8 py-6 bg-white rounded-3xl border border-slate-100 shadow-sm mt-8">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Showing {notifications.length} of {total} alerts
+                            </p>
+                            <Pagination className="mx-0 w-fit">
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setPage(Math.max(1, page - 1));
+                                            }}
+                                            className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                        />
+                                    </PaginationItem>
+
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                                        if (
+                                            p === 1 ||
+                                            p === totalPages ||
+                                            (p >= page - 1 && p <= page + 1)
+                                        ) {
+                                            return (
+                                                <PaginationItem key={p}>
+                                                    <PaginationLink
+                                                        href="#"
+                                                        isActive={page === p}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setPage(p);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        {p}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                        } else if (p === page - 2 || p === page + 2) {
+                                            return (
+                                                <PaginationItem key={p}>
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setPage(Math.min(totalPages, page + 1));
+                                            }}
+                                            className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
                         </div>
                     )}
                 </div>

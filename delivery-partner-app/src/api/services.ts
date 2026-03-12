@@ -11,6 +11,7 @@ import {
   DeliveryPartner,
   AvailabilityStatus,
   TokenResponse,
+  Notification,
 } from '../types';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -82,8 +83,9 @@ export const ordersAPI = {
     await apiClient.patch(`/shipments/${shipmentId}/reject`, { reason });
   },
 
-  getActiveOrder: async (): Promise<Shipment | null> => {
-    const { data } = await apiClient.get<Shipment | null>('/delivery/orders/active');
+  getActiveOrder: async (params?: { page?: number; limit?: number; search?: string }): Promise<{ data: Shipment[]; total: number; page: number; limit: number; totalPages: number } | Shipment[]> => {
+    const qs = params ? `?page=${params.page || 1}&limit=${params.limit || 10}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}` : '';
+    const { data } = await apiClient.get<{ data: Shipment[]; total: number; page: number; limit: number; totalPages: number } | Shipment[]>(`/delivery/orders/active${qs}`);
     return data;
   },
 
@@ -132,6 +134,11 @@ export const ordersAPI = {
     const { data } = await apiClient.get<Order>(`/delivery/orders/${orderId}`);
     return data;
   },
+
+  getShipmentById: async (shipmentId: string): Promise<Shipment> => {
+    const { data } = await apiClient.get<Shipment>(`/delivery/shipments/${shipmentId}`);
+    return data;
+  },
 };
 
 // ─── Location ─────────────────────────────────────────────────────────────────
@@ -176,5 +183,22 @@ export const dashboardAPI = {
   getStats: async (): Promise<DashboardStats> => {
     const { data } = await apiClient.get<DashboardStats>('/delivery/dashboard/stats');
     return data;
+  },
+};
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export const notificationsAPI = {
+  getAll: async (): Promise<any[]> => {
+    const { data } = await apiClient.get<any[]>('/delivery-partners/me/notifications');
+    return data;
+  },
+
+  markRead: async (id: string): Promise<void> => {
+    await apiClient.patch(`/delivery-partners/me/notifications/${id}/read`);
+  },
+
+  markAllRead: async (): Promise<void> => {
+    await apiClient.patch('/delivery-partners/me/notifications/read-all');
   },
 };

@@ -89,9 +89,11 @@ export interface ShippingAddress {
   state: string;
   postalCode: string;
   country: string;
+  location?: { latitude: number; longitude: number };
 }
 
 export interface OrderItem {
+  _id?: string;
   product: string;
   variant: string;
   warehouse: string;
@@ -120,6 +122,7 @@ export interface PopulatedOrder {
   history: OrderHistory[];
   totalAmount: number;
   deliveryFee?: number;
+  shippingCharge?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -137,7 +140,19 @@ export interface Shipment {
   _id: string;
   orderId: Order;           // populated nested order object
   deliveryPartnerId: ShipmentDeliveryPartner;
-  warehouseId: string | { _id: string; name: string; location?: { latitude: number; longitude: number } };
+  warehouseId: string | {
+    _id: string;
+    name: string;
+    location?: { latitude: number; longitude: number };
+    address?: {
+      addressLine1: string;
+      addressLine2?: string;
+      city: string;
+      state: string;
+      country: string;
+      pincode: string;
+    }
+  };
   status: ShipmentStatus;
   trackingNumber: string;
   distance?: number;                 // km — may be added by backend
@@ -166,6 +181,7 @@ export interface Order {
   history: OrderHistory[];
   totalAmount: number;
   deliveryFee: number;
+  shippingCharge?: number;
   distance?: number;
   estimatedTime?: number;
   createdAt: string;
@@ -188,6 +204,7 @@ export interface WalletSummary {
   incentives: number;
   withdrawals: number;
   availableBalance: number;
+  totalDeliveries?: number;
 }
 
 export interface LoginCredentials {
@@ -209,4 +226,30 @@ export interface TokenResponse {
 export interface ApiError {
   message: string;
   statusCode: number;
+}
+
+export type NotificationType =
+  | 'NEW_ORDER'
+  | 'ORDER_ASSIGNED'
+  | 'ORDER_ACCEPTED'
+  | 'ORDER_REJECTED'
+  | 'ORDER_PICKED_UP'
+  | 'ORDER_DELIVERED'
+  | 'ORDER_FAILED'
+  | 'WALLET'
+  | 'SYSTEM';
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;           // ✅ was `body` — now matches backend `message`
+  type: NotificationType;
+  timestamp: string;
+  isRead: boolean;
+  data?: {                   // ✅ mapped from backend `metadata`
+    orderId?: string;
+    shipmentId?: string;
+    amount?: number;
+    [key: string]: any;
+  };
 }

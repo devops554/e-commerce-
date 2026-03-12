@@ -9,6 +9,8 @@ import {
   UseGuards,
   Put,
   Req,
+  Query
+
 } from '@nestjs/common';
 import { WarehousesService } from './warehouses.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
@@ -31,8 +33,14 @@ export class WarehousesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   @Get()
-  async findAll() {
-    return this.warehousesService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    const p = page ? parseInt(page) : 1;
+    const l = limit ? parseInt(limit) : 20;
+    return this.warehousesService.findAll(p, l, search);
   }
 
   // Manager apna warehouse
@@ -40,7 +48,7 @@ export class WarehousesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER)
   async getManagerWarehouse(@Req() req: any) {
-    return this.warehousesService.findByManager(req.user.id);
+    return this.warehousesService.findByManager(req.user._id);
   }
 
   // Admin specific manager warehouse

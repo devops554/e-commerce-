@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   useDashboardStats,
   useActiveOrder,
@@ -22,16 +23,15 @@ import {
   useUpdateAvailability,
 } from '../../hooks/useQueries';
 import { useAuthStore } from '../../store/authStore';
+import { useNotificationStore } from '../../store/notificationStore';
 import { socketService } from '../../services/socketService';
 import { locationService } from '../../services/locationService';
-import { StatusDot } from '../../components/ui';
 import { Colors, Spacing, FontSize, Shadow } from '../../utils/theme';
 import { formatCurrency, getInitials } from '../../utils/helpers';
 
-import { StatCard } from '../../components/home/StatCard';
-import { QuickAction } from '../../components/home/QuickAction';
-import { ActiveOrderCard } from '../../components/home/ActiveOrderCard';
-import { NoActiveOrderCard } from '../../components/home/NoActiveOrderCard';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 // ── Animated Pulsing Notification Badge ──────────────────────────────────────
 const PulsingNotifBadge = ({
@@ -42,29 +42,20 @@ const PulsingNotifBadge = ({
   onPress: () => void;
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const pulseOpacity = useRef(new Animated.Value(0.7)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(pulseAnim, {
-            toValue: 1.5,
-            duration: 650,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseOpacity, {
-            toValue: 0,
-            duration: 650,
-            useNativeDriver: true,
-          }),
+          Animated.timing(pulseAnim, { toValue: 1.6, duration: 700, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 700, useNativeDriver: true }),
         ]),
-        // Reset instantly
         Animated.parallel([
           Animated.timing(pulseAnim, { toValue: 1, duration: 0, useNativeDriver: true }),
-          Animated.timing(pulseOpacity, { toValue: 0.7, duration: 0, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
         ]),
-        Animated.delay(500),
+        Animated.delay(600),
       ])
     );
     loop.start();
@@ -73,17 +64,11 @@ const PulsingNotifBadge = ({
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.notifWrapper} activeOpacity={0.8}>
-      {/* Expanding pulse ring */}
       <Animated.View
-        style={[
-          styles.notifPulseRing,
-          { transform: [{ scale: pulseAnim }], opacity: pulseOpacity },
-        ]}
+        style={[styles.notifPulseRing, { transform: [{ scale: pulseAnim }], opacity: pulseOpacity }]}
       />
-      {/* Bell button */}
       <View style={styles.notifBadge}>
-        <Text style={styles.notifBell}>🔔</Text>
-        {/* Count chip */}
+        <Ionicons name="notifications" size={20} color={Colors.white} />
         <View style={styles.notifCountChip}>
           <Text style={styles.notifCountText}>{count > 9 ? '9+' : count}</Text>
         </View>
@@ -91,8 +76,64 @@ const PulsingNotifBadge = ({
     </TouchableOpacity>
   );
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
+// ── Quick Action Card ─────────────────────────────────────────────────────────
+const QuickActionCard = ({
+  icon,
+  iconFocused,
+  label,
+  count,
+  color,
+  onPress,
+}: {
+  icon: IoniconsName;
+  iconFocused: IoniconsName;
+  label: string;
+  count?: number;
+  color: string;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity style={styles.qaCard} onPress={onPress} activeOpacity={0.82}>
+    <View style={[styles.qaIconWrap, { backgroundColor: color + '18' }]}>
+      <Ionicons name={iconFocused} size={24} color={color} />
+      {count !== undefined && count > 0 && (
+        <View style={[styles.qaBadge, { backgroundColor: color }]}>
+          <Text style={styles.qaBadgeText}>{count > 9 ? '9+' : count}</Text>
+        </View>
+      )}
+    </View>
+    <Text style={styles.qaLabel} numberOfLines={1}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+const StatItem = ({
+  label,
+  value,
+  icon,
+  color,
+  loading,
+}: {
+  label: string;
+  value: string | null;
+  icon: IoniconsName;
+  color: string;
+  loading: boolean;
+}) => (
+  <View style={[styles.statCard, { borderTopColor: color, borderTopWidth: 3 }]}>
+    <View style={[styles.statIconWrap, { backgroundColor: color + '18' }]}>
+      <Ionicons name={icon} size={18} color={color} />
+    </View>
+    {loading ? (
+      <View style={styles.statSkeleton} />
+    ) : (
+      <Text style={styles.statValue}>{value}</Text>
+    )}
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const partner = useAuthStore((s) => s.partner);
@@ -100,32 +141,35 @@ export default function HomeScreen() {
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats();
   const { data: activeOrder, isLoading: activeLoading, refetch: refetchActive } = useActiveOrder();
   const { data: availableOrders } = useAvailableOrders();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const updateAvailability = useUpdateAvailability();
 
   const isOnline = partner?.availabilityStatus === 'ONLINE';
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-    socketService.connect();
-
-    if (isOnline) locationService.startTracking();
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 450, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
 
     const unsubNewOrder = socketService.onNewOrder(() => {
       navigation.navigate('AvailableOrders');
     });
-
     return () => { unsubNewOrder(); };
   }, []);
+
+  useEffect(() => {
+    if (isOnline) locationService.startTracking();
+    else locationService.stopTracking();
+  }, [isOnline]);
 
   const handleToggleOnline = async () => {
     const newStatus = isOnline ? 'OFFLINE' : 'ONLINE';
     await updateAvailability.mutateAsync(newStatus);
-    if (newStatus === 'ONLINE') {
-      locationService.startTracking();
-    } else {
-      locationService.stopTracking();
-    }
+    if (newStatus === 'ONLINE') locationService.startTracking();
+    else locationService.stopTracking();
   };
 
   const handleRefresh = useCallback(() => {
@@ -134,6 +178,26 @@ export default function HomeScreen() {
   }, []);
 
   const pendingCount = availableOrders?.length ?? 0;
+  const activeShipments = Array.isArray(activeOrder) ? activeOrder : (activeOrder?.data || []);
+  const activeCount = activeShipments.length;
+  // Aggregate count for Notifications badge (Unread + Active + Available) as requested
+  const totalNotifCount = unreadCount + pendingCount + activeCount;
+
+  const quickActions: {
+    icon: IoniconsName;
+    iconFocused: IoniconsName;
+    label: string;
+    count?: number;
+    color: string;
+    screen: string;
+  }[] = [
+      { icon: 'receipt-outline', iconFocused: 'receipt', label: 'Available Orders', count: pendingCount, color: Colors.primary, screen: 'AvailableOrders' },
+      { icon: 'bicycle-outline', iconFocused: 'bicycle', label: 'Active Orders', count: activeCount, color: '#10B981', screen: 'ActiveOrdersList' },
+      { icon: 'time-outline', iconFocused: 'time', label: 'History', color: Colors.warning, screen: 'History' },
+      { icon: 'wallet-outline', iconFocused: 'wallet', label: 'Wallet', color: '#8B5CF6', screen: 'Wallet' },
+      { icon: 'person-circle-outline', iconFocused: 'person-circle', label: 'Profile', color: '#EC4899', screen: 'Profile' },
+      { icon: 'notifications-outline', iconFocused: 'notifications', label: 'Notifications', count: totalNotifCount, color: Colors.danger, screen: 'Notifications' },
+    ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -149,15 +213,14 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Header */}
-        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <View>
+        {/* ── Header ── */}
+        <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Good morning 👋</Text>
             <Text style={styles.partnerName}>{partner?.name || 'Partner'}</Text>
           </View>
 
           <View style={styles.headerRight}>
-            {/* Animated notification bell — only shown when there are pending orders */}
             {pendingCount > 0 && (
               <PulsingNotifBadge
                 count={pendingCount}
@@ -165,25 +228,21 @@ export default function HomeScreen() {
               />
             )}
 
-            {/* Profile avatar — fixed: image OR initials, never both */}
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={styles.avatarBtn}
               activeOpacity={0.85}
             >
               {partner?.profileImage ? (
-                <Image
-                  source={{ uri: partner.profileImage }}
-                  style={styles.avatarImage}
-                />
+                <Image source={{ uri: partner.profileImage }} style={styles.avatarImage} />
               ) : (
-                <View style={styles.avatarFallback}>
-                  <Text style={styles.avatarText}>
-                    {getInitials(partner?.name || 'DP')}
-                  </Text>
-                </View>
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryLight || '#818CF8']}
+                  style={styles.avatarFallback}
+                >
+                  <Text style={styles.avatarText}>{getInitials(partner?.name || 'DP')}</Text>
+                </LinearGradient>
               )}
-              {/* Online status indicator dot */}
               <View
                 style={[
                   styles.avatarStatusDot,
@@ -194,135 +253,150 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        {/* Online Toggle Hero */}
-        <LinearGradient
-          colors={isOnline ? [Colors.primary, Colors.primaryLight] : ['#3A3A5C', '#1E1E30']}
-          style={styles.heroBanner}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.heroContent}>
-            <View style={styles.heroLeft}>
-              <View style={styles.statusRow}>
-                <StatusDot status={partner?.availabilityStatus ?? 'OFFLINE'} size={12} />
-                <Text style={styles.statusLabel}>
-                  {partner?.availabilityStatus ?? 'OFFLINE'}
+        {/* ── Hero Banner ── */}
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          <LinearGradient
+            colors={isOnline
+              ? [Colors.primary, Colors.primaryLight || '#818CF8']
+              : ['#374151', '#1F2937']}
+            style={styles.heroBanner}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Decorative circles */}
+            <View style={[styles.heroDecorCircle, { width: 160, height: 160, top: -60, right: -40, opacity: 0.1 }]} />
+            <View style={[styles.heroDecorCircle, { width: 90, height: 90, bottom: -30, right: 80, opacity: 0.08 }]} />
+
+            <View style={styles.heroContent}>
+              <View style={styles.heroLeft}>
+                {/* Status pill */}
+                <View style={[styles.statusPill, { backgroundColor: isOnline ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)' }]}>
+                  <View style={[styles.statusDot, { backgroundColor: isOnline ? '#4ADE80' : '#9CA3AF' }]} />
+                  <Text style={styles.statusPillText}>
+                    {isOnline ? 'ONLINE' : 'OFFLINE'}
+                  </Text>
+                </View>
+
+                <Text style={styles.heroTitle}>
+                  {isOnline ? "You're Live! 🚀" : "You're Offline"}
+                </Text>
+                <Text style={styles.heroSubtitle}>
+                  {isOnline
+                    ? 'Receiving delivery requests'
+                    : 'Toggle to start accepting orders'}
                 </Text>
               </View>
-              <Text style={styles.heroTitle}>{isOnline ? 'You are Live!' : 'You are Offline'}</Text>
-              <Text style={styles.heroSubtitle}>
-                {isOnline
-                  ? 'Accepting new delivery requests'
-                  : 'Toggle to start receiving orders'}
-              </Text>
-            </View>
-            <View style={styles.heroRight}>
-              <Switch
-                value={isOnline}
-                onValueChange={handleToggleOnline}
-                trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
-                thumbColor={Colors.white}
-                ios_backgroundColor="rgba(255,255,255,0.2)"
-                style={{ transform: [{ scaleX: 1.3 }, { scaleY: 1.3 }] }}
-              />
-            </View>
-          </View>
-          <View style={styles.heroDecor} />
-        </LinearGradient>
 
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          <StatCard
+              <View style={styles.heroRight}>
+                <View style={[styles.switchContainer, { backgroundColor: isOnline ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)' }]}>
+                  <Switch
+                    value={isOnline}
+                    onValueChange={handleToggleOnline}
+                    trackColor={{ false: 'rgba(255,255,255,0.15)', true: '#4ADE80' }}
+                    thumbColor={Colors.white}
+                    ios_backgroundColor="rgba(255,255,255,0.15)"
+                    style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Earnings preview strip */}
+            {isOnline && (
+              <View style={styles.heroStrip}>
+                <View style={styles.heroStripItem}>
+                  <Ionicons name="flash" size={14} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroStripText}>
+                    {pendingCount} orders nearby
+                  </Text>
+                </View>
+                <View style={styles.heroStripDivider} />
+                <View style={styles.heroStripItem}>
+                  <Ionicons name="trending-up" size={14} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroStripText}>
+                    {formatCurrency(stats?.todayEarnings ?? 0)} today
+                  </Text>
+                </View>
+              </View>
+            )}
+          </LinearGradient>
+        </Animated.View>
+
+        {/* ── Stats Row ── */}
+        <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
+          <StatItem
             label="Today's Earnings"
             value={statsLoading ? null : formatCurrency(stats?.todayEarnings ?? 0)}
-            icon="💰"
-            color={Colors.success}
+            icon="cash"
+            color="#10B981"
+            loading={statsLoading}
           />
-          <StatCard
-            label="Deliveries Today"
+          <StatItem
+            label="Deliveries"
             value={statsLoading ? null : String(stats?.todayDeliveries ?? 0)}
-            icon="📦"
+            icon="bicycle"
             color={Colors.primary}
+            loading={statsLoading}
           />
-          <StatCard
+          <StatItem
             label="Rating"
-            value={statsLoading ? null : `${stats?.rating?.toFixed(1) ?? '—'} ⭐`}
-            icon="⭐"
-            color={Colors.warning}
+            value={statsLoading ? null : `${stats?.rating?.toFixed(1) ?? '—'}`}
+            icon="star"
+            color="#F59E0B"
+            loading={statsLoading}
           />
-        </View>
+        </Animated.View>
 
-        {/* Active Order */}
-        {activeOrder ? (
-          <ActiveOrderCard
-            order={activeOrder}
-            onPress={() => navigation.navigate('ActiveDelivery', { orderId: activeOrder._id })}
-          />
-        ) : (
-          <NoActiveOrderCard isOnline={isOnline} />
-        )}
-
-        {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickGrid}>
-          <QuickAction
-            icon="📋"
-            label="Available Orders"
-            count={pendingCount}
-            color={Colors.primary}
-            onPress={() => navigation.navigate('AvailableOrders')}
-          />
-          <QuickAction
-            icon="🕐"
-            label="Delivery History"
-            color={Colors.warning}
-            onPress={() => navigation.navigate('History')}
-          />
-          <QuickAction
-            icon="💳"
-            label="Wallet"
-            color={Colors.success}
-            onPress={() => navigation.navigate('Wallet')}
-          />
-          <QuickAction
-            icon="👤"
-            label="Profile"
-            color={Colors.accent}
-            onPress={() => navigation.navigate('Profile')}
-          />
-        </View>
+        {/* ── Quick Actions ── */}
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <Ionicons name="grid-outline" size={18} color={Colors.textSecondary} />
+          </View>
+          <View style={styles.quickGrid}>
+            {quickActions.map((qa) => (
+              <QuickActionCard
+                key={qa.screen}
+                icon={qa.icon}
+                iconFocused={qa.iconFocused}
+                label={qa.label}
+                count={qa.count}
+                color={qa.color}
+                onPress={() => navigation.navigate(qa.screen)}
+              />
+            ))}
+          </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
 
-  // ── Header ──
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
   },
-  greeting: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  headerLeft: { flex: 1 },
+  greeting: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '500' },
   partnerName: {
     fontSize: FontSize.xl,
     fontWeight: '800',
     color: Colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
+    marginTop: 2,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
-  // ── Notification Badge ──
-  notifWrapper: {
-    width: 46,
-    height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // Notif
+  notifWrapper: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },
   notifPulseRing: {
     position: 'absolute',
     width: 46,
@@ -339,49 +413,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: Colors.danger,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     elevation: 8,
   },
-  notifBell: { fontSize: 19, lineHeight: 23 },
   notifCountChip: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
+    top: -3,
+    right: -3,
+    minWidth: 17,
+    height: 17,
     borderRadius: 9,
     backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 2,
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
     borderColor: Colors.danger,
   },
-  notifCountText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: Colors.danger,
-    lineHeight: 14,
-  },
+  notifCountText: { fontSize: 8, fontWeight: '900', color: Colors.danger, lineHeight: 13 },
 
-  // ── Avatar ──
-  avatarBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    position: 'relative',
-  },
-  avatarImage: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-  },
+  // Avatar
+  avatarBtn: { width: 44, height: 44, borderRadius: 22, position: 'relative' },
+  avatarImage: { width: 44, height: 44, borderRadius: 22 },
   avatarFallback: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.primary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -390,50 +448,122 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 1,
     right: 1,
-    width: 11,
-    height: 11,
+    width: 12,
+    height: 12,
     borderRadius: 6,
     borderWidth: 2,
     borderColor: Colors.background,
   },
 
-  // ── Hero Banner ──
+  // Hero
   heroBanner: {
-    borderRadius: 20,
+    borderRadius: 22,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
     overflow: 'hidden',
     ...Shadow.md,
   },
-  heroContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  heroLeft: { flex: 1 },
-  heroRight: {},
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  statusLabel: {
-    fontSize: FontSize.xs,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  heroTitle: { fontSize: FontSize.xxl, fontWeight: '900', color: Colors.white, letterSpacing: -0.3 },
-  heroSubtitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.65)', marginTop: 4 },
-  heroDecor: {
+  heroDecorCircle: {
     position: 'absolute',
-    right: -40,
-    bottom: -60,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 999,
+    backgroundColor: Colors.white,
   },
+  heroContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  heroLeft: { flex: 1, gap: 6 },
+  heroRight: {},
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 2,
+  },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusPillText: { color: 'rgba(255,255,255,0.85)', fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  heroTitle: { fontSize: FontSize.xxl, fontWeight: '900', color: Colors.white, letterSpacing: -0.4 },
+  heroSubtitle: { fontSize: FontSize.sm, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  switchContainer: {
+    borderRadius: 999,
+    padding: 8,
+  },
+  heroStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+    gap: 12,
+  },
+  heroStripItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  heroStripDivider: { width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.2)' },
+  heroStripText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600' },
 
+  // Stats
   statsRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.lg },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'flex-start',
+    gap: 6,
+    ...Shadow.sm,
+  },
+  statIconWrap: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.3 },
+  statLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '600', letterSpacing: 0.1 },
+  statSkeleton: { width: 48, height: 20, borderRadius: 6, backgroundColor: Colors.border },
+
+  // Section header
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
   sectionTitle: {
     fontSize: FontSize.lg,
     fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
     letterSpacing: -0.2,
   },
+
+  // Quick Actions grid
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  qaCard: {
+    width: '30.5%',
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    padding: 14,
+    alignItems: 'center',
+    gap: 8,
+    ...Shadow.sm,
+  },
+  qaIconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  qaBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  qaBadgeText: { color: Colors.white, fontSize: 8, fontWeight: '900' },
+  qaLabel: { fontSize: 11, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
 });

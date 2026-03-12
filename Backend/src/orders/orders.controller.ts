@@ -211,8 +211,15 @@ export class OrdersController {
   @Get('warehouse/:warehouseId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  getWarehouseOrders(@Param('warehouseId') warehouseId: string) {
-    return this.ordersService.getWarehouseOrders(warehouseId);
+  getWarehouseOrders(
+    @Param('warehouseId') warehouseId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    const p = page ? parseInt(page) : 1;
+    const l = limit ? parseInt(limit) : 20;
+    return this.ordersService.getWarehouseOrders(warehouseId, p, l, search);
   }
 
   @Post(':id/dispatch')

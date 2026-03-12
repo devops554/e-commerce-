@@ -1,23 +1,31 @@
-"use client"
-
-import React from 'react'
-import { Package, Plus, ArrowRightLeft, AlertTriangle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { Input } from '@/components/ui/input'
-import { BarChart3, Search, Filter, PackagePlus } from 'lucide-react'
-import Image from 'next/image'
-import type { InventoryItem } from '@/services/inventory.service'
+import { ChevronLeft, ChevronRight, PackagePlus, Search, Package, BarChart3, Plus, ArrowRightLeft, AlertTriangle } from 'lucide-react'
+import type { PaginatedInventory, InventoryItem } from '@/services/inventory.service'
 import type { Warehouse } from '@/services/warehouse.service'
 import { useAuth } from '@/providers/AuthContext'
-
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Link from 'next/link'
+import Image from 'next/image'
 
 interface InventoryTableProps {
     warehouse: Warehouse
-    inventory: InventoryItem[] | undefined
+    inventoryResponse: PaginatedInventory | undefined
     searchTerm: string
     onSearchChange: (term: string) => void
+    page: number
+    onPageChange: (page: number) => void
     onReceiveClick?: () => void
     onAdjustClick?: (item: InventoryItem) => void
     onTransferClick?: (item: InventoryItem) => void
@@ -25,22 +33,26 @@ interface InventoryTableProps {
 
 export const InventoryTable = ({
     warehouse,
-    inventory,
+    inventoryResponse,
     searchTerm,
     onSearchChange,
+    page,
+    onPageChange,
     onReceiveClick,
     onAdjustClick,
     onTransferClick,
 }: InventoryTableProps) => {
-    const filtered = inventory?.filter(item =>
-        item.variant?.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.product?.title?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const inventory = inventoryResponse?.items || []
+    const totalPages = inventoryResponse?.totalPages || 0
+    const totalItems = inventoryResponse?.total || 0
+
+
+
     const { user } = useAuth()
 
     return (
         <Card className="border-none shadow-xl shadow-slate-200/50 bg-white">
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-8">
+            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-8 pb-4">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
@@ -75,10 +87,6 @@ export const InventoryTable = ({
                             onChange={(e) => onSearchChange(e.target.value)}
                         />
                     </div>
-                    <Button variant="outline" className="rounded-xl h-11 border-slate-100 font-bold px-4">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filter
-                    </Button>
                 </div>
             </CardHeader>
 
@@ -99,13 +107,11 @@ export const InventoryTable = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered?.map((item) => (
+                            {inventory.map((item) => (
                                 <tr key={item._id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/30 transition-colors group">
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-4">
-
-
-                                            <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product._id}`} className="h-12 w-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white transition-colors shrink-0 overflow-hidden">
+                                            <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product?._id}`} className="h-12 w-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white transition-colors shrink-0 overflow-hidden">
                                                 {item.product?.thumbnail?.url ? (
                                                     <Image
                                                         src={item.product.thumbnail.url}
@@ -119,7 +125,7 @@ export const InventoryTable = ({
                                                 )}
                                             </Link>
                                             <div className="flex flex-col">
-                                                <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product._id}`} className="font-bold text-slate-900 text-sm leading-snug hover:text-blue-600 transition-colors">
+                                                <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product?._id}`} className="font-bold text-slate-900 text-sm leading-snug hover:text-blue-600 transition-colors">
                                                     {item.product?.title || 'Unknown Product'}
                                                 </Link>
                                                 <span className="text-[10px] text-slate-400 font-black uppercase tracking-tight mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -200,9 +206,9 @@ export const InventoryTable = ({
                                 </tr>
                             ))}
 
-                            {filtered?.length === 0 && (
+                            {inventory.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-8 py-20 text-center">
+                                    <td colSpan={7} className="px-8 py-20 text-center">
                                         <div className="flex flex-col items-center opacity-40">
                                             <Package className="h-12 w-12 mb-4" />
                                             <p className="font-bold text-slate-900">No inventory found</p>
@@ -216,6 +222,71 @@ export const InventoryTable = ({
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-8 py-6 border-t border-slate-50">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Showing {inventory.length} of {totalItems} items
+                        </p>
+                        <Pagination className="mx-0 w-fit">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onPageChange(Math.max(1, page - 1));
+                                        }}
+                                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                                    if (
+                                        p === 1 ||
+                                        p === totalPages ||
+                                        (p >= page - 1 && p <= page + 1)
+                                    ) {
+                                        return (
+                                            <PaginationItem key={p}>
+                                                <PaginationLink
+                                                    href="#"
+                                                    isActive={page === p}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        onPageChange(p);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {p}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    } else if (p === page - 2 || p === page + 2) {
+                                        return (
+                                            <PaginationItem key={p}>
+                                                <PaginationEllipsis />
+                                            </PaginationItem>
+                                        );
+                                    }
+                                    return null;
+                                })}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onPageChange(Math.min(totalPages, page + 1));
+                                        }}
+                                        className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )

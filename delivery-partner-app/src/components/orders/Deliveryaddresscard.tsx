@@ -71,15 +71,25 @@ export const DeliveryAddressCard: React.FC<Props> = ({
     const [destCoords, setDestCoords] = useState<{ lat: number; lon: number } | null>(null);
     const [geocoding, setGeocoding] = useState(false);
 
-    // Geocode on mount
+    // Geocode or use existing location on mount
     useEffect(() => {
         if (!address) return;
+
+        if (address.location?.latitude && address.location?.longitude) {
+            setDestCoords({
+                lat: address.location.latitude,
+                lon: address.location.longitude,
+            });
+            setGeocoding(false);
+            return;
+        }
+
         setGeocoding(true);
         geocodeAddress(address).then((coords) => {
             setDestCoords(coords);
             setGeocoding(false);
         });
-    }, [address?.street, address?.postalCode]);
+    }, [address?.street, address?.postalCode, address?.location]);
 
     // Compute distances
     const partnerDist =

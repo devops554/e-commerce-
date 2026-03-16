@@ -102,7 +102,7 @@ export default function CustomerInvoicePage() {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Order
                 </Button>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button
                         variant="outline"
                         onClick={downloadPDF}

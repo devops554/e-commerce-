@@ -8,6 +8,7 @@ import {
     Bell,
     ClipboardList,
     BarChart3,
+    Tag,
 } from 'lucide-react'
 
 export const managerNavigation = [
@@ -51,7 +52,13 @@ export const managerNavigation = [
                 icon: History,
                 href: '/manager/orders/history',
             },
+
         ],
+    },
+    {
+        title: 'Return Orders',
+        href: '/manager/returns',
+        icon: Tag,
     },
     {
         title: 'Delivery Fleet',

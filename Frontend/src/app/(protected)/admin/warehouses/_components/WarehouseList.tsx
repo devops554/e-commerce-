@@ -32,10 +32,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useRouter } from 'next/navigation'
 import { useWarehouses, useWarehouseActions, Warehouse } from '@/hooks/useWarehouses'
 import { useDebounce } from '@/hooks/useDebounce'
-import { WarehouseDialog } from './WarehouseDialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -46,6 +44,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useRouter } from 'next/navigation'
 
 export default function WarehouseList() {
     const router = useRouter()
@@ -65,8 +64,6 @@ export default function WarehouseList() {
     const totalItems = data?.total || 0
 
     const { deleteWarehouse, setDefaultWarehouse } = useWarehouseActions()
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
     // Reset to page 1 when search changes
@@ -93,8 +90,7 @@ export default function WarehouseList() {
     }
 
     const handleEdit = (wh: Warehouse) => {
-        setEditingWarehouse(wh)
-        setDialogOpen(true)
+        router.push(`/admin/warehouses/${wh._id}/edit`)
     }
 
     const handleAdd = () => {
@@ -340,12 +336,6 @@ export default function WarehouseList() {
                     </div>
                 )}
             </div>
-
-            <WarehouseDialog
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-                warehouse={editingWarehouse}
-            />
 
             <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <AlertDialogContent className="rounded-[32px]">

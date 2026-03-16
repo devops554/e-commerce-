@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { CategorySidebar } from '@/components/category/CategorySidebar'
+import { SubcategorySidebar } from '@/components/category/SubcategorySidebar'
 import { CategoryFilterBar } from '@/components/category/CategoryFilterBar'
 import { useCategory } from '@/hooks/useCategories'
 import { useProducts } from '@/hooks/useProducts'
@@ -85,9 +85,9 @@ export default function CategoryPage() {
             <div className="flex-1 container mx-auto px-4 lg:px-8 py-8 lg:py-12">
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
-                    {/* Sidebar - Hidden on mobile, or could be a drawer but here we use list for now */}
+                    {/* Sidebar - Shows subcategories of this category */}
                     <div className="hidden lg:block lg:w-72 shrink-0">
-                        <CategorySidebar productType={category?.productType?._id as string} />
+                        <SubcategorySidebar parentId={category._id} />
                     </div>
 
                     {/* Main Content */}
@@ -118,7 +118,7 @@ export default function CategoryPage() {
                                                 </Button>
                                             </SheetTrigger>
                                             <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 border-none bg-slate-50">
-                                                <CategorySidebar productType={category?.productType?._id as string} />
+                                                <SubcategorySidebar parentId={category._id} />
                                             </SheetContent>
                                         </Sheet>
                                     </div>

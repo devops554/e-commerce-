@@ -4,7 +4,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { useCategories } from '@/hooks/useCategories'
+import { useCategory } from '@/hooks/useCategories'
 
 interface HighlightsSectionProps {
     data: any;
@@ -12,8 +12,7 @@ interface HighlightsSectionProps {
 }
 
 export default function HighlightsSection({ data, onChange }: HighlightsSectionProps) {
-    const { data: categoryData } = useCategories({ limit: 100 })
-    const currentCategory = categoryData?.categories.find(c => c._id === data.category)
+    const { data: currentCategory } = useCategory(data.category)
     const categoryName = currentCategory?.name?.toLowerCase() || ''
 
     const handleHighlightChange = (field: string, value: string) => {

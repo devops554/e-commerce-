@@ -1,8 +1,10 @@
+import { UserRole } from "@/services/user.service";
+
 export interface UserData {
     id: string;
     email: string;
     name: string;
-    role: 'admin' | 'subadmin'
+    role: UserRole;
     profilePicture?: string;
     phone?: string;
 }

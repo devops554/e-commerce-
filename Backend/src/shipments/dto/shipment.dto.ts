@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { ShipmentStatus } from '../schemas/shipment.schema';
+import { ShipmentStatus, ShipmentType } from '../schemas/shipment.schema';
 
 export class CreateShipmentDto {
   @IsMongoId()
@@ -20,6 +20,10 @@ export class CreateShipmentDto {
   @IsMongoId()
   @IsOptional()
   deliveryPartnerId?: string;
+
+  @IsEnum(ShipmentType)
+  @IsOptional()
+  type?: ShipmentType;
 }
 
 export class AssignShipmentDto {

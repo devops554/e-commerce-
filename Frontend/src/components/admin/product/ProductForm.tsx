@@ -15,6 +15,8 @@ import VariantManagementSection from './VariantManagementSection'
 import VariantDialog from './VariantDialog'
 import SeoSection from './SeoSection'
 import ProductGstSection from './ProductGstSection'
+import ReturnPolicySection, { defaultReturnPolicy } from './Returnpolicysection'
+import FaqSection from './FaqSection'
 import { Save, ArrowLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useProductVariantActions } from '@/hooks/useProducts'
@@ -29,34 +31,42 @@ function resolveId(val: any): string | null {
 }
 
 interface ProductFormProps {
-    initialData?: any;
-    onSubmit: (data: any) => void;
-    isLoading?: boolean;
-    title: string;
+    initialData?: any
+    onSubmit: (data: any) => void
+    isLoading?: boolean
+    title: string
 }
 
 export default function ProductForm({ initialData, onSubmit, isLoading, title }: ProductFormProps) {
     const router = useRouter()
     const queryClient = useQueryClient()
+
     const [formData, setFormData] = useState(initialData || {
         isActive: true,
         images: [],
         productType: '',
-        gst: { hsnCode: '', gstRate: 18, includedInPrice: true }
+        gst: { hsnCode: '', gstRate: 18, includedInPrice: true },
+        // Return policy defaults — isReturnable: false so no accidental returns
+        returnPolicy: defaultReturnPolicy,
     })
 
-    // Sync formData with initialData when it changes (important for variants)
+    // Sync formData with initialData when it changes (important for edit mode / variants)
     useEffect(() => {
         if (initialData) {
             setFormData({
                 ...initialData,
-                gst: initialData.gst || { hsnCode: '', gstRate: 18, includedInPrice: true }
+                gst: initialData.gst || { hsnCode: '', gstRate: 18, includedInPrice: true },
+                returnPolicy: initialData.returnPolicy || defaultReturnPolicy,
             })
         }
     }, [initialData])
 
-    const selectedCategoryId = typeof formData.category === 'object' ? formData.category?._id : formData.category
-    const selectedSubCategoryId = typeof formData.subCategory === 'object' ? formData.subCategory?._id : formData.subCategory
+    const selectedCategoryId = typeof formData.category === 'object'
+        ? formData.category?._id
+        : formData.category
+    const selectedSubCategoryId = typeof formData.subCategory === 'object'
+        ? formData.subCategory?._id
+        : formData.subCategory
     const activeCategoryId = selectedSubCategoryId || selectedCategoryId
 
     const { data: categoryDetails } = useCategory(activeCategoryId || '')
@@ -64,34 +74,37 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
     // Update attributes when category changes
     useEffect(() => {
         if (categoryDetails?.attributes) {
-            // Check if we are actually changing to a NEW category vs just loading on start
-            const isInitialLoad = initialData && (resolveId(initialData.category) === selectedCategoryId || resolveId(initialData.subCategory) === selectedSubCategoryId)
-
+            const isInitialLoad = initialData && (
+                resolveId(initialData.category) === selectedCategoryId ||
+                resolveId(initialData.subCategory) === selectedSubCategoryId
+            )
             if (!isInitialLoad || !formData.attributes?.length) {
                 setFormData((prev: any) => ({
                     ...prev,
-                    attributes: categoryDetails.attributes
+                    attributes: categoryDetails.attributes,
                 }))
             }
         }
     }, [categoryDetails, initialData])
 
-    // Variant Management State
+    // Variant management state
     const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false)
     const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null)
-    const { createVariant, updateVariant, deleteVariant, isCreatingVariant, isUpdatingVariant } = useProductVariantActions()
+    const {
+        createVariant,
+        updateVariant,
+        deleteVariant,
+        isCreatingVariant,
+        isUpdatingVariant,
+    } = useProductVariantActions()
 
     const handleFieldChange = (field: string, value: any) => {
-        setFormData((prev: any) => ({
-            ...prev,
-            [field]: value
-        }))
+        setFormData((prev: any) => ({ ...prev, [field]: value }))
     }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Sanitize data: Ensure IDs are strings, not objects
         const sanitizedData = {
             ...formData,
             productType: resolveId(formData.productType),
@@ -99,13 +112,13 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
             subCategory: resolveId(formData.subCategory) || undefined,
             brand: resolveId(formData.brand),
             createdBy: resolveId(formData.createdBy) || undefined,
-            updatedBy: resolveId(formData.updatedBy) || undefined
+            updatedBy: resolveId(formData.updatedBy) || undefined,
         }
 
         onSubmit(sanitizedData)
     }
 
-    // Variant Actions
+    // Variant actions
     const handleSaveVariant = async (variantData: any) => {
         try {
             if (editingVariant) {
@@ -116,7 +129,6 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
             setIsVariantDialogOpen(false)
             setEditingVariant(null)
             queryClient.invalidateQueries({ queryKey: ['product', formData._id] })
-
         } catch (error) {
             console.error('Failed to save variant:', error)
         }
@@ -135,6 +147,7 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8 pb-20">
+            {/* ── Sticky header ── */}
             <div className="flex items-center justify-between sticky top-0 z-10 bg-white/80 backdrop-blur-md py-4 border-b">
                 <div className="flex items-center gap-4">
                     <Button
@@ -164,13 +177,20 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                 </Button>
             </div>
 
+            {/* ── Two-column layout ── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Main Info */}
+
+                {/* Left column — main content */}
                 <div className="lg:col-span-2 space-y-8">
                     <BasicInfoSection data={formData} onChange={handleFieldChange} />
                     <MediaSection data={formData} onChange={handleFieldChange} />
                     <HighlightsSection data={formData} onChange={handleFieldChange} />
                     <SpecificationsSection data={formData} onChange={handleFieldChange} />
+                    <FaqSection data={formData} onChange={handleFieldChange} />
+
+                    {/* Return policy sits in the main column, below specs */}
+
+
                     <VariantManagementSection
                         productId={formData._id}
                         variants={formData.variants || []}
@@ -184,9 +204,10 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                         }}
                         onDeleteVariant={handleDeleteVariant}
                     />
+                    {formData.variants?.length > 0 && <ReturnPolicySection data={formData} onChange={handleFieldChange} variants={formData.variants || []} />}
                 </div>
 
-                {/* Right Column - Status & Category */}
+                {/* Right column — settings */}
                 <div className="space-y-8">
                     <CategorySelectionSection data={formData} onChange={handleFieldChange} />
                     <ProductGstSection data={formData} onChange={handleFieldChange} />
@@ -197,6 +218,7 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                 </div>
             </div>
 
+            {/* ── Variant dialog ── */}
             <VariantDialog
                 isOpen={isVariantDialogOpen}
                 onClose={() => {
@@ -208,7 +230,7 @@ export default function ProductForm({ initialData, onSubmit, isLoading, title }:
                 isLoading={isCreatingVariant || isUpdatingVariant}
                 availableImages={[
                     ...(formData.thumbnail?.url ? [formData.thumbnail] : []),
-                    ...(formData.images || [])
+                    ...(formData.images || []),
                 ]}
                 productAttributes={formData.attributes || []}
                 productGst={formData.gst}

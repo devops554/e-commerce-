@@ -125,4 +125,24 @@ export class PaymentsService {
       return false;
     }
   }
+
+  async createRefund(paymentId: string, amount: number, notes?: any) {
+    try {
+      const options: any = {
+        payment_id: paymentId,
+        amount: Math.round(amount * 100), // paise
+      };
+      if (notes) options.notes = notes;
+
+      const refund = await this.razorpay.payments.refund(paymentId, options);
+      this.logger.log(`Razorpay refund created: ${refund.id} for payment: ${paymentId}`);
+      return refund;
+    } catch (error) {
+      this.logger.error(
+        `Razorpay refund failed for payment ${paymentId}: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException('Refund failed at payment gateway');
+    }
+  }
 }

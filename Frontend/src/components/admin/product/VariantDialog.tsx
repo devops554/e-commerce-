@@ -16,6 +16,14 @@ import SimpleImageUpload from '@/components/SimpleImageUpload'
 import { CheckIcon, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import GstBreakdownCard from './GstBreakdownCard'
+import { Switch } from '@/components/ui/switch'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 
 interface VariantDialogProps {
     isOpen: boolean;
@@ -217,6 +225,7 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
                         </div>
                     </div>
 
+
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <Label className="font-bold text-sm text-slate-700">Variant Attributes</Label>
@@ -370,8 +379,9 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
                 </div>
 
                 <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100 gap-2 sm:gap-0">
-                    <Button variant="ghost" onClick={onClose} className="rounded-xl font-bold">Cancel</Button>
+                    <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl font-bold">Cancel</Button>
                     <Button
+                        type="button"
                         onClick={() => onSave(formData)}
                         disabled={isLoading}
                         className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold px-8 shadow-lg shadow-blue-100"

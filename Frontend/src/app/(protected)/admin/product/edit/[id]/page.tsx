@@ -30,8 +30,13 @@ export default function EditProductPage() {
     const handleSubmit = async (formData: any) => {
 
         try {
-            await updateProduct({ id: formData._id, data: formData })
-            router.push(`/admin/product/${id}`)
+            const result = await updateProduct({ id: formData._id, data: formData })
+            // Redirect to the new slug (in case it changed)
+            if (result?.slug) {
+                router.push(`/admin/product/${result.slug}`)
+            } else {
+                router.push(`/admin/product/${id}`)
+            }
         } catch (error) {
             console.error('Failed to update product:', error)
         }

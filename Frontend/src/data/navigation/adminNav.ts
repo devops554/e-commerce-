@@ -74,8 +74,17 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     icon: ShoppingCart,
     items: [
       { title: "All Orders", href: "/admin/orders", icon: ClipboardList },
-      { title: "Pending Orders", href: "/admin/orders?status=pending", icon: Clock },
-      { title: "Completed Orders", href: "/admin/orders?status=delivered", icon: CheckCircle2 },
+      {
+        title: 'Analytics',
+        icon: BarChart3,
+        href: '/admin/orders/analysis',
+      },
+      {
+        title: 'Order History',
+        icon: History,
+        href: '/admin/orders/history',
+      },
+
     ],
   },
 

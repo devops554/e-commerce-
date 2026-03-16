@@ -146,6 +146,9 @@ export class Order extends Document {
   @Prop({ type: Date })
   invoiceDate: Date;
 
+  @Prop({ type: String })
+  estimatedTime: string;
+
   // ─── Payment ───
   @Prop({ required: true, enum: PaymentMethod })
   paymentMethod: PaymentMethod;
@@ -205,6 +208,9 @@ export class Order extends Document {
 
   @Prop({ default: null })
   cancelAt: Date;
+
+  @Prop({ type: Date })
+  deliveredAt: Date;
 
   @Prop([
     {

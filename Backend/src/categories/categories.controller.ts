@@ -86,6 +86,34 @@ export class CategoriesController {
     });
   }
 
+  @Get('parents')
+  findParents(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('productType') productType?: string,
+    @Query('isActive') isActive?: string,
+    @Query('sort') sort?: string,
+  ) {
+    const p = page ? parseInt(page) : 1;
+    const l = limit ? parseInt(limit) : 10;
+
+    if (p < 1) throw new BadRequestException('Page must be greater than 0');
+    if (l < 1 || l > 100)
+      throw new BadRequestException('Limit must be between 1 and 100');
+
+    return this.categoriesService.findAll({
+      page: p,
+      limit: l,
+      search,
+      productType,
+      parentId: null,
+      isActive:
+        isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+      sort,
+    });
+  }
+
   @Get(':idOrSlug')
   findOne(@Param('idOrSlug') idOrSlug: string) {
     return this.categoriesService.findOne(idOrSlug);

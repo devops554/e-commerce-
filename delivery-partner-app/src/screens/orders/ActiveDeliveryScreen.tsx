@@ -32,7 +32,6 @@ import {
   useActiveOrders,
 } from '../../hooks/useQueries';
 import { Card, Divider } from '../../components/ui';
-import { ActiveDeliveryMap } from '../../components/orders/ActiveDeliveryMap';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
 import {
   formatCurrency,
@@ -40,6 +39,8 @@ import {
   getOrderStatusLabel,
   isCOD,
 } from '../../utils/helpers';
+import { FullMapModal } from './FullMapModal';
+import { ActiveDeliveryMap } from '../../components/orders/ActiveDeliveryMap';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -53,62 +54,6 @@ const SectionLabel = ({ icon, text }: { icon: IoniconsName; text: string }) => (
 );
 
 // ── Full Map Modal ─────────────────────────────────────────────────────────────
-const FullMapModal = ({
-  visible,
-  onClose,
-  partnerLocation,
-  destination,
-  destinationLabel,
-  destinationIcon,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  partnerLocation: { latitude: number; longitude: number } | null;
-  destination: any;
-  destinationLabel: string;
-  destinationIcon: string;
-}) => (
-  <Modal visible={visible} animationType="slide" transparent={false}>
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
-      <View style={fullMapStyles.header}>
-        <TouchableOpacity onPress={onClose} style={fullMapStyles.closeBtn}>
-          <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={fullMapStyles.title}>Full Map</Text>
-        <View style={{ width: 38 }} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <ActiveDeliveryMap
-          partnerLocation={partnerLocation}
-          destination={destination}
-          destinationLabel={destinationLabel}
-          destinationIcon={destinationIcon as any}
-        />
-      </View>
-    </SafeAreaView>
-  </Modal>
-);
-
-const fullMapStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.white,
-  },
-  closeBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.background,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  title: {
-    fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary,
-  },
-});
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function ActiveDeliveryScreen() {

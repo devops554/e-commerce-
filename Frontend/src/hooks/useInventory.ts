@@ -43,10 +43,18 @@ export const useTransferStock = () => {
     });
 };
 
-export const useStockHistory = (warehouseId: string | undefined, params: { page?: number; limit?: number; search?: string } = {}) => {
+export const useStockHistory = (warehouseId: string | undefined, params: { page?: number; limit?: number; search?: string; productId?: string } = {}) => {
     return useQuery({
         queryKey: ['stock-history', warehouseId, params],
         queryFn: () => inventoryService.getHistory(warehouseId as string, params),
+        enabled: !!warehouseId,
+    });
+};
+
+export const useStockHistoryStats = (warehouseId: string | undefined, params: { range?: string; productId?: string } = {}) => {
+    return useQuery({
+        queryKey: ['stock-history-stats', warehouseId, params],
+        queryFn: () => inventoryService.getHistoryStats(warehouseId as string, params),
         enabled: !!warehouseId,
     });
 };

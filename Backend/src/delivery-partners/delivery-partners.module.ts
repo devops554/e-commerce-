@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -17,7 +17,7 @@ import { Shipment, ShipmentSchema } from '../shipments/schemas/shipment.schema';
 @Module({
   imports: [
     UsersModule, // Required for RolesGuard to inject UsersService
-    NotificationsModule, // ✅ Required for NotificationsService injection
+    forwardRef(() => NotificationsModule), // ✅ Required for NotificationsService injection
     PassportModule,
     ConfigModule, // Added to make ConfigService available
     MongooseModule.forFeature([

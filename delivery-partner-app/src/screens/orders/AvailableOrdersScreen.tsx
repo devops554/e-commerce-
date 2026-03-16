@@ -85,7 +85,12 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
     ]).start();
   }, []);
 
+
   const order = shipment.orderId;
+
+  // Guard: skip rendering if orderId hasn't been populated
+  if (!order) return null;
+
   const totalItems = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const cod = isCOD(order.paymentMethod);
 

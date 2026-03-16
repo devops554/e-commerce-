@@ -5,6 +5,8 @@ import {
   Logger,
   NotFoundException,
   UnauthorizedException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -34,6 +36,7 @@ export class DeliveryPartnersService {
     @InjectModel(Shipment.name)
     private shipmentModel: Model<ShipmentDocument>,
     private jwtService: JwtService,
+    @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
   ) { }
 

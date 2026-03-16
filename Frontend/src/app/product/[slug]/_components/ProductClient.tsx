@@ -2,9 +2,6 @@
 
 import { productService, Product, ProductVariant } from '@/services/product.service'
 
-
-
-
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
@@ -23,6 +20,9 @@ import { ProductHighlights } from '@/components/product/detail/ProductHighlights
 import { ProductManufacturer } from '@/components/product/detail/ProductManufacturer'
 import { ProductCard } from '@/components/product/ProductCard'
 import OffersSection from '@/components/product/detail/OffersSection'
+import ProductFaqs from '@/components/product/detail/ProductFaqs'
+import ProductReviews from '@/components/product/detail/ProductReviews'
+import { useReviews } from '@/hooks/useReviews'
 
 type FullProduct = Product & { variants: ProductVariant[] }
 
@@ -36,8 +36,17 @@ export default function ProductPage() {
     const [selectedImage, setSelectedImage] = useState<string>('')
     const [similarProducts, setSimilarProducts] = useState<any[]>([])
     const [recentProducts, setRecentProducts] = useState<any[]>([])
+    const [reviewPage, setReviewPage] = useState(1)
 
-    // ... (Saare useEffects aur Handlers same rahenge jo aapke original code mein the) ...
+    // ── useReviews must be here, unconditionally, before any early return.
+    // The hook's own `enabled` flag handles the no-product case internally.
+    const { data: reviewsData } = useReviews({
+        productId: product?._id,
+        status: 'APPROVED',
+        page: reviewPage,
+        limit: 10,
+    })
+
     useEffect(() => {
         const recent = JSON.parse(localStorage.getItem('recent_products') || '[]')
         setRecentProducts(recent)
@@ -45,7 +54,6 @@ export default function ProductPage() {
 
     useSocket('stock.updated', (data) => {
         if (!product || data.productId !== product._id) return
-
         setProduct(prev => {
             if (!prev) return prev
             const newVariants = prev.variants.map(v =>
@@ -53,7 +61,6 @@ export default function ProductPage() {
             )
             return { ...prev, variants: newVariants }
         })
-
         setSelectedVariant(prev => {
             if (!prev || prev._id !== data.variantId) return prev
             return { ...prev, stock: data.stock }
@@ -80,15 +87,17 @@ export default function ProductPage() {
                         price: firstVariant?.price || 0,
                         discountPrice: firstVariant?.discountPrice || 0,
                         attributes: firstVariant?.attributes || [],
-                        stock: firstVariant?.stock || 0
+                        stock: firstVariant?.stock || 0,
                     },
-                    ...recent.filter((p: any) => p.slug !== data.slug)
+                    ...recent.filter((p: any) => p.slug !== data.slug),
                 ].slice(0, 6)
                 localStorage.setItem('recent_products', JSON.stringify(newRecent))
                 setRecentProducts(newRecent)
 
                 if (data.category) {
-                    const categoryId = typeof data.category === 'string' ? data.category : (data.category as any)._id
+                    const categoryId = typeof data.category === 'string'
+                        ? data.category
+                        : (data.category as any)._id
                     const similar = await productService.getAll({ category: categoryId, limit: 6 })
                     setSimilarProducts(similar.products.filter((p: any) => p.slug !== slug))
                 }
@@ -106,8 +115,14 @@ export default function ProductPage() {
         if (!product) return []
         const imgs: { url: string }[] = []
         if (product.thumbnail?.url) imgs.push({ url: product.thumbnail.url })
-        product.images?.forEach((i: any) => { if (!imgs.find(x => x.url === i.url)) imgs.push({ url: i.url }) })
-        product.variants?.forEach(v => v.images?.forEach(i => { if (!imgs.find(x => x.url === i.url)) imgs.push({ url: i.url }) }))
+        product.images?.forEach((i: any) => {
+            if (!imgs.find(x => x.url === i.url)) imgs.push({ url: i.url })
+        })
+        product.variants?.forEach(v =>
+            v.images?.forEach(i => {
+                if (!imgs.find(x => x.url === i.url)) imgs.push({ url: i.url })
+            })
+        )
         return imgs
     }, [product])
 
@@ -118,7 +133,10 @@ export default function ProductPage() {
 
     const handleAddToCart = () => {
         if (!product || !selectedVariant) return
-        const effectivePrice = selectedVariant.discountPrice > 0 ? selectedVariant.discountPrice : selectedVariant.price
+        const effectivePrice =
+            selectedVariant.discountPrice > 0
+                ? selectedVariant.discountPrice
+                : selectedVariant.price
         addToCart({
             id: selectedVariant._id,
             productId: product._id,
@@ -128,25 +146,34 @@ export default function ProductPage() {
             quantity: 1,
             image: selectedImage,
             gstRate: product.gst?.gstRate,
-            hsnCode: product.gst?.hsnCode
+            hsnCode: product.gst?.hsnCode,
         })
         toast.success(`${product.title} added to cart!`)
     }
 
-    const categoryName = product ? (typeof product.category === 'string' ? '' : (product.category as any)?.name) : ''
+    // Derived values — safe after all hooks
+    const categoryName = product
+        ? typeof product.category === 'string' ? '' : (product.category as any)?.name
+        : ''
 
+    const isOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false
+
+    // ── Conditional early returns come LAST, after every hook ──
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center">
             <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
     )
 
-    if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>
-
-    const isOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false
+    if (!product) return (
+        <div className="min-h-screen flex items-center justify-center">
+            Product not found
+        </div>
+    )
 
     return (
         <main className="container mx-auto px-4 lg:px-8 py-8 max-w-7xl">
+
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-widest mb-8">
                 <Link href="/" className="hover:text-primary transition-colors">Home</Link>
@@ -162,7 +189,7 @@ export default function ProductPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
-                {/* LEFT SIDE: Fixed/Sticky Gallery Section */}
+                {/* LEFT — sticky gallery */}
                 <div className="lg:sticky lg:top-24">
                     <ProductImageGallery
                         selectedImage={selectedImage}
@@ -174,10 +201,9 @@ export default function ProductPage() {
                     />
                 </div>
 
-                {/* RIGHT SIDE: Scrollable Details Section */}
+                {/* RIGHT — scrollable details */}
                 <div className="flex flex-col gap-6">
 
-                    {/* Primary Info Card */}
                     <section className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
                         <ProductInfo
                             title={product.title}
@@ -189,30 +215,21 @@ export default function ProductPage() {
                             tags={product.tags}
                             attributes={selectedVariant?.attributes || product.attributes}
                         />
-
-
-
                         <ProductPricing variant={selectedVariant} />
-
                         <ProductVariantSelector
                             variants={product.variants || []}
                             selectedVariant={selectedVariant}
                             onSelect={handleSelectVariant}
                         />
-                        <OffersSection />
+                        <OffersSection returnPolicy={product.returnPolicy} />
                     </section>
 
-                    {/* Secondary Info: Highlights & Specs */}
                     <section className="space-y-6">
                         <ProductHighlights highLight={product.highLight} />
-
-
                         <ProductSpecifications
                             specifications={product.specifications}
                             attributes={product.attributes}
                         />
-
-
                         <ProductDescription
                             shortDescription={product.shortDescription}
                             description={product.description}
@@ -224,12 +241,10 @@ export default function ProductPage() {
                             customerCareDetails={product.customerCareDetails}
                         />
                     </section>
-
-
                 </div>
             </div>
 
-            {/* Recommendations Section */}
+            {/* Recommendations */}
             <div className="mt-20 space-y-16">
                 {similarProducts.length > 0 && (
                     <section>
@@ -251,8 +266,6 @@ export default function ProductPage() {
                                         attributes={fv?.attributes}
                                         stock={fv?.stock}
                                         image={p.thumbnail?.url || ''}
-                                    // rating={p.ratingsAverage || 0}
-                                    // reviewCount={p.ratingsCount || 0}
                                     />
                                 )
                             })}
@@ -264,12 +277,6 @@ export default function ProductPage() {
                     <section>
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl font-black text-slate-900">Recently Viewed</h2>
-                            <button
-                                onClick={() => { localStorage.removeItem('recent_products'); setRecentProducts([]) }}
-                                className="text-xs text-slate-400 hover:text-red-500 font-bold uppercase tracking-tighter transition-colors"
-                            >
-                                Clear History
-                            </button>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                             {recentProducts.filter(p => p.slug !== slug).map((p: any) => (
@@ -286,14 +293,24 @@ export default function ProductPage() {
                                     attributes={p.attributes}
                                     stock={p.stock}
                                     image={p.image || ''}
-                                // rating={p.ratingsAverage || 0}
-                                // reviewCount={p.ratingsCount || 0}
                                 />
                             ))}
                         </div>
                     </section>
                 )}
             </div>
+
+            <ProductFaqs faqs={product.faqs} />
+
+            <ProductReviews
+                reviews={reviewsData?.data || []}
+                averageRating={product.ratingsAverage || 0}
+                totalReviews={product.ratingsCount || 0}
+                currentPage={reviewPage}
+                totalPages={reviewsData?.totalPages || 0}
+                totalItems={reviewsData?.total || 0}
+                onPageChange={setReviewPage}
+            />
         </main>
     )
 }

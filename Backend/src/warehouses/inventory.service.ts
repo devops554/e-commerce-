@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -32,8 +34,11 @@ export class InventoryService {
     @InjectModel(ProductVariant.name) private variantModel: Model<any>,
     @InjectModel(Warehouse.name)
     private warehouseModel: Model<WarehouseDocument>,
+    @Inject(forwardRef(() => EventsGateway))
     private readonly eventsGateway: EventsGateway,
+    @Inject(forwardRef(() => ProductsService))
     private readonly productsService: ProductsService,
+    @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService: NotificationsService,
   ) { }
 
@@ -477,11 +482,16 @@ export class InventoryService {
     page?: number;
     limit?: number;
     search?: string;
+    productId?: string;
   }): Promise<{ data: StockHistoryDocument[]; total: number; page: number; limit: number; totalPages: number }> {
-    const { warehouseId, page = 1, limit = 20, search } = params;
+    const { warehouseId, page = 1, limit = 20, search, productId } = params;
     const skip = (page - 1) * limit;
 
     const filter: any = { warehouse: new Types.ObjectId(warehouseId) };
+
+    if (productId) {
+      filter.product = new Types.ObjectId(productId);
+    }
 
     if (search) {
       const variants = await this.variantModel.find({
@@ -517,6 +527,108 @@ export class InventoryService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async getHistoryStats(params: {
+    warehouseId: string;
+    range: string;
+    productId?: string;
+  }) {
+    const { warehouseId, range, productId } = params;
+    const filter: any = { warehouse: new Types.ObjectId(warehouseId) };
+    
+    if (productId) {
+      filter.product = new Types.ObjectId(productId);
+    }
+
+    const now = new Date();
+    let startDate = new Date();
+    let groupByFormat = '%Y-%m-%d';
+
+    switch (range) {
+      case '1d':
+        startDate.setDate(now.getDate() - 1);
+        groupByFormat = '%Y-%m-%d %H:00';
+        break;
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '1m':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case '1y':
+        startDate.setFullYear(now.getFullYear() - 1);
+        groupByFormat = '%Y-%m';
+        break;
+      default:
+        startDate = new Date(0);
+        groupByFormat = '%Y-%m';
+        break;
+    }
+
+    // Only filter by start date if not 'all'
+    if (range !== 'all') {
+      filter.createdAt = { $gte: startDate };
+    }
+
+    const pipeline = [
+      { $match: filter },
+      {
+        $group: {
+          _id: {
+            date: { $dateToString: { format: groupByFormat, date: '$createdAt' } },
+            type: '$type',
+            isPositive: { $gt: ['$amount', 0] }
+          },
+          totalAmount: { $sum: { $abs: '$amount' } },
+          count: { $sum: 1 }
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.date',
+          actions: {
+            $push: {
+              type: '$_id.type',
+              isPositive: '$_id.isPositive',
+              amount: '$totalAmount',
+              count: '$count'
+            },
+          },
+        },
+      },
+      { $sort: { _id: 1 as any } },
+    ];
+
+    const results = await this.historyModel.aggregate(pipeline).exec();
+
+    return results.map((item) => {
+      let received = 0;
+      let dispatched = 0;
+      let transferred = 0;
+
+      for (const action of item.actions) {
+        if (action.type === StockActionType.ADJUSTMENT) {
+          if (action.isPositive) received += action.amount;
+          else dispatched += action.amount;
+        } else if (action.type === StockActionType.TRANSFER_IN) {
+          transferred += action.amount;
+        } else if (action.type === StockActionType.TRANSFER_OUT) {
+          transferred += action.amount; // total transfer activity
+        } else if (action.type === StockActionType.DISPATCH) {
+          // If amount is 0 due to old bug, fallback to count or just use amount if fixed
+          dispatched += action.amount > 0 ? action.amount : action.count; 
+        }
+      }
+
+      return {
+        date: item._id,
+        received,
+        dispatched,
+        transferred,
+      };
+    });
+  }
+
 
   private async sendStockNotification(
     productId: any,

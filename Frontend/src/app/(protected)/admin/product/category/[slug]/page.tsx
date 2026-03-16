@@ -60,7 +60,6 @@ export default function CategoryListPage() {
         page,
         limit: 10,
         search: debouncedSearch,
-        parentId: isRoot ? 'null' : undefined,
         productType: selectedProductType
     })
 

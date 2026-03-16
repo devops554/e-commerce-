@@ -6,6 +6,8 @@ import {
     Settings,
     Bike,
     Bell,
+    ClipboardList,
+    BarChart3,
 } from 'lucide-react'
 
 export const managerNavigation = [
@@ -16,18 +18,40 @@ export const managerNavigation = [
     },
     {
         title: 'Inventory',
-        href: '/manager/inventory',
         icon: Package,
+        items: [
+            {
+                title: 'Products',
+                icon: ClipboardList,
+                href: '/manager/inventory',
+            },
+            {
+                title: 'Stock History',
+                icon: History,
+                href: '/manager/stock-history',
+            },
+        ],
     },
     {
         title: 'My Orders',
-        href: '/manager/orders',
         icon: WarehouseIcon,
-    },
-    {
-        title: 'Stock History',
-        href: '/manager/history',
-        icon: History,
+        items: [
+            {
+                title: 'Orders',
+                icon: ClipboardList,
+                href: '/manager/orders',
+            },
+            {
+                title: 'Analytics',
+                icon: BarChart3,
+                href: '/manager/orders/analysis',
+            },
+            {
+                title: 'Order History',
+                icon: History,
+                href: '/manager/orders/history',
+            },
+        ],
     },
     {
         title: 'Delivery Fleet',

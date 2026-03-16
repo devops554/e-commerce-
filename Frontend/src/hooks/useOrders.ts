@@ -141,3 +141,26 @@ export const usePlaceOrder = () => {
 
     return { placeOrder, loading };
 };
+
+export const useOrderAnalytics = (warehouseId: string, range: string) => {
+    return useQuery({
+        queryKey: ['order-analytics', warehouseId, range],
+        queryFn: () => orderService.getWarehouseAnalytics(warehouseId, range),
+        enabled: !!warehouseId,
+    });
+};
+
+export const useWarehouseOrderHistory = (warehouseId: string, params: { page?: number; limit?: number; search?: string } = {}) => {
+    return useQuery({
+        queryKey: ['warehouse-history', warehouseId, params],
+        queryFn: () => orderService.getWarehouseHistory(warehouseId, params),
+        enabled: !!warehouseId,
+    });
+};
+
+export const useGlobalOrderAnalytics = (range: string) => {
+    return useQuery({
+        queryKey: ['global-order-analytics', range],
+        queryFn: () => orderService.getGlobalAnalytics(range),
+    });
+};

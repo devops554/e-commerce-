@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { useCategories } from '@/hooks/useCategories'
+import { useCategories, useSubcategories } from '@/hooks/useCategories'
 import { ChevronDown, Search, Check, X } from 'lucide-react'
 
 interface CategorySelectionSectionProps {
@@ -27,10 +27,11 @@ function resolveId(val: any): string | null {
 }
 
 export default function CategorySelectionSection({ data, onChange }: CategorySelectionSectionProps) {
+    // 1. Fetch Parent Categories (top-level)
     const { data: categoryData, isLoading: isLoadingCats } = useCategories({ limit: 100 })
     const { data: productTypesData, isLoading: isLoadingTypes } = useProductTypes({ limit: 100 })
 
-    const allCategories = categoryData?.categories || []
+    const allParentCategories = categoryData?.categories || []
     const productTypeItems = productTypesData?.productTypes || []
 
     const isLoading = isLoadingCats || isLoadingTypes
@@ -40,12 +41,15 @@ export default function CategorySelectionSection({ data, onChange }: CategorySel
     const selectedCategoryId = resolveId(data.category)
     const selectedSubCategoryId = resolveId(data.subCategory)
 
-    const mainCategories = allCategories.filter((c: any) => !c.parentId && resolveId(c.productType) === selectedProductType)
+    // 2. Fetch Subcategories for the selected parent category
+    const { data: subCategoryData, isLoading: isLoadingSubs } = useSubcategories(
+        selectedCategoryId,
+        { limit: 100 }
+    )
 
-    const subCategories = allCategories.filter((c: any) => {
-        const parentId = resolveId(c.parentId)
-        return parentId === selectedCategoryId
-    })
+    const mainCategories = allParentCategories.filter((c: any) => resolveId(c.productType) === selectedProductType)
+
+    const subCategories = subCategoryData?.categories || []
 
     const handleProductTypeSelect = (id: string | null) => {
         onChange('productType', id)

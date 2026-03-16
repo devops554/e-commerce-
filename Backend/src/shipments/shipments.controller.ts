@@ -26,7 +26,7 @@ import { DeliveryPartnerJwtGuard } from '../delivery-partners/delivery-partner.g
 export class ShipmentsController {
   constructor(private readonly shipmentsService: ShipmentsService) { }
 
-  // ─── ADMIN & MANAGER ROUTES ───
+  // ─── ADMIN & MANAGER ROUTES ───────────────────────────────────────────────
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -80,26 +80,6 @@ export class ShipmentsController {
     return this.shipmentsService.findById(id);
   }
 
-  // ─── DELIVERY PARTNER ROUTES ───
-
-  @UseGuards(DeliveryPartnerJwtGuard)
-  @Get('partner/my-shipments')
-  async getMyShipments(
-    @Req() req: any,
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-    @Query('status') status?: string,
-  ) {
-    // Delivery partner ID from the request object attached by guard
-    const partnerId = req.deliveryPartner._id.toString();
-    return this.shipmentsService.findAll({
-      page,
-      limit,
-      deliveryPartnerId: partnerId,
-      status,
-    });
-  }
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   @Patch(':id/cancel/admin')
@@ -110,6 +90,7 @@ export class ShipmentsController {
     return this.shipmentsService.cancelShipment(id, reason);
   }
 
+  // Pickup OTP — admin requests it, delivery partner scans/enters at warehouse
   @Post(':id/pickup-otp')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
@@ -127,16 +108,19 @@ export class ShipmentsController {
     return this.shipmentsService.verifyPickupOtp(id, dto.otp);
   }
 
+  // ─── DELIVERY OTP — called by DELIVERY PARTNER at customer doorstep ───────
+  // FIX: was incorrectly using BOTH JwtAuthGuard + DeliveryPartnerJwtGuard
+  // together which caused 401 — delivery partner token fails JwtAuthGuard.
+  // Only DeliveryPartnerJwtGuard is needed here.
+
   @Post(':id/delivery-otp')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  @UseGuards(DeliveryPartnerJwtGuard)
   async requestDeliveryOtp(@Param('id') id: string) {
     return this.shipmentsService.requestDeliveryOtp(id);
   }
 
   @Patch(':id/verify-delivery')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  @UseGuards(DeliveryPartnerJwtGuard)
   async verifyDeliveryOtp(
     @Param('id') id: string,
     @Body() dto: { otp: string },
@@ -144,7 +128,24 @@ export class ShipmentsController {
     return this.shipmentsService.verifyDeliveryOtp(id, dto.otp);
   }
 
-  // ─── DELIVERY PARTNER ROUTES ───
+  // ─── DELIVERY PARTNER ROUTES ──────────────────────────────────────────────
+
+  @UseGuards(DeliveryPartnerJwtGuard)
+  @Get('partner/my-shipments')
+  async getMyShipments(
+    @Req() req: any,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('status') status?: string,
+  ) {
+    const partnerId = req.deliveryPartner._id.toString();
+    return this.shipmentsService.findAll({
+      page,
+      limit,
+      deliveryPartnerId: partnerId,
+      status,
+    });
+  }
 
   @UseGuards(DeliveryPartnerJwtGuard)
   @Patch(':id/cancel')
@@ -152,7 +153,6 @@ export class ShipmentsController {
     @Param('id') id: string,
     @Body('reason') reason?: string,
   ) {
-    // In a real app, we'd verify the shipment belongs to this partner
     return this.shipmentsService.cancelShipment(id, reason);
   }
 
@@ -217,7 +217,6 @@ export class ShipmentsController {
 
   @Get(':id/tracking')
   async getTrackingHistory(@Param('id') id: string) {
-    // This could be open or protected depending on business logic
     return this.shipmentsService.getTrackingHistory(id);
   }
 }

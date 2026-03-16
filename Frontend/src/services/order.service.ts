@@ -17,8 +17,10 @@ export interface ShippingAddress {
     state: string;
     postalCode: string;
     country: string;
-    latitude?: number;
-    longitude?: number;
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
 }
 
 export interface OrderItem {
@@ -99,6 +101,7 @@ export interface Order {
     isDeleted?: boolean;
     createdAt: string;
     updatedAt: string;
+    estimatedTime?: string;
     history?: OrderHistory[];
     // GST totals
     subTotal?: number;
@@ -249,6 +252,21 @@ export const orderService = {
 
     getPackingSlip: async (id: string): Promise<any> => {
         const response = await axiosClient.get(`/orders/${id}/packing-slip`);
+        return response.data;
+    },
+
+    getWarehouseAnalytics: async (warehouseId: string, range: string): Promise<any> => {
+        const response = await axiosClient.get(`/orders/warehouse/${warehouseId}/analytics`, { params: { range } });
+        return response.data;
+    },
+
+    getWarehouseHistory: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string }): Promise<any> => {
+        const response = await axiosClient.get(`/orders/warehouse/${warehouseId}/history`, { params });
+        return response.data;
+    },
+
+    getGlobalAnalytics: async (range: string): Promise<any> => {
+        const response = await axiosClient.get('/orders/analytics/global', { params: { range } });
         return response.data;
     },
 };

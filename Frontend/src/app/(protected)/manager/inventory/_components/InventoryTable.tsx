@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import Image from 'next/image'
+import { UserRole } from '@/services/user.service'
 
 interface InventoryTableProps {
     warehouse: Warehouse
@@ -111,7 +112,7 @@ export const InventoryTable = ({
                                 <tr key={item._id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/30 transition-colors group">
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-4">
-                                            <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product?._id}`} className="h-12 w-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white transition-colors shrink-0 overflow-hidden">
+                                            <Link href={user?.role === UserRole.ADMIN || user?.role === UserRole.SUB_ADMIN ? `/admin/warehouses/${warehouse._id}/inventory/stock-history/${item.variant._id}` : `/manager/inventory/product/${item.product?._id}`} className="h-12 w-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center group-hover:bg-white transition-colors shrink-0 overflow-hidden">
                                                 {item.product?.thumbnail?.url ? (
                                                     <Image
                                                         src={item.product.thumbnail.url}
@@ -125,7 +126,7 @@ export const InventoryTable = ({
                                                 )}
                                             </Link>
                                             <div className="flex flex-col">
-                                                <Link href={user?.role === 'admin' ? `/admin/product/${item.product.slug}` : `/manager/inventory/product/${item.product?._id}`} className="font-bold text-slate-900 text-sm leading-snug hover:text-blue-600 transition-colors">
+                                                <Link href={user?.role === UserRole.ADMIN || user?.role === UserRole.SUB_ADMIN ? `/admin/warehouses/${warehouse._id}/inventory/stock-history/${item.variant._id}` : `/manager/inventory/product/${item.product?._id}`} className="font-bold text-slate-900 text-sm leading-snug hover:text-blue-600 transition-colors">
                                                     {item.product?.title || 'Unknown Product'}
                                                 </Link>
                                                 <span className="text-[10px] text-slate-400 font-black uppercase tracking-tight mt-0.5 flex items-center gap-1.5 flex-wrap">

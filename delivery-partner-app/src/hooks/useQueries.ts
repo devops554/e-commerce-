@@ -44,20 +44,26 @@ export const useProfile = () => {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export const useAvailableOrders = () =>
-  useQuery({
+export const useAvailableOrders = () => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return useQuery({
     queryKey: QUERY_KEYS.availableOrders,
     queryFn: ordersAPI.getAvailableOrders,
-    refetchInterval: 10_000, // Poll every 10s
+    enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 10_000 : false, // Poll every 10s only when logged in
     staleTime: 5_000,
   });
+};
 
-export const useActiveOrder = (params?: { page?: number; limit?: number; search?: string }) =>
-  useQuery<{ data: Shipment[]; total: number; page: number; limit: number; totalPages: number } | Shipment[]>({
+export const useActiveOrder = (params?: { page?: number; limit?: number; search?: string }) => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return useQuery<{ data: Shipment[]; total: number; page: number; limit: number; totalPages: number } | Shipment[]>({
     queryKey: [...QUERY_KEYS.activeOrder, params],
     queryFn: () => ordersAPI.getActiveOrder(params),
-    refetchInterval: 15_000,
+    enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 15_000 : false,
   });
+};
 
 export const useAcceptOrder = () => {
   const queryClient = useQueryClient();
@@ -186,11 +192,14 @@ export const useShipmentById = (shipmentId: string) => {
 // Add this to your hooks/useQueries.ts:
 
 export const useActiveOrders = (params?: { page?: number; limit?: number; search?: string }) => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return useQuery({
     queryKey: ['activeOrders', params],
     queryFn: () => ordersAPI.getActiveOrder(params),
+    enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 15_000 : false,
   });
-};;
+};
 
 // ─── Location ─────────────────────────────────────────────────────────────────
 

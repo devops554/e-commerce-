@@ -47,6 +47,17 @@ export const categoryService = {
         return response.data;
     },
 
+    getParents: async (params?: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        productType?: string;
+        isActive?: boolean;
+    }) => {
+        const response = await axiosClient.get<CategoryResponse>('/categories/parents', { params });
+        return response.data;
+    },
+
     getSubcategories: async (parentId: string, params?: {
         page?: number;
         limit?: number;

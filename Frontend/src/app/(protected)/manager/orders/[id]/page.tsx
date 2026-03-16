@@ -38,6 +38,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 
+import { useOrderTracking } from '@/hooks/useOrderTracking'
+
 // Extracted sub-components
 import { ItemActionCell, getNextStepConfig } from './_components/OrderActionComponents'
 import { DeliveryDetails } from './_components/DeliveryDetails'
@@ -54,9 +56,16 @@ export default function ManagerOrderDetailsPage() {
     const { setBreadcrumbs } = useBreadcrumb()
 
     const { data: warehouse, isLoading: isWarehouseLoading } = useManagerWarehouse()
-    const { data: order, isLoading: isOrderLoading, error } = useOrderById(orderId)
+    const { data: fetchOrder, isLoading: isOrderLoading, error } = useOrderById(orderId)
+    const [order, setOrder] = useState<any>(null)
+    
+    // ─────────────────────────────────────────────────────────────────
+    // REUSABLE HOOK FOR REAL-TIME TRACKING
+    // ─────────────────────────────────────────────────────────────────
+    const { livePartnerLoc } = useOrderTracking(fetchOrder?._id)
+
     const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({
-        orderId: order?._id,
+        orderId: fetchOrder?._id,
         warehouseId: warehouse?._id
     })
 
@@ -64,7 +73,13 @@ export default function ManagerOrderDetailsPage() {
     const cancelMutation = useCancelOrder()
 
     const shipment = shipmentData?.data?.[0]
-    const partner = shipment?.deliveryPartnerId
+    const partner = livePartnerLoc || shipment?.deliveryPartnerId
+
+    useEffect(() => {
+        if (fetchOrder) {
+            setOrder(fetchOrder)
+        }
+    }, [fetchOrder])
 
     const [showCancelDialog, setShowCancelDialog] = useState(false)
     const [cancelReason, setCancelReason] = useState('')
@@ -334,9 +349,12 @@ export default function ManagerOrderDetailsPage() {
                 <div className="w-full h-[500px] lg:h-[600px] bg-slate-100 rounded-3xl border border-slate-200 overflow-hidden relative shadow-sm mt-4">
                     <LiveTrackingMap
                         warehouseLoc={warehouse?.location}
-                        customerLoc={order?.shippingAddress}
+                        customerLoc={order?.shippingAddress.location}
                         partnerLoc={partner?.currentLocation}
                         partnerName={partner?.name}
+                        orderStatus={order.orderStatus}
+                        orderId={order.orderId}
+                        estimatedTime={order.estimatedTime}
                     />
 
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-6 w-[90%] md:w-80 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl z-[400] border border-slate-100">

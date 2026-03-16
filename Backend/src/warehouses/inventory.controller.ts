@@ -55,12 +55,28 @@ export default class InventoryController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
+    @Query('productId') productId?: string,
   ) {
     return this.inventoryService.getHistory({
       warehouseId: id,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 20,
       search,
+      productId,
+    });
+  }
+
+  @Get('warehouse/:id/history/stats')
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async getWarehouseHistoryStats(
+    @Param('id') id: string,
+    @Query('range') range: string = '1m',
+    @Query('productId') productId?: string,
+  ) {
+    return this.inventoryService.getHistoryStats({
+      warehouseId: id,
+      range,
+      productId,
     });
   }
 

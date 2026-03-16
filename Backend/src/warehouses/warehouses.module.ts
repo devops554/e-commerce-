@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { WarehousesService } from './warehouses.service';
 import { WarehousesController } from './warehouses.controller';
@@ -39,12 +39,12 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
       { name: Seller.name, schema: SellerSchema },
     ]),
     UsersModule,
-    ProductsModule,
-    EventsModule,
-    NotificationsModule,
+    forwardRef(() => ProductsModule),
+    forwardRef(() => EventsModule),
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [WarehousesController, InventoryController],
   providers: [WarehousesService, InventoryService],
   exports: [WarehousesService, InventoryService],
 })
-export class WarehousesModule {}
+export class WarehousesModule { }

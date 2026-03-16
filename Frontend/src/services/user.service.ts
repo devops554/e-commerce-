@@ -39,6 +39,10 @@ export interface UserAddress {
     postalCode: string;
     country: string;
     isDefault: boolean;
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
 }
 
 export type CreateUserAddressDto = Omit<UserAddress, '_id' | 'isDefault'> & {

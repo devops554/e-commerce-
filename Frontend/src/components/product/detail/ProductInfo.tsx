@@ -60,14 +60,14 @@ export function ProductInfo({ title, brand, ratingsAverage, ratingsCount, isNewA
                     )}
                 </div>
             </div>
-
+            {/* 
             {tags && tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                     {tags.map(tag => (
                         <span key={tag} className="text-[10px] px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full font-medium">#{tag}</span>
                     ))}
                 </div>
-            )}
+            )} */}
 
         </div>
     )

@@ -14,7 +14,9 @@ import {
 import Link from 'next/link'
 import { VariantSelector } from '@/components/admin/product/VariantSelector'
 import { ProductAttributes } from '@/components/admin/product/ProductAttributes'
+import ReturnPolicyCard from '@/components/admin/product/Returnpolicycard'
 import Image from 'next/image'
+import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 
 function resolveId(val: any): string | null {
     if (!val) return null
@@ -42,8 +44,6 @@ function SpecRow({ label, value }: { label: string; value: any }) {
     )
 }
 
-import { useBreadcrumb } from '@/providers/BreadcrumbContext'
-
 export default function AdminProductDetailPage() {
     const params = useParams()
     const router = useRouter()
@@ -59,7 +59,6 @@ export default function AdminProductDetailPage() {
         ])
     }, [product, setBreadcrumbs])
 
-    // All images = thumbnail + gallery
     const allImages = React.useMemo(() => {
         if (!product) return []
         const imgs: { url: string }[] = []
@@ -71,7 +70,6 @@ export default function AdminProductDetailPage() {
     const [activeImageUrl, setActiveImageUrl] = useState<string | null>(null)
     const [selectedVariant, setSelectedVariant] = useState<any>(null)
 
-    // Set defaults once data loads
     React.useEffect(() => {
         if (product) {
             setActiveImageUrl(product.thumbnail?.url || product.images?.[0]?.url || null)
@@ -106,7 +104,7 @@ export default function AdminProductDetailPage() {
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20">
 
-            {/* Header */}
+            {/* ── Header ── */}
             <div className="flex items-center justify-between py-4 sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="icon" className="rounded-full" onClick={() => router.back()}>
@@ -130,11 +128,11 @@ export default function AdminProductDetailPage() {
                 </div>
             </div>
 
+            {/* ── Gallery + Info ── */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
 
-                {/* ── LEFT: Gallery ── */}
+                {/* Gallery */}
                 <div className="lg:col-span-2 space-y-4">
-                    {/* Main Image */}
                     <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
                         {displayImage ? (
                             <Image
@@ -156,7 +154,6 @@ export default function AdminProductDetailPage() {
                         ) : null}
                     </div>
 
-                    {/* Thumbnail Strip */}
                     {allImages.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto pb-1">
                             {allImages.map((img, idx) => (
@@ -176,14 +173,11 @@ export default function AdminProductDetailPage() {
                     )}
                 </div>
 
-                {/* ── RIGHT: Info ── */}
+                {/* Info */}
                 <div className="lg:col-span-3 space-y-6">
-
-                    {/* Badges row */}
                     <div className="flex flex-wrap gap-2">
                         {categoryName && <Badge variant="outline" className="rounded-full text-xs">{categoryName}</Badge>}
                         {subCategoryName && <Badge variant="outline" className="rounded-full text-xs text-purple-600 border-purple-200 bg-purple-50">{subCategoryName}</Badge>}
-
                         {product.isNewArrival && <Badge className="rounded-full text-xs bg-emerald-100 text-emerald-700 border-emerald-200">New Arrival</Badge>}
                     </div>
 
@@ -217,7 +211,6 @@ export default function AdminProductDetailPage() {
                         )}
                     </div>
 
-                    {/* Variants */}
                     <VariantSelector
                         variants={variants}
                         selectedVariant={selectedVariant}
@@ -231,13 +224,11 @@ export default function AdminProductDetailPage() {
                         }}
                     />
 
-                    {/* Short Description */}
                     <div className="space-y-1">
                         <h3 className="text-sm font-bold text-slate-700">Short Description</h3>
                         <p className="text-sm text-slate-600 leading-relaxed">{product.shortDescription}</p>
                     </div>
 
-                    {/* Tags */}
                     {(product.tags || []).length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                             {product.tags.map(tag => (
@@ -248,7 +239,7 @@ export default function AdminProductDetailPage() {
                 </div>
             </div>
 
-            {/* Bottom sections */}
+            {/* ── Bottom sections grid ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* Full Description */}
@@ -260,7 +251,7 @@ export default function AdminProductDetailPage() {
                     <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{product.description}</div>
                 </div>
 
-                {/* Attributes Section */}
+                {/* Attributes */}
                 <ProductAttributes
                     productAttributes={product.attributes}
                     selectedVariantAttributes={selectedVariant?.attributes}
@@ -306,7 +297,7 @@ export default function AdminProductDetailPage() {
                     </div>
                 )}
 
-                {/* Tax & GST Section */}
+                {/* GST */}
                 {product.gst && (
                     <div className="rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3 bg-emerald-50/20 border-emerald-100">
                         <h3 className="font-bold text-emerald-800 flex items-center gap-2">
@@ -315,9 +306,12 @@ export default function AdminProductDetailPage() {
                         <Separator className="bg-emerald-100/50" />
                         <SpecRow label="HSN / SAC Code" value={product.gst.hsnCode} />
                         <SpecRow label="GST Rate" value={`${product.gst.gstRate}%`} />
-                        <SpecRow label="Tax Status" value={product.gst.includedInPrice ? "Inclusive (GST included in price)" : "Exclusive (GST added on top)"} />
+                        <SpecRow label="Tax Status" value={product.gst.includedInPrice ? 'Inclusive (GST included in price)' : 'Exclusive (GST added on top)'} />
                     </div>
                 )}
+
+                {/* ── Return Policy (NEW) ── */}
+                <ReturnPolicyCard returnPolicy={product.returnPolicy} />
 
                 {/* Highlights */}
                 {product.highLight && (
@@ -352,7 +346,7 @@ export default function AdminProductDetailPage() {
                 {/* SEO & Keywords */}
                 <div className="rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-slate-400" /> SEO & Keywords
+                        <ExternalLink className="h-4 w-4 text-slate-400" /> SEO &amp; Keywords
                     </h3>
                     <Separator />
 
@@ -392,8 +386,8 @@ export default function AdminProductDetailPage() {
                         )}
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     )
 }

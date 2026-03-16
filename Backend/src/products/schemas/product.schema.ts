@@ -1,6 +1,108 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+export enum ReturnWindowUnit {
+  DAYS = 'DAYS',
+  HOURS = 'HOURS',
+}
+
+export enum ReturnCondition {
+  UNUSED = 'UNUSED',
+  ORIGINAL_PACKAGING = 'ORIGINAL_PACKAGING',
+  WITH_TAGS = 'WITH_TAGS',
+  ANY = 'ANY',
+}
+
+export enum RefundMethod {
+  ORIGINAL_SOURCE = 'ORIGINAL_SOURCE',
+  WALLET = 'WALLET',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+}
+
+export enum ExchangeAllowed {
+  YES = 'YES',
+  NO = 'NO',
+  SIZE_ONLY = 'SIZE_ONLY',
+}
+
+// ─────────────────────────────────────────────
+// SUB-SCHEMAS
+// ─────────────────────────────────────────────
+
+@Schema({ _id: false })
+export class ReturnPolicy {
+  @Prop({ default: false })
+  isReturnable: boolean;
+
+  @Prop({ default: 0 })
+  windowValue: number;
+
+  @Prop({
+    type: String,
+    enum: Object.values(ReturnWindowUnit),
+    default: ReturnWindowUnit.DAYS,
+  })
+  windowUnit: ReturnWindowUnit;
+
+  @Prop({
+    type: [String],
+    enum: Object.values(ReturnCondition),
+    default: [],
+  })
+  conditions: ReturnCondition[];
+
+  @Prop({ default: false })
+  requiresQcPhoto: boolean;
+
+  @Prop({ default: true })
+  doorstepQcRequired: boolean;
+
+  @Prop({
+    type: [String],
+    enum: Object.values(RefundMethod),
+    default: [RefundMethod.ORIGINAL_SOURCE],
+  })
+  refundMethods: RefundMethod[];
+
+  @Prop({
+    type: String,
+    enum: Object.values(ExchangeAllowed),
+    default: ExchangeAllowed.NO,
+  })
+  exchangeAllowed: ExchangeAllowed;
+
+  @Prop({ type: [String], default: [] })
+  nonReturnableReasons: string[];
+
+  @Prop({ type: [String], default: [] })
+  excludedSkuPatterns: string[];
+
+  @Prop({ type: String, default: '' })
+  internalNote: string;
+}
+
+export const ReturnPolicySchema = SchemaFactory.createForClass(ReturnPolicy);
+
+@Schema({ _id: false })
+export class Faq {
+  @Prop({ required: true })
+  question: string;
+
+  @Prop({ required: true })
+  answer: string;
+
+  @Prop({ default: true })
+  isActive: boolean;
+}
+
+export const FaqSchema = SchemaFactory.createForClass(Faq);
+
+
+
 @Schema({ timestamps: true })
 export class Product extends Document {
   // ===== BASIC INFO =====
@@ -9,6 +111,9 @@ export class Product extends Document {
 
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   slug: string;
+
+  @Prop({ type: [FaqSchema], default: [] })
+  faqs: Faq[];
 
   @Prop({ required: true })
   description: string;
@@ -29,7 +134,7 @@ export class Product extends Document {
   brand: string;
 
   @Prop({ required: true })
-  baseSku: string; // Parent SKU
+  baseSku: string;
 
   // ===== IMAGES =====
   @Prop({
@@ -107,18 +212,10 @@ export class Product extends Document {
   };
 
   @Prop({
-    type: [
-      {
-        name: String,
-        value: String,
-      },
-    ],
+    type: [{ name: String, value: String }],
     _id: false,
   })
-  attributes: {
-    name: string;
-    value: string;
-  }[];
+  attributes: { name: string; value: string }[];
 
   @Prop({ type: String })
   disclaimer: string;
@@ -159,6 +256,26 @@ export class Product extends Document {
     keywords?: string[];
   };
 
+  // ===== GST / TAX =====
+  @Prop({
+    type: {
+      hsnCode: { type: String },
+      gstRate: { type: Number, enum: [0, 3, 5, 12, 18, 28] },
+      includedInPrice: { type: Boolean, default: true },
+    },
+    _id: false,
+  })
+  gst?: {
+    hsnCode: string;
+    gstRate: number;
+    includedInPrice: boolean;
+  };
+
+  // ===== RETURN POLICY (NEW) =====
+  @Prop({ type: ReturnPolicySchema, default: () => ({}) })
+  returnPolicy: ReturnPolicy;
+
+  // ===== ADMIN / META =====
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
 
@@ -177,7 +294,6 @@ export class Product extends Document {
   @Prop([String])
   tags: string[];
 
-  // Specs kept for legacy or unstructured info
   @Prop({ type: Object })
   specifications: Record<string, any>;
 
@@ -185,25 +301,10 @@ export class Product extends Document {
   order: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Seller' })
-  seller?: Types.ObjectId; // null = platform product
+  seller?: Types.ObjectId;
 
   @Prop({ type: String, default: '' })
-  sellerStateCode?: string; // auto-set from seller.gstNumber.slice(0,2)
-
-  // ===== GST / TAX =====
-  @Prop({
-    type: {
-      hsnCode: { type: String },
-      gstRate: { type: Number, enum: [0, 3, 5, 12, 18, 28] },
-      includedInPrice: { type: Boolean, default: true },
-    },
-    _id: false,
-  })
-  gst?: {
-    hsnCode: string; // 4- or 8-digit HSN/SAC code
-    gstRate: number; // 0 | 3 | 5 | 12 | 18 | 28
-    includedInPrice: boolean; // true → selling price already GST-inclusive
-  };
+  sellerStateCode?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
@@ -211,17 +312,20 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ slug: 1 });
 ProductSchema.index({ title: 'text' });
 ProductSchema.index({ category: 1 });
+ProductSchema.index({ 'returnPolicy.isReturnable': 1 });
+
+// ─────────────────────────────────────────────
+// PRODUCT VARIANT SCHEMA (unchanged)
+// ─────────────────────────────────────────────
 
 @Schema({ timestamps: true })
 export class ProductVariant extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
   product: Types.ObjectId;
 
-  // ===== VARIANT SKU =====
   @Prop({ required: true, unique: true })
   sku: string;
 
-  // ===== PRICE =====
   @Prop({ required: true, min: 0 })
   price: number;
 
@@ -232,40 +336,26 @@ export class ProductVariant extends Document {
   discountPrice: number;
 
   @Prop({
-    type: {
-      name: String,
-      value: String,
-    },
+    type: { name: String, value: String },
     _id: false,
   })
-  unit: {
-    name?: string;
-    value?: string;
-  };
+  unit: { name?: string; value?: string };
 
   @Prop({
-    type: [
-      {
-        name: String,
-        value: String,
-      },
-    ],
+    type: [{ name: String, value: String }],
     _id: false,
   })
-  attributes: {
-    name: string;
-    value: string;
-  }[];
+  attributes: { name: string; value: string }[];
 
   @Prop({ type: [String], default: [] })
   isFeatured: string[];
 
-  // Variant images (color specific)
   @Prop([{ url: String, publicId: String }])
   images: { url: string; publicId: string }[];
 
   @Prop({ default: true })
   isActive: boolean;
+
 }
 
 export const ProductVariantSchema =
@@ -273,3 +363,155 @@ export const ProductVariantSchema =
 
 ProductVariantSchema.index({ product: 1 });
 ProductVariantSchema.index({ sku: 1 });
+
+// ─────────────────────────────────────────────
+// RETURN REQUEST SCHEMA (NEW — missing from original)
+// ─────────────────────────────────────────────
+
+export enum ReturnRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PICKUP_SCHEDULED = 'PICKUP_SCHEDULED',
+  PICKED_UP = 'PICKED_UP',
+  RECEIVED_AT_WAREHOUSE = 'RECEIVED_AT_WAREHOUSE',
+  QC_PASSED = 'QC_PASSED',
+  QC_FAILED = 'QC_FAILED',
+  REFUND_INITIATED = 'REFUND_INITIATED',
+  REFUND_COMPLETED = 'REFUND_COMPLETED',
+  CLOSED = 'CLOSED',
+}
+
+export enum ReturnReason {
+  DAMAGED = 'DAMAGED',
+  WRONG_ITEM = 'WRONG_ITEM',
+  NOT_AS_DESCRIBED = 'NOT_AS_DESCRIBED',
+  DEFECTIVE = 'DEFECTIVE',
+  SIZE_ISSUE = 'SIZE_ISSUE',
+  CHANGED_MIND = 'CHANGED_MIND',
+  OTHER = 'OTHER',
+}
+
+export enum QcGrade {
+  RESELLABLE = 'RESELLABLE',      // goes back to inventory
+  REFURBISH = 'REFURBISH',        // needs work before resell
+  DISPOSE = 'DISPOSE',            // cannot be resold
+}
+
+export type ReturnRequestDocument = ReturnRequest & Document;
+
+@Schema({ timestamps: true })
+export class ReturnRequest {
+  // ── References ──
+  @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
+  orderId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'OrderItem', required: true })
+  orderItemId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
+  productId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'ProductVariant', required: true })
+  variantId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  customerId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Seller' })
+  sellerId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Warehouse', required: true })
+  warehouseId: Types.ObjectId;
+
+  // ── Return details ──
+  @Prop({
+    type: String,
+    enum: Object.values(ReturnReason),
+    required: true,
+  })
+  reason: ReturnReason;
+
+  @Prop({ type: String })
+  reasonDescription?: string;
+
+  // Customer-uploaded evidence (photos/video URLs from Cloudinary)
+  @Prop([{ url: String, publicId: String }])
+  evidenceMedia: { url: string; publicId: string }[];
+
+  // ── Status lifecycle ──
+  @Prop({
+    type: String,
+    enum: Object.values(ReturnRequestStatus),
+    default: ReturnRequestStatus.PENDING,
+  })
+  status: ReturnRequestStatus;
+
+  @Prop({ type: Date })
+  approvedAt?: Date;
+
+  @Prop({ type: Date })
+  rejectedAt?: Date;
+
+  @Prop({ type: String })
+  rejectionReason?: string;  // populated from Product.returnPolicy.nonReturnableReasons
+
+  // ── Shipment linkage ──
+  // Populated once a reverse shipment is created
+  @Prop({ type: Types.ObjectId, ref: 'Shipment' })
+  returnShipmentId?: Types.ObjectId;
+
+  // ── Warehouse QC ──
+  @Prop({
+    type: String,
+    enum: Object.values(QcGrade),
+  })
+  warehouseQcGrade?: QcGrade;
+
+  @Prop({ type: String })
+  warehouseQcNotes?: string;
+
+  @Prop({ type: Date })
+  warehouseReceivedAt?: Date;
+
+  // ── Refund ──
+  @Prop({
+    type: String,
+    enum: Object.values(RefundMethod),
+  })
+  refundMethod?: RefundMethod;
+
+  @Prop({ type: Number, min: 0 })
+  refundAmount?: number;       // final amount after GST reversal
+
+  @Prop({ type: Number, min: 0 })
+  gstReversalAmount?: number;  // GST component being reversed
+
+  @Prop({ type: String })
+  refundTransactionId?: string;
+
+  @Prop({ type: Date })
+  refundInitiatedAt?: Date;
+
+  @Prop({ type: Date })
+  refundCompletedAt?: Date;
+
+  // ── Quantity ──
+  @Prop({ type: Number, required: true, min: 1, default: 1 })
+  quantity: number;
+
+  // ── Admin ──
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  reviewedBy?: Types.ObjectId;
+
+  @Prop({ type: String })
+  adminNote?: string;
+}
+
+export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);
+
+ReturnRequestSchema.index({ orderId: 1 });
+ReturnRequestSchema.index({ customerId: 1 });
+ReturnRequestSchema.index({ status: 1 });
+ReturnRequestSchema.index({ returnShipmentId: 1 });
+ReturnRequestSchema.index({ variantId: 1 });

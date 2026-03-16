@@ -206,6 +206,15 @@ export class OrdersController {
     );
   }
 
+  @Get('analytics/global')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+  getGlobalAnalytics(
+    @Query('range') range: '7d' | '1m' | '1y' | 'all',
+  ) {
+    return this.ordersService.getGlobalOrderStats(range);
+  }
+
   // ─── WAREHOUSE MANAGER ROUTES ───
 
   @Get('warehouse/:warehouseId')
@@ -254,5 +263,33 @@ export class OrdersController {
       req.user._id,
       req.user.role,
     );
+  }
+
+  @Get('warehouse/:warehouseId/analytics')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  getWarehouseAnalytics(
+    @Param('warehouseId') warehouseId: string,
+    @Query('range') range: '7d' | '1m' | '1y' | 'all',
+  ) {
+    return this.ordersService.getManagerOrderStats(warehouseId, range);
+  }
+
+  @Get('warehouse/:warehouseId/history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  getWarehouseHistory(
+    @Param('warehouseId') warehouseId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    const p = page ? parseInt(page) : 1;
+    const l = limit ? parseInt(limit) : 10;
+    return this.ordersService.getWarehouseOrderHistory(warehouseId, {
+      page: p,
+      limit: l,
+      search,
+    });
   }
 }

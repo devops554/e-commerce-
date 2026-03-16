@@ -60,7 +60,12 @@ export const inventoryService = {
         return response.data;
     },
 
-    getHistory: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string }): Promise<PaginatedHistory> => {
+    getHistoryStats: async (warehouseId: string, params?: { range?: string; productId?: string }): Promise<any[]> => {
+        const response = await axiosClient.get<any[]>(`/inventory/warehouse/${warehouseId}/history/stats`, { params });
+        return response.data;
+    },
+
+    getHistory: async (warehouseId: string, params?: { page?: number; limit?: number; search?: string; productId?: string }): Promise<PaginatedHistory> => {
         const response = await axiosClient.get<PaginatedHistory>(`/inventory/warehouse/${warehouseId}/history`, { params });
         return response.data;
     },

@@ -1450,4 +1450,228 @@ export class OrdersService {
     }
   }
 
+  async getManagerOrderStats(warehouseId: string, range: '7d' | '1m' | '1y' | 'all' = '7d') {
+    try {
+      this.validateObjectId(warehouseId, 'warehouse');
+      
+      const filter: any = {
+        'items.warehouse': new Types.ObjectId(warehouseId),
+        isDeleted: { $ne: true },
+      };
+
+      const now = new Date();
+      let startDate: Date | undefined;
+      if (range === '7d') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else if (range === '1m') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      } else if (range === '1y') {
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      }
+
+      if (startDate) {
+        filter.createdAt = { $gte: startDate };
+      }
+
+      const orders = await this.orderModel.find(filter).lean();
+
+      // Statistics calculation
+      const stats = {
+        totalOrders: 0,
+        completedOrders: 0, // Delivered
+        pendingOrders: 0, // Created/Pending
+        assignedOrders: 0, // Confirmed
+        packedOrders: 0,
+        outForDeliveryOrders: 0,
+        totalEarnings: 0, // Sum of line totals for items in this warehouse for delivered orders
+        totalTaxableValue: 0,
+        chartData: [] as any[],
+      };
+
+      const dailyData: Record<string, any> = {};
+
+      orders.forEach((order: any) => {
+        let orderAddedToCount = false;
+        let orderEarnings = 0;
+        let orderTaxable = 0;
+
+        order.items.forEach((item: any) => {
+          if (item.warehouse?.toString() === warehouseId) {
+            if (!orderAddedToCount) {
+              stats.totalOrders++;
+              orderAddedToCount = true;
+            }
+
+            if (order.orderStatus === OrderStatus.DELIVERED) {
+              stats.completedOrders++;
+              orderEarnings += item.lineTotal || 0;
+              orderTaxable += item.lineTaxableValue || 0;
+            } else if ([OrderStatus.CREATED, OrderStatus.PENDING].includes(order.orderStatus)) {
+              stats.pendingOrders++;
+            } else if (order.orderStatus === OrderStatus.CONFIRMED) {
+              stats.assignedOrders++;
+            } else if (order.orderStatus === OrderStatus.PACKED) {
+              stats.packedOrders++;
+            } else if (order.orderStatus === OrderStatus.OUT_FOR_DELIVERY) {
+              stats.outForDeliveryOrders++;
+            }
+          }
+        });
+
+        stats.totalEarnings += orderEarnings;
+        stats.totalTaxableValue += orderTaxable;
+
+        // Group by date for chart
+        const dateKey = order.createdAt.toISOString().split('T')[0];
+        if (!dailyData[dateKey]) {
+          dailyData[dateKey] = { date: dateKey, orders: 0, earnings: 0 };
+        }
+        dailyData[dateKey].orders++;
+        if (order.orderStatus === OrderStatus.DELIVERED) {
+          dailyData[dateKey].earnings += orderEarnings;
+        }
+      });
+
+      stats.chartData = Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date));
+
+      return stats;
+    } catch (error) {
+      this.logger.error(`Failed to fetch manager stats: ${error.message}`);
+      throw new InternalServerErrorException('Failed to fetch statistics');
+    }
+  }
+
+  async getWarehouseOrderHistory(warehouseId: string, params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    try {
+      this.validateObjectId(warehouseId, 'warehouse');
+      const { page = 1, limit = 10, search } = params;
+      const skip = (page - 1) * limit;
+
+      const filter: any = {
+        'items.warehouse': new Types.ObjectId(warehouseId),
+        isDeleted: { $ne: true },
+      };
+
+      if (search) {
+        filter.$or = [
+          { orderId: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const [orders, total] = await Promise.all([
+        this.orderModel
+          .find(filter)
+          .populate('user', 'name email')
+          .populate('items.product', 'title images')
+          .populate('history.actor', 'name role')
+          .sort({ updatedAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        this.orderModel.countDocuments(filter),
+      ]);
+
+      const historyList = orders.map((order: any) => {
+        return {
+          _id: order._id,
+          orderId: order.orderId,
+          user: order.user,
+          status: order.orderStatus,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          items: order.items.filter((i: any) => i.warehouse?.toString() === warehouseId),
+          history: order.history,
+        };
+      });
+
+      return {
+        data: historyList,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch warehouse history: ${error.message}`);
+      throw new InternalServerErrorException('Failed to fetch history');
+    }
+  }
+
+  async getGlobalOrderStats(range: '7d' | '1m' | '1y' | 'all' = '7d') {
+    try {
+      const filter: any = { isDeleted: { $ne: true } };
+
+      const now = new Date();
+      let startDate: Date | undefined;
+      if (range === '7d') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else if (range === '1m') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      } else if (range === '1y') {
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      }
+
+      if (startDate) {
+        filter.createdAt = { $gte: startDate };
+      }
+
+      const orders = await this.orderModel.find(filter).lean();
+
+      const stats = {
+        totalOrders: 0,
+        completedOrders: 0,
+        pendingOrders: 0,
+        confirmedOrders: 0,
+        packedOrders: 0,
+        shippedOrders: 0,
+        outForDeliveryOrders: 0,
+        cancelledOrders: 0,
+        totalRevenue: 0,
+        chartData: [] as any[],
+      };
+
+      const dailyData: Record<string, any> = {};
+
+      orders.forEach((order: any) => {
+        stats.totalOrders++;
+
+        if (order.orderStatus === OrderStatus.DELIVERED) {
+          stats.completedOrders++;
+          stats.totalRevenue += order.totalAmount || 0;
+        } else if ([OrderStatus.CREATED, OrderStatus.PENDING].includes(order.orderStatus)) {
+          stats.pendingOrders++;
+        } else if (order.orderStatus === OrderStatus.CONFIRMED) {
+          stats.confirmedOrders++;
+        } else if (order.orderStatus === OrderStatus.PACKED) {
+          stats.packedOrders++;
+        } else if (order.orderStatus === OrderStatus.SHIPPED) {
+          stats.shippedOrders++;
+        } else if (order.orderStatus === OrderStatus.OUT_FOR_DELIVERY) {
+          stats.outForDeliveryOrders++;
+        } else if (order.orderStatus === OrderStatus.CANCELLED) {
+          stats.cancelledOrders++;
+        }
+
+        const dateKey = order.createdAt.toISOString().split('T')[0];
+        if (!dailyData[dateKey]) {
+          dailyData[dateKey] = { date: dateKey, orders: 0, revenue: 0 };
+        }
+        dailyData[dateKey].orders++;
+        if (order.orderStatus === OrderStatus.DELIVERED) {
+          dailyData[dateKey].revenue += order.totalAmount || 0;
+        }
+      });
+
+      stats.chartData = Object.values(dailyData).sort((a: any, b: any) => a.date.localeCompare(b.date));
+
+      return stats;
+    } catch (error) {
+      this.logger.error(`Failed to fetch global stats: ${error.message}`);
+      throw new InternalServerErrorException('Failed to fetch statistics');
+    }
+  }
 }

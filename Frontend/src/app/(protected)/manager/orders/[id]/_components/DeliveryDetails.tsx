@@ -31,9 +31,11 @@ export function DeliveryDetails({ order }: { order: any }) {
                 <div
                     className="bg-slate-50 rounded-xl p-4 border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors group"
                     onClick={() => {
-                        const { latitude, longitude, street, city, state, postalCode } = order.shippingAddress
-                        const url = latitude && longitude
-                            ? `https://www.google.com/maps?q=${latitude},${longitude}`
+                        const { street, city, state, postalCode, location } = order.shippingAddress
+                        const lat = location?.latitude
+                        const lng = location?.longitude
+                        const url = lat && lng
+                            ? `https://www.google.com/maps?q=${lat},${lng}`
                             : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${city}, ${state}, ${postalCode}`)}`
                         window.open(url, '_blank')
                     }}

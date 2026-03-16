@@ -35,5 +35,6 @@ import { SellersModule } from 'src/sellers/sellers.module';
 
   providers: [OrdersService],
   controllers: [OrdersController],
+  exports: [OrdersService],
 })
-export class OrdersModule {}
+export class OrdersModule { }

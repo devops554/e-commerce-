@@ -7,6 +7,8 @@ import {
   InternalServerErrorException,
   Logger,
   HttpException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -36,8 +38,9 @@ export class ProductsService implements OnModuleInit {
     @InjectModel(Seller.name) private sellerModel: Model<Seller>,
     private readonly redisService: RedisService,
     private readonly categoriesService: CategoriesService,
+    @Inject(forwardRef(() => EventsGateway))
     private readonly eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   // ─── INITIALIZATION ───
 
@@ -285,7 +288,7 @@ export class ProductsService implements OnModuleInit {
       this.invalidateProductCache(
         savedProduct._id.toString(),
         savedProduct.slug,
-      ).catch(() => {});
+      ).catch(() => { });
 
       this.logger.log(
         `Product created: ${savedProduct.title} (${savedProduct._id})`,
@@ -498,8 +501,14 @@ export class ProductsService implements OnModuleInit {
       ]);
 
       const productIds = products.map((p) => p._id);
+      const variantQuery: any = { product: { $in: productIds } };
+      // If shop context (isActive=true), only return active variants
+      if (isActive === true || String(isActive) === 'true') {
+        variantQuery.isActive = true;
+      }
+
       const variants = await this.variantModel
-        .find({ product: { $in: productIds }, isActive: true })
+        .find(variantQuery)
         .exec();
 
       const variantIds = variants.map((v) => v._id);
@@ -544,7 +553,7 @@ export class ProductsService implements OnModuleInit {
         totalPages: Math.ceil(finalTotal / limit),
       };
 
-      this.redisService.set(cacheKey, result, 3600).catch(() => {});
+      this.redisService.set(cacheKey, result, 3600).catch(() => { });
 
       return result;
     } catch (error) {
@@ -564,7 +573,7 @@ export class ProductsService implements OnModuleInit {
       if (cached) {
         this.redisService
           .incr(`stats:product:views:${cached._id}`)
-          .catch(() => {});
+          .catch(() => { });
         return cached;
       }
 
@@ -587,7 +596,7 @@ export class ProductsService implements OnModuleInit {
       }
 
       const variants = await this.variantModel
-        .find({ product: product._id, isActive: true })
+        .find({ product: product._id })
         .exec();
       const variantIds = variants.map((v) => v._id);
       const stockMap = await this.aggregateStock(variantIds);
@@ -603,20 +612,20 @@ export class ProductsService implements OnModuleInit {
         ),
       };
 
-      this.redisService.set(cacheKey, result, 3600).catch(() => {});
+      this.redisService.set(cacheKey, result, 3600).catch(() => { });
       if (idOrSlug === product.slug) {
         this.redisService
           .set(`product:detail:${product._id}`, result, 3600)
-          .catch(() => {});
+          .catch(() => { });
       } else {
         this.redisService
           .set(`product:detail:${product.slug}`, result, 3600)
-          .catch(() => {});
+          .catch(() => { });
       }
 
       this.redisService
         .incr(`stats:product:views:${product._id}`)
-        .catch(() => {});
+        .catch(() => { });
 
       return result;
     } catch (error) {
@@ -663,7 +672,7 @@ export class ProductsService implements OnModuleInit {
       }
 
       this.invalidateProductCache(product._id.toString(), product.slug).catch(
-        () => {},
+        () => { },
       );
 
       // Re-index all autocomplete terms whenever the product changes
@@ -691,7 +700,7 @@ export class ProductsService implements OnModuleInit {
         throw new NotFoundException(`Product ID ${id} not found`);
       }
 
-      this.invalidateProductCache(id, product.slug).catch(() => {});
+      this.invalidateProductCache(id, product.slug).catch(() => { });
       this.logger.warn(`Product soft-deleted: ${product.title} (${id})`);
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -728,7 +737,7 @@ export class ProductsService implements OnModuleInit {
       });
 
       const savedVariant = await variant.save();
-      this.invalidateProductCache(createVariantDto.product).catch(() => {});
+      this.invalidateProductCache(createVariantDto.product).catch(() => { });
 
       this.logger.log(
         `Variant created for product ${createVariantDto.product}: ${savedVariant.sku}`,
@@ -769,8 +778,11 @@ export class ProductsService implements OnModuleInit {
           }
         }
 
+        // Defensive: prevent accidental product detachment or change
+        delete updateVariantDto.product;
+
         await this.variantModel.findByIdAndUpdate(id, updateVariantDto).exec();
-        this.invalidateProductCache(productId).catch(() => {});
+        this.invalidateProductCache(productId).catch(() => { });
       }
 
       const updatedVariant = await this.variantModel.findById(id).exec();
@@ -802,7 +814,7 @@ export class ProductsService implements OnModuleInit {
 
       const productId = variant.product?.toString();
       if (productId) {
-        this.invalidateProductCache(productId).catch(() => {});
+        this.invalidateProductCache(productId).catch(() => { });
       }
       this.logger.log(`Variant deleted: ${id}`);
     } catch (error) {
@@ -849,7 +861,7 @@ export class ProductsService implements OnModuleInit {
         return variantObj;
       });
 
-      this.redisService.set(cacheKey, variantsWithGst, 3600).catch(() => {});
+      this.redisService.set(cacheKey, variantsWithGst, 3600).catch(() => { });
       return variantsWithGst;
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -914,4 +926,6 @@ export class ProductsService implements OnModuleInit {
       return [];
     }
   }
+
+
 }

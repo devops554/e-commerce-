@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { useCategories } from '@/hooks/useCategories'
+import { useCategory } from '@/hooks/useCategories'
 import { X, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -14,8 +14,7 @@ interface SpecificationsSectionProps {
 }
 
 export default function SpecificationsSection({ data, onChange }: SpecificationsSectionProps) {
-    const { data: categoryData } = useCategories({ limit: 100 })
-    const currentCategory = categoryData?.categories.find(c => c._id === data.category)
+    const { data: currentCategory } = useCategory(data.category)
 
     // Ensure data.attributes is an array
     const attributes: { name: string; value: string }[] = Array.isArray(data.attributes) ? data.attributes : []

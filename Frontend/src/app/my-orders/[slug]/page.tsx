@@ -9,9 +9,14 @@ import { ArrowLeft, Loader2, AlertCircle, ShoppingBag } from 'lucide-react'
 
 import { OrderStatusCard } from '@/components/order/OrderStatusCard'
 import { OrderItemCard } from '@/components/order/OrderItemCard'
-import { OrderShippingCard } from '@/components/order/OrderShippingCard'
-import { OrderPaymentCard } from '@/components/order/OrderPaymentCard'
 import { OrderMetaCard } from '@/components/order/OrderMetaCard'
+import { useReviews as useReviewQuery, useReviewActions } from '@/hooks/useReviews'
+import ReviewForm from '@/components/product/ReviewForm'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { CheckCircle2 } from 'lucide-react'
+import { OrderShippingCard } from '@/components/order/OrderShippingCard';
+import { OrderPaymentCard } from '@/components/order/OrderPaymentCard';
+import { useState } from 'react';
 
 
 export default function OrderDetailsPage() {
@@ -19,6 +24,10 @@ export default function OrderDetailsPage() {
     const router = useRouter()
     const orderId = params.slug as string
     const { data: order, isLoading, error } = useOrderById(orderId)
+    const { data: reviewsData } = useReviewQuery({ orderId })
+    const { createReview } = useReviewActions()
+
+    const [reviewingItem, setReviewingItem] = useState<{ productId: string, productTitle: string, productImage?: string } | null>(null)
 
     // ── Loading ──────────────────────────────────────────────────────────────
     if (isLoading) {
@@ -93,13 +102,40 @@ export default function OrderDetailsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-5 pb-5 space-y-4">
-                        {order.items.map((item: any, i: number) => (
-                            <OrderItemCard
-                                key={item._id ?? i}
-                                item={item}
-                                isLast={i === order.items.length - 1}
-                            />
-                        ))}
+                        {order.items.map((item: any, i: number) => {
+                            const hasReviewed = reviewsData?.data?.some((r: any) => r.productId?._id === (item.productId?._id || item.productId))
+                            const isDelivered = order.orderStatus === 'delivered'
+
+                            return (
+                                <div key={item._id ?? i} className="group relative">
+                                    <OrderItemCard
+                                        item={item}
+                                        isLast={i === order.items.length - 1}
+                                    />
+                                    {isDelivered && !hasReviewed && (
+                                        <div className="absolute top-2 right-2">
+                                            <Button
+                                                size="sm"
+                                                className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 h-8 text-[10px] uppercase tracking-wider"
+                                                onClick={() => setReviewingItem({
+                                                    productId: item.productId?._id || item.productId,
+                                                    productTitle: item.title,
+                                                    productImage: item.image || item.thumbnail
+                                                })}
+                                            >
+                                                Rate Item
+                                            </Button>
+                                        </div>
+                                    )}
+                                    {hasReviewed && (
+                                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded-lg border border-green-100">
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            <span className="text-[10px] font-bold uppercase">Reviewed</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
 
                         {/* Bill summary */}
                         <Separator />
@@ -163,6 +199,7 @@ export default function OrderDetailsPage() {
 
                 {/* ── 4. Payment Info ── */}
                 <OrderPaymentCard
+
                     paymentMethod={order.paymentMethod}
                     paymentStatus={order.paymentStatus}
                     razorpayOrderId={order.razorpayOrderId}
@@ -189,7 +226,23 @@ export default function OrderDetailsPage() {
                 </p>
             </main>
 
-
+            <Dialog open={!!reviewingItem} onOpenChange={() => setReviewingItem(null)}>
+                <DialogContent className="max-w-2xl p-0 bg-transparent border-none shadow-none">
+                    {reviewingItem && (
+                        <ReviewForm
+                            orderId={orderId}
+                            productId={reviewingItem.productId}
+                            productTitle={reviewingItem.productTitle}
+                            productImage={reviewingItem.productImage}
+                            onSubmit={async (values) => {
+                                await createReview(values)
+                                setReviewingItem(null)
+                            }}
+                            onCancel={() => setReviewingItem(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

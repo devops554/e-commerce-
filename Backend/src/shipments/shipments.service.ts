@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
   Shipment,
   ShipmentDocument,
   ShipmentStatus,
+  ShipmentType,
 } from './schemas/shipment.schema';
 import {
   TrackingHistory,
@@ -30,6 +25,9 @@ import {
 } from '../delivery-partners/schemas/delivery-partner.schema';
 import { InventoryService } from '../warehouses/inventory.service';
 import { EventsGateway } from '../events/events.gateway';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import { from } from 'rxjs';
 
 @Injectable()
 export class ShipmentsService {
@@ -42,8 +40,10 @@ export class ShipmentsService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(DeliveryPartner.name)
     private deliveryPartnerModel: Model<DeliveryPartnerDocument>,
+    @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
     private inventoryService: InventoryService,
+    @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
   ) { }
 
@@ -64,6 +64,7 @@ export class ShipmentsService {
     const activeShipment = await this.shipmentModel.findOne({
       orderId: new Types.ObjectId(dto.orderId),
       warehouseId: new Types.ObjectId(dto.warehouseId),
+      type: dto.type || ShipmentType.FORWARD,
       status: {
         $not: {
           $in: [
@@ -607,10 +608,6 @@ export class ShipmentsService {
       }
     });
 
-    if (targetOrderStatus) {
-      order.orderStatus = targetOrderStatus;
-    }
-
     await order.save();
   }
 
@@ -752,6 +749,49 @@ export class ShipmentsService {
       totalDeliveries: partner.totalDeliveries || 0,
       rating: partner.rating || 0,
     };
+  }
+
+  async handlePartnerLocationUpdate(partnerId: string, latitude: number, longitude: number) {
+    // 1. Update partner's physical location (for generic partner tracking)
+    await this.deliveryPartnerModel.findByIdAndUpdate(partnerId, {
+      $set: {
+        currentLocation: {
+          latitude,
+          longitude,
+          lastUpdated: new Date(),
+        },
+      },
+    });
+
+    // 2. Find active shipments for this partner
+    const activeShipments = await this.shipmentModel.find({
+      deliveryPartnerId: new Types.ObjectId(partnerId),
+      status: { $in: [ShipmentStatus.PICKED_UP, ShipmentStatus.OUT_FOR_DELIVERY] }
+    });
+
+    for (const shipment of activeShipments) {
+      // 3. Persist to TrackingHistory
+      await this.addTrackingLocation(shipment._id.toString(), {
+        latitude,
+        longitude,
+        status: shipment.status
+      });
+
+      // 4. Get partner info for broadcast
+      const partner = await this.deliveryPartnerModel.findById(partnerId).select('name phone').lean();
+
+      // 5. Broadcast to the specific order room
+      this.eventsGateway.emitToOrderRoom(shipment.orderId.toString(), 'location-update', {
+        shipmentId: shipment._id,
+        orderId: shipment.orderId,
+        location: { latitude, longitude },
+        partner: {
+          name: partner?.name,
+          phone: partner?.phone
+        },
+        status: shipment.status
+      });
+    }
   }
 
   private async emitStatsUpdate(partnerId: string) {

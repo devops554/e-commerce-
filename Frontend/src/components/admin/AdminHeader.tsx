@@ -64,7 +64,7 @@ export default function AdminHeader({ user: propUser }: AdminHeaderProps) {
 
     const pageTitle = getPageTitle(pathname)
 
-    const isManager = user?.role === UserRole.MANAGER || user?.role === 'manager'
+    const isManager = user?.role === UserRole.MANAGER
 
     const mobileHeader = (
         <div

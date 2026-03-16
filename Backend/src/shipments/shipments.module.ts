@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShipmentsController } from './shipments.controller';
 import { ShipmentsService } from './shipments.service';
@@ -30,9 +30,9 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
     ]),
     ConfigModule,
     UsersModule,
-    DeliveryPartnersModule,
-    NotificationsModule,
-    WarehousesModule,
+    forwardRef(() => DeliveryPartnersModule),
+    forwardRef(() => NotificationsModule),
+    forwardRef(() => WarehousesModule),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'fallback_secret',
       signOptions: { expiresIn: '1d' },
@@ -42,4 +42,4 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
   providers: [ShipmentsService, DeliveryPartnerJwtGuard],
   exports: [ShipmentsService],
 })
-export class ShipmentsModule {}
+export class ShipmentsModule { }

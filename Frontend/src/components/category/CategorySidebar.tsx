@@ -18,7 +18,6 @@ export const CategorySidebar = ({ productType }: { productType?: string }) => {
     // Fetch categories for the sidebar, optionally filtered by productType
     const { data, isLoading } = useCategories({
         isActive: true,
-        parentId: null,
         limit: 50,
         productType: productType
     })

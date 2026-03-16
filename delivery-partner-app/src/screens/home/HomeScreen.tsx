@@ -144,6 +144,8 @@ export default function HomeScreen() {
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const updateAvailability = useUpdateAvailability();
 
+  console.log("availableOrders", availableOrders);
+
   const isOnline = partner?.availabilityStatus === 'ONLINE';
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
@@ -180,8 +182,8 @@ export default function HomeScreen() {
   const pendingCount = availableOrders?.length ?? 0;
   const activeShipments = Array.isArray(activeOrder) ? activeOrder : (activeOrder?.data || []);
   const activeCount = activeShipments.length;
-  // Aggregate count for Notifications badge (Unread + Active + Available) as requested
-  const totalNotifCount = unreadCount + pendingCount + activeCount;
+  // Notification badge only shows REAL unread notifications — not orders
+  const totalNotifCount = unreadCount;
 
   const quickActions: {
     icon: IoniconsName;
@@ -196,7 +198,8 @@ export default function HomeScreen() {
       { icon: 'time-outline', iconFocused: 'time', label: 'History', color: Colors.warning, screen: 'History' },
       { icon: 'wallet-outline', iconFocused: 'wallet', label: 'Wallet', color: '#8B5CF6', screen: 'Wallet' },
       { icon: 'person-circle-outline', iconFocused: 'person-circle', label: 'Profile', color: '#EC4899', screen: 'Profile' },
-      { icon: 'notifications-outline', iconFocused: 'notifications', label: 'Notifications', count: totalNotifCount, color: Colors.danger, screen: 'Notifications' },
+      // count shows only real unread notifications — not order counts
+      { icon: 'notifications-outline', iconFocused: 'notifications', label: 'Notifications', count: unreadCount, color: Colors.danger, screen: 'Notifications' },
     ];
 
   return (

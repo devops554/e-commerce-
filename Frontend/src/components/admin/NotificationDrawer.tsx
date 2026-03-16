@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { Notification } from "@/services/notification.service"
 import { useAuth } from "@/providers/AuthContext"
+import { UserRole } from "@/services/user.service"
 
 type TabType = 'All' | 'order' | 'stock' | 'info'
 
@@ -167,7 +168,7 @@ export default function NotificationDrawer() {
                         ) : (
                             filtered.map((notification: Notification) => {
                                 const link = notification.link || (notification.type === 'stock'
-                                    ? (user?.role === 'manager' || user?.role === 'MANAGER' ? '/manager/inventory' : '/admin/product')
+                                    ? (user?.role === UserRole.MANAGER ? '/manager/inventory' : '/admin/product')
                                     : null)
 
                                 return (
@@ -229,7 +230,7 @@ export default function NotificationDrawer() {
                 {/* Footer */}
                 <div className="p-3 bg-white border-t border-pink-100">
                     <Link
-                        href={user?.role === 'manager' || user?.role === 'MANAGER' ? "/manager/notifications" : "/admin/notifications"}
+                        href={user?.role === UserRole.MANAGER ? "/manager/notifications" : "/admin/notifications"}
                         className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white text-[12px] font-bold transition-all duration-150 active:scale-[0.98] shadow-sm shadow-pink-200"
                     >
                         View all notifications

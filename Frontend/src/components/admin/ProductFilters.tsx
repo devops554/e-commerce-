@@ -33,7 +33,7 @@ interface ProductFiltersProps {
 
 export default function ProductFilters({ filters, onFilterChange }: ProductFiltersProps) {
     const { data: ptData } = useProductTypes({ limit: 100 })
-    const { data: catData } = useCategories({ limit: 100, parentId: 'null' })
+    const { data: catData } = useCategories({ limit: 100 })
     const { data: subData } = useSubcategories(filters.category, { limit: 100 })
 
     const productTypes = ptData?.productTypes || []

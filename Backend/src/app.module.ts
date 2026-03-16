@@ -20,6 +20,9 @@ import { BannerModule } from './banner/banner.module';
 import { RedisModule } from './redis/redis.module';
 import { SettingsModule } from './settings/settings.module';
 
+import { ReturnsModule } from './returns/returns.module';
+import { ReviewsModule } from './reviews/reviews.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -51,6 +54,8 @@ import { SettingsModule } from './settings/settings.module';
     ShipmentsModule,
     DeliveryModule,
     SettingsModule,
+    ReturnsModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}

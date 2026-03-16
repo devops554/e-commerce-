@@ -11,8 +11,8 @@ export const useCategories = (params: {
     isActive?: boolean;
 }) => {
     return useQuery({
-        queryKey: ['categories', params],
-        queryFn: () => categoryService.getAll(params),
+        queryKey: ['parent-categories', params],
+        queryFn: () => categoryService.getParents(params),
     });
 };
 

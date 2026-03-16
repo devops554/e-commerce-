@@ -1,6 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+export enum ShipmentType {
+  FORWARD = 'FORWARD',
+  REVERSE = 'REVERSE',
+}
+
 export enum ShipmentStatus {
   ORDER_PLACED = 'ORDER_PLACED',
   ASSIGNED_TO_DELIVERY = 'ASSIGNED_TO_DELIVERY',
@@ -28,6 +33,13 @@ export class Shipment {
 
   @Prop({ unique: true, required: true })
   trackingNumber: string;
+
+  @Prop({
+    type: String,
+    enum: Object.values(ShipmentType),
+    default: ShipmentType.FORWARD,
+  })
+  type: ShipmentType;
 
   @Prop({
     type: String,

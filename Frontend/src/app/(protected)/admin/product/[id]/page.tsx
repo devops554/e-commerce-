@@ -17,6 +17,9 @@ import { ProductAttributes } from '@/components/admin/product/ProductAttributes'
 import ReturnPolicyCard from '@/components/admin/product/Returnpolicycard'
 import Image from 'next/image'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
+import ProductFaqs from '@/components/product/detail/ProductFaqs'
+import ProductReviews from '@/components/product/detail/ProductReviews'
+import { useReviews } from '@/hooks/useReviews'
 
 function resolveId(val: any): string | null {
     if (!val) return null
@@ -49,6 +52,7 @@ export default function AdminProductDetailPage() {
     const router = useRouter()
     const id = params?.id as string
     const { setBreadcrumbs } = useBreadcrumb()
+    const [reviewPage, setReviewPage] = useState(1)
 
     const { data: product, isLoading, isError } = useProduct(id)
 
@@ -76,6 +80,14 @@ export default function AdminProductDetailPage() {
             if (product.variants?.length) setSelectedVariant(product.variants[0])
         }
     }, [product])
+
+    const { data: reviewsData } = useReviews({
+        productId: product?._id,
+        status: 'APPROVED',
+        page: reviewPage,
+        limit: 10,
+    })
+
 
     const displayImage = activeImageUrl
     const prices = selectedVariant ? getPriceDisplay(selectedVariant) : null
@@ -388,6 +400,17 @@ export default function AdminProductDetailPage() {
                 </div>
 
             </div>
+
+            <ProductFaqs faqs={product.faqs} />
+            <ProductReviews
+                reviews={reviewsData?.data || []}
+                averageRating={product.ratingsAverage || 0}
+                totalReviews={product.ratingsCount || 0}
+                currentPage={reviewPage}
+                totalPages={reviewsData?.totalPages || 0}
+                totalItems={reviewsData?.total || 0}
+                onPageChange={setReviewPage}
+            />
         </div>
     )
 }

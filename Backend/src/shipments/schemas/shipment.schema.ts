@@ -16,6 +16,7 @@ export enum ShipmentStatus {
   FAILED_DELIVERY = 'FAILED_DELIVERY',
   CANCELLED = 'CANCELLED',
   RETURNED = 'RETURNED',
+  FAILED_PICKUP = 'FAILED_PICKUP',
 }
 
 export type ShipmentDocument = Shipment & Document;
@@ -73,6 +74,15 @@ export class Shipment {
 
   @Prop({ type: Date })
   deliveryOtpExpires?: Date;
+
+  @Prop([{ url: String, publicId: String }])
+  verificationMedia?: { url: string; publicId: string }[];
+
+  @Prop()
+  pickupNotes?: string;
+
+  @Prop({ default: 0 })
+  commissionEarned?: number;
 }
 
 export const ShipmentSchema = SchemaFactory.createForClass(Shipment);

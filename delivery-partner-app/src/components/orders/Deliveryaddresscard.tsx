@@ -58,6 +58,7 @@ interface Props {
     warehouseLocation?: { latitude: number; longitude: number } | null;
     // Precomputed distance from backend (shipment.distance in km) — used as fallback
     backendDistanceKm?: number;
+    label?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ export const DeliveryAddressCard: React.FC<Props> = ({
     partnerLocation,
     warehouseLocation,
     backendDistanceKm,
+    label,
 }) => {
     const [destCoords, setDestCoords] = useState<{ lat: number; lon: number } | null>(null);
     const [geocoding, setGeocoding] = useState(false);
@@ -121,7 +123,7 @@ export const DeliveryAddressCard: React.FC<Props> = ({
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <Text style={styles.headerIcon}>📦</Text>
-                    <Text style={styles.headerLabel}>DELIVERY ADDRESS</Text>
+                    <Text style={styles.headerLabel}>{label || 'DELIVERY ADDRESS'}</Text>
                 </View>
 
                 {/* Action buttons */}

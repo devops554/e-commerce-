@@ -232,7 +232,7 @@ export class DeliveryController {
       deliveryPartnerId: partnerId,
       status: ShipmentStatus.DELIVERED, // Simplified
     });
-    return shipments.data.map((s) => s.orderId);
+    return shipments.data; // Return full shipment so type is preserved
   }
 
   @Get('orders/:id')

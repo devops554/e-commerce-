@@ -10,6 +10,10 @@ export const Colors = {
   accent: '#00D4FF',
   accentDark: '#0099BB',
 
+  // Secondary — purple for returns
+  secondary: '#8B5CF6',
+  secondaryLight: '#A78BFA',
+
   // Success
   success: '#00C896',
   successLight: '#E6FAF5',

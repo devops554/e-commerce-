@@ -20,10 +20,15 @@ export class NotificationsService {
     message: string;
     type: NotificationType;
     recipientRole: string;
-    recipientId?: string;
+    recipientId?: string | any;
     link?: string;
     metadata?: any;
   }) {
+    // Defensive check: if recipientId is a populated object, extract the string ID
+    if (data.recipientId && typeof data.recipientId === 'object') {
+      data.recipientId = data.recipientId._id?.toString() || data.recipientId.toString();
+    }
+
     const notification = new this.notificationModel(data);
     const saved = await notification.save();
 

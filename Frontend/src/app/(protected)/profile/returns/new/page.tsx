@@ -16,9 +16,17 @@ import {
     CreditCard,
     Info,
     Loader2,
+    Building2,
+    User as UserIcon,
+    Hash,
+    Fingerprint
 } from 'lucide-react'
 import SimpleImageUpload from '@/components/SimpleImageUpload'
 import { toast } from 'sonner'
+import { useOrderById } from '@/hooks/useOrders'
+import { useCreateReturn } from '@/hooks/useReturns'
+import { Input } from '@/components/ui/input'
+import { RefundMethod } from '@/services/return.service'
 
 // ─────────────────────────────────────────────
 // INNER COMPONENT — uses useSearchParams()
@@ -31,18 +39,60 @@ function NewReturnWizardInner() {
     const orderId = searchParams.get('orderId')
     const orderItemId = searchParams.get('orderItemId')
 
+    const { data: order, isLoading: isLoadingOrder } = useOrderById(orderId || '')
+    const { mutate: createReturn, isPending: isSubmitting } = useCreateReturn()
+
     const [step, setStep] = React.useState(1)
     const [formData, setFormData] = React.useState({
         reason: '',
         reasonDescription: '',
         evidenceMedia: [] as string[],
-        refundMethod: 'ORIGINAL_SOURCE',
+        refundMethod: 'ORIGINAL_SOURCE' as RefundMethod,
         quantity: 1,
+        bankDetails: {
+            accountHolderName: '',
+            accountNumber: '',
+            ifscCode: '',
+            bankName: '',
+        }
     })
 
+    const isCOD = order?.paymentMethod === 'cod'
+
+    // Adjust default refund method if COD
+    React.useEffect(() => {
+        if (order && order.paymentMethod === 'cod') {
+            setFormData(prev => ({ ...prev, refundMethod: 'BANK_TRANSFER' as RefundMethod }))
+        }
+    }, [order])
+
     const handleSubmit = async () => {
-        toast.success('Return request submitted successfully!')
-        router.push('/profile/orders')
+        if (!orderId || !orderItemId) return
+
+        const item = order?.items.find((i: any) => i._id === orderItemId)
+        if (!item) {
+            toast.error('Item not found in order')
+            return
+        }
+
+        const submissionData = {
+            orderId,
+            orderItemId,
+            productId: item.product?._id || item.product,
+            variantId: item.variant?._id || item.variant,
+            quantity: formData.quantity,
+            reason: formData.reason,
+            reasonDescription: formData.reasonDescription,
+            evidenceMedia: formData.evidenceMedia,
+            refundMethod: formData.refundMethod,
+            bankDetails: formData.refundMethod === 'BANK_TRANSFER' ? formData.bankDetails : undefined
+        }
+
+        createReturn(submissionData, {
+            onSuccess: () => {
+                router.push(`/my-orders/${orderId}`)
+            }
+        })
     }
 
     const nextStep = () => setStep(s => s + 1)
@@ -207,32 +257,60 @@ function NewReturnWizardInner() {
 
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 gap-3">
-                                    <button
-                                        onClick={() => setFormData({ ...formData, refundMethod: 'ORIGINAL_SOURCE' })}
-                                        className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left
-                                            ${formData.refundMethod === 'ORIGINAL_SOURCE'
-                                                ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-50'
-                                                : 'border-slate-100 hover:border-slate-200'
-                                            }`}
-                                    >
-                                        <div className="p-3 rounded-xl bg-white shadow-sm">
-                                            <CreditCard className="h-6 w-6 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <p className={`font-bold ${formData.refundMethod === 'ORIGINAL_SOURCE' ? 'text-blue-700' : 'text-slate-700'}`}>
-                                                Original Source
-                                            </p>
-                                            <p className="text-xs text-slate-500 mt-1 font-medium">
-                                                Refund to your original payment method. May take 5–7 business days.
-                                            </p>
-                                        </div>
-                                        {formData.refundMethod === 'ORIGINAL_SOURCE' && (
-                                            <CheckCircle2 className="ml-auto h-5 w-5 text-blue-600 shrink-0 mt-1" />
-                                        )}
-                                    </button>
+                                    {isCOD && (
+                                        <button
+                                            onClick={() => setFormData({ ...formData, refundMethod: 'BANK_TRANSFER' as RefundMethod })}
+                                            className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left
+                                                ${formData.refundMethod === 'BANK_TRANSFER'
+                                                    ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50'
+                                                    : 'border-slate-100 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <div className="p-3 rounded-xl bg-white shadow-sm">
+                                                <Building2 className="h-6 w-6 text-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <p className={`font-bold ${formData.refundMethod === 'BANK_TRANSFER' ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                    Bank Transfer
+                                                </p>
+                                                <p className="text-xs text-slate-500 mt-1 font-medium">
+                                                    Refund directly to your bank account. Recommended for COD orders.
+                                                </p>
+                                            </div>
+                                            {formData.refundMethod === 'BANK_TRANSFER' && (
+                                                <CheckCircle2 className="ml-auto h-5 w-5 text-indigo-600 shrink-0 mt-1" />
+                                            )}
+                                        </button>
+                                    )}
 
-                                    <button
-                                        onClick={() => setFormData({ ...formData, refundMethod: 'WALLET' })}
+                                    {!isCOD && (
+                                        <button
+                                            onClick={() => setFormData({ ...formData, refundMethod: 'ORIGINAL_SOURCE' as RefundMethod })}
+                                            className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left
+                                                ${formData.refundMethod === 'ORIGINAL_SOURCE'
+                                                    ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-50'
+                                                    : 'border-slate-100 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <div className="p-3 rounded-xl bg-white shadow-sm">
+                                                <CreditCard className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className={`font-bold ${formData.refundMethod === 'ORIGINAL_SOURCE' ? 'text-blue-700' : 'text-slate-700'}`}>
+                                                    Original Source
+                                                </p>
+                                                <p className="text-xs text-slate-500 mt-1 font-medium">
+                                                    Refund to your original payment method. May take 5–7 business days.
+                                                </p>
+                                            </div>
+                                            {formData.refundMethod === 'ORIGINAL_SOURCE' && (
+                                                <CheckCircle2 className="ml-auto h-5 w-5 text-blue-600 shrink-0 mt-1" />
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* <button
+                                        onClick={() => setFormData({ ...formData, refundMethod: 'WALLET' as RefundMethod })}
                                         className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left
                                             ${formData.refundMethod === 'WALLET'
                                                 ? 'border-emerald-600 bg-emerald-50/50 ring-4 ring-emerald-50'
@@ -253,8 +331,69 @@ function NewReturnWizardInner() {
                                         {formData.refundMethod === 'WALLET' && (
                                             <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600 shrink-0 mt-1" />
                                         )}
-                                    </button>
+                                    </button> */}
                                 </div>
+
+                                {/* Bank Details Form */}
+                                {formData.refundMethod === 'BANK_TRANSFER' && (
+                                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Building2 className="h-4 w-4 text-indigo-600" />
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Bank Account Details</h4>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Account Holder</Label>
+                                                <div className="relative">
+                                                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                                    <Input
+                                                        placeholder="Name on account"
+                                                        className="rounded-xl border-slate-200 pl-10 h-11"
+                                                        value={formData.bankDetails.accountHolderName}
+                                                        onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountHolderName: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Bank Name</Label>
+                                                <div className="relative">
+                                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                                    <Input
+                                                        placeholder="e.g. HDFC Bank"
+                                                        className="rounded-xl border-slate-200 pl-10 h-11"
+                                                        value={formData.bankDetails.bankName}
+                                                        onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, bankName: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Account Number</Label>
+                                                <div className="relative">
+                                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                                    <Input
+                                                        placeholder="0000 0000 0000"
+                                                        className="rounded-xl border-slate-200 pl-10 h-11"
+                                                        value={formData.bankDetails.accountNumber}
+                                                        onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountNumber: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] font-bold text-slate-500 uppercase ml-1">IFSC Code</Label>
+                                                <div className="relative">
+                                                    <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                                    <Input
+                                                        placeholder="SBIN0001234"
+                                                        className="rounded-xl border-slate-200 pl-10 h-11 uppercase"
+                                                        value={formData.bankDetails.ifscCode}
+                                                        onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, ifscCode: e.target.value.toUpperCase() } })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 flex gap-3">
                                     <Info className="h-5 w-5 text-blue-600 shrink-0" />
@@ -270,14 +409,23 @@ function NewReturnWizardInner() {
                                     variant="ghost"
                                     className="h-14 rounded-2xl font-bold border-2 border-transparent hover:border-slate-200"
                                     onClick={prevStep}
+                                    disabled={isSubmitting}
                                 >
                                     Back
                                 </Button>
                                 <Button
                                     className="flex-1 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-xl shadow-blue-100"
                                     onClick={handleSubmit}
+                                    disabled={isSubmitting || (formData.refundMethod === 'BANK_TRANSFER' && (!formData.bankDetails.accountNumber || !formData.bankDetails.ifscCode))}
                                 >
-                                    Submit Request
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Submit Request'
+                                    )}
                                 </Button>
                             </div>
                         </div>

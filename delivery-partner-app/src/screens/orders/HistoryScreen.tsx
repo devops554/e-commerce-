@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOrderHistory } from '../../hooks/useQueries';
-import { Order } from '../../types';
+import { Shipment, Order } from '../../types';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
 import {
   formatCurrency,
@@ -38,11 +38,11 @@ const FILTERS: { label: string; value: FilterType; icon: IoniconsName }[] = [
 
 // ── History Card ──────────────────────────────────────────────────────────────
 const HistoryCard = ({
-  order,
+  shipment,
   index,
   onPress,
 }: {
-  order: Order;
+  shipment: Shipment;
   index: number;
   onPress: () => void;
 }) => {
@@ -56,11 +56,19 @@ const HistoryCard = ({
     ]).start();
   }, []);
 
-  const statusColor = getOrderStatusColor(order.orderStatus);
-  const statusLabel = getOrderStatusLabel(order.orderStatus);
+  const order = shipment.orderId as Order;
+  if (!order) return null;
+
+  const isReverse = shipment.type === 'REVERSE';
+  const isFailedPickup = isReverse && shipment.status === 'FAILED_PICKUP';
+  
+  const statusColor = isFailedPickup ? Colors.danger : getOrderStatusColor(order.orderStatus);
+  const statusLabel = isFailedPickup 
+    ? 'Pickup Failed' 
+    : (isReverse ? 'Returned' : getOrderStatusLabel(order.orderStatus));
   const cod = isCOD(order.paymentMethod);
   const earning = order.shippingCharge ?? order.deliveryFee ?? 0;
-  const orderId = typeof order.orderId === 'string' ? order.orderId.slice(-8) : 'Error';
+  const orderId = typeof order.orderId === 'string' ? order.orderId.slice(-8) : String(order.orderId).slice(-8);
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -83,7 +91,9 @@ const HistoryCard = ({
           <View style={styles.addrRow}>
             <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
             <Text style={styles.orderAddr} numberOfLines={1}>
-              {order.shippingAddress.city}, {order.shippingAddress.state}
+              {isReverse 
+                ? (typeof shipment.warehouseId === 'object' && shipment.warehouseId !== null && 'address' in shipment.warehouseId ? shipment.warehouseId.address?.city : 'Warehouse')
+                : (order.shippingAddress?.city ? `${order.shippingAddress.city}, ${order.shippingAddress.state}` : 'N/A')}
             </Text>
           </View>
 
@@ -130,14 +140,18 @@ const HistoryCard = ({
 export default function HistoryScreen() {
   const navigation = useNavigation<any>();
   const [filter, setFilter] = useState<FilterType>('today');
-  const { data: orders, isLoading } = useOrderHistory(filter);
+  const { data: shipments, isLoading } = useOrderHistory(filter);
 
   const headerFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(headerFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
 
-  const totalEarnings = orders?.reduce((sum, o) => sum + (o.shippingCharge ?? o.deliveryFee ?? 0), 0) ?? 0;
+  const totalEarnings = shipments?.reduce((sum, s) => {
+    const o = s.orderId as Order;
+    if (!o) return sum;
+    return sum + (o.shippingCharge ?? o.deliveryFee ?? 0);
+  }, 0) ?? 0;
   const filterLabel = filter === 'today' ? 'today' : filter === 'week' ? 'this week' : 'this month';
 
   const ListHeader = () => (
@@ -172,7 +186,7 @@ export default function HistoryScreen() {
           <View style={[styles.summaryIconWrap, { backgroundColor: Colors.primary + '15' }]}>
             <Ionicons name="bicycle" size={18} color={Colors.primary} />
           </View>
-          <Text style={styles.summaryValue}>{orders?.length ?? 0}</Text>
+          <Text style={styles.summaryValue}>{shipments?.length ?? 0}</Text>
           <Text style={styles.summaryLabel}>Deliveries</Text>
         </View>
         <View style={styles.summaryDivider} />
@@ -191,7 +205,7 @@ export default function HistoryScreen() {
             <Ionicons name="star" size={18} color="#F59E0B" />
           </View>
           <Text style={styles.summaryValue}>
-            {orders?.length ? (totalEarnings / orders.length).toFixed(0) : '0'}
+            {shipments?.length ? (totalEarnings / shipments.length).toFixed(0) : '0'}
           </Text>
           <Text style={styles.summaryLabel}>Avg. Earn</Text>
         </View>
@@ -201,9 +215,9 @@ export default function HistoryScreen() {
       <View style={styles.sectionHeader}>
         <Ionicons name="receipt-outline" size={15} color={Colors.primary} />
         <Text style={styles.sectionTitle}>Orders — {filterLabel}</Text>
-        {orders && orders.length > 0 && (
+        {shipments && shipments.length > 0 && (
           <View style={styles.countChip}>
-            <Text style={styles.countChipText}>{orders.length}</Text>
+            <Text style={styles.countChipText}>{shipments.length}</Text>
           </View>
         )}
       </View>
@@ -244,7 +258,7 @@ export default function HistoryScreen() {
         </View>
       ) : (
         <FlatList
-          data={orders}
+          data={shipments}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -262,9 +276,17 @@ export default function HistoryScreen() {
           }
           renderItem={({ item, index }) => (
             <HistoryCard
-              order={item}
+              shipment={item}
               index={index}
-              onPress={() => navigation.navigate('OrderDetail', { orderId: item._id })}
+              onPress={() => {
+                 let oId = '';
+                 if (typeof item.orderId === 'object' && item.orderId !== null && '_id' in item.orderId) {
+                     oId = (item.orderId as Order)._id as string;
+                 } else if (typeof item.orderId === 'string') {
+                     oId = item.orderId;
+                 }
+                 navigation.navigate('OrderDetail', { orderId: oId });
+              }}
             />
           )}
         />

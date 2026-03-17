@@ -55,6 +55,7 @@ export const getOrderStatusLabel = (status: OrderStatus): string => {
     CANCELLED: 'Cancelled',
     RETURNED: 'Returned',
     FAILED_DELIVERY: 'Delivery Failed',
+    FAILED_PICKUP: 'Pickup Failed',
   };
   return labels[status] || status;
 };
@@ -72,6 +73,7 @@ export const getOrderStatusColor = (status: OrderStatus): string => {
     case 'FAILED':
     case 'CANCELLED':
     case 'FAILED_DELIVERY':
+    case 'FAILED_PICKUP':
       return Colors.danger;
     default:
       return Colors.textSecondary;

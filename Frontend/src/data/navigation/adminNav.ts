@@ -1,5 +1,5 @@
 
-import { Building2, LayoutGrid, LucideIcon } from "lucide-react";
+import { Building2, LayoutGrid, LucideIcon, RotateCcw } from "lucide-react";
 import { UserRole } from "@/services/user.service";
 
 export interface NavItemType {
@@ -74,6 +74,11 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     icon: ShoppingCart,
     items: [
       { title: "All Orders", href: "/admin/orders", icon: ClipboardList },
+      {
+        title: 'Return Orders',
+        icon: RotateCcw,
+        href: '/admin/orders/return-order',
+      },
       {
         title: 'Analytics',
         icon: BarChart3,

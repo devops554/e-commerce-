@@ -326,7 +326,7 @@ export default function ManagerOrderDetailsPage() {
                         <LogisticsCard
                             shipment={shipment}
                             partner={partner}
-                            onAssignPartner={() => setIsAssignDialogOpen(true)}
+                            onAssignPartner={() => router.push(`/manager/orders/${order._id}/assign-partner`)}
                             onViewPartner={(id) => router.push(`/manager/delivery-partners/${id}`)}
                         />
 

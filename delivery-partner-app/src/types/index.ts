@@ -15,7 +15,8 @@ export type OrderStatus =
   | 'FAILED'
   | 'CANCELLED'
   | 'RETURNED'
-  | 'FAILED_DELIVERY';
+  | 'FAILED_DELIVERY'
+  | 'FAILED_PICKUP';
 
 // Backend uses lowercase 'cod' | 'razorpay' — match exactly
 export type PaymentMethod = 'cod' | 'razorpay';
@@ -30,7 +31,8 @@ export type ShipmentStatus =
   | 'DELIVERED'
   | 'FAILED_DELIVERY'
   | 'CANCELLED'
-  | 'RETURNED';
+  | 'RETURNED'
+  | 'FAILED_PICKUP';
 
 export interface CurrentLocation {
   latitude: number;
@@ -94,8 +96,17 @@ export interface ShippingAddress {
 
 export interface OrderItem {
   _id?: string;
-  product: string;
-  variant: string;
+  product: string | {
+    _id: string;
+    title: string;
+    images?: { url: string; publicId: string }[];
+    returnPolicy?: any; // Generic for now or I can define ReturnPolicy
+  };
+  variant: string | {
+    _id: string;
+    sku: string;
+    images?: { url: string; publicId: string }[];
+  };
   warehouse: string;
   quantity: number;
   price: number;
@@ -139,6 +150,7 @@ export interface ShipmentDeliveryPartner {
 export interface Shipment {
   _id: string;
   orderId: Order;           // populated nested order object
+  type?: 'FORWARD' | 'REVERSE'; // Forward delivery vs return pickup
   deliveryPartnerId: ShipmentDeliveryPartner;
   warehouseId: string | {
     _id: string;
@@ -160,6 +172,8 @@ export interface Shipment {
   assignedAt: string;
   pickupOtp?: string;
   deliveryOtp?: string;
+  pickupNotes?: string;
+  verificationMedia?: { url: string; publicId: string }[];
   createdAt: string;
   updatedAt: string;
 }

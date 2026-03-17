@@ -28,7 +28,7 @@ import { Shipment, Order } from '../../types';
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 // ── Phase config ──────────────────────────────────────────────────────────────
-const getPhaseConfig = (status: string): {
+const getPhaseConfig = (status: string, isReverse = false): {
     label: string;
     icon: IoniconsName;
     color: string;
@@ -36,11 +36,11 @@ const getPhaseConfig = (status: string): {
 } => {
     switch (status) {
         case 'ACCEPTED':
-            return { label: 'Pickup Pending', icon: 'location', color: '#F59E0B', step: 1 };
+            return { label: isReverse ? 'Customer Pickup' : 'Pickup Pending', icon: 'location', color: '#F59E0B', step: 1 };
         case 'PICKED_UP':
             return { label: 'Picked Up', icon: 'cube', color: Colors.primary, step: 2 };
         case 'OUT_FOR_DELIVERY':
-            return { label: 'Out for Delivery', icon: 'bicycle', color: '#10B981', step: 3 };
+            return { label: isReverse ? 'Return to Warehouse' : 'Out for Delivery', icon: 'bicycle', color: '#10B981', step: 3 };
         default:
             return { label: status, icon: 'receipt', color: Colors.textSecondary, step: 0 };
     }
@@ -79,7 +79,8 @@ const OrderCard = ({
     const order = shipment.orderId as Order;
     if (!order) return null;
 
-    const phase = getPhaseConfig(shipment.status);
+    const isReverse = shipment.type === 'REVERSE';
+    const phase = getPhaseConfig(shipment.status, isReverse);
     const isCod = isCOD(order.paymentMethod);
     const orderId = typeof order.orderId === 'string'
         ? order.orderId.slice(-8)
@@ -137,15 +138,15 @@ const OrderCard = ({
                             </React.Fragment>
                         ))}
                         <Text style={[styles.progressLabel, { color: phase.color }]}>
-                            {['', 'Pickup', 'Picked Up', 'Delivering'][phase.step]}
+                            {['', 'Pickup', 'Picked Up', isReverse ? 'Returning' : 'Delivering'][phase.step]}
                         </Text>
                     </View>
 
                     {/* Address */}
                     <View style={styles.addressRow}>
-                        <View style={[styles.addressDot, { backgroundColor: '#EF4444' }]} />
+                        <View style={[styles.addressDot, { backgroundColor: isReverse ? '#8B5CF6' : '#EF4444' }]} />
                         <Text style={styles.addressText} numberOfLines={1}>
-                            {order.shippingAddress?.street}, {order.shippingAddress?.city}
+                            {isReverse ? 'Return Pickup' : `${order.shippingAddress?.street}, ${order.shippingAddress?.city}`}
                         </Text>
                     </View>
 

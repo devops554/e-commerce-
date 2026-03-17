@@ -13,6 +13,7 @@ import {
   TextInput,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,12 +25,14 @@ import {
   useShipmentById,
   useStartDelivery,
   useCompleteDelivery,
-  useFailDelivery,
   useRejectOrder,
   usePickupOrder,
   useRequestDeliveryOtp,
   useVerifyDeliveryOtp,
   useActiveOrders,
+  useVerifyPickupOtp,
+  useFailDelivery,
+  useFailPickup
 } from '../../hooks/useQueries';
 import { Card, Divider } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
@@ -42,18 +45,15 @@ import {
 import { FullMapModal } from './FullMapModal';
 import { ActiveDeliveryMap } from '../../components/orders/ActiveDeliveryMap';
 
+// Modular Components
+import { DeliveryHeader } from '../../components/orders/active/DeliveryHeader';
+import { PhaseCard } from '../../components/orders/active/PhaseCard';
+import { DestinationCard } from '../../components/orders/active/DestinationCard';
+import { PaymentItems } from '../../components/orders/active/PaymentItems';
+import { OtpModal, IssueModal } from '../../components/orders/active/Modals';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
-
-// ── Section Label ─────────────────────────────────────────────────────────────
-const SectionLabel = ({ icon, text }: { icon: IoniconsName; text: string }) => (
-  <View style={styles.sectionLabelRow}>
-    <Ionicons name={icon} size={13} color={Colors.textSecondary} />
-    <Text style={styles.sectionLabel}>{text}</Text>
-  </View>
-);
-
-// ── Full Map Modal ─────────────────────────────────────────────────────────────
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function ActiveDeliveryScreen() {
@@ -87,6 +87,16 @@ export default function ActiveDeliveryScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { refetch, isRefetching } = useActiveOrders();
+
+  // FIX: Safe items array
+  const orderItems = Array.isArray(order?.items) ? order.items : [];
+
+  const handleVerifyPickup = () => {
+    navigation.navigate('ReturnItemReview', {
+      shipmentId,
+      items: orderItems
+    });
+  };
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -225,6 +235,8 @@ export default function ActiveDeliveryScreen() {
     }
   };
 
+
+
   const handleFailDelivery = async () => {
     if (!shipmentId) return;
     if (!failReason.trim()) {
@@ -276,16 +288,23 @@ export default function ActiveDeliveryScreen() {
 
   const warehouse = (shipment as any).warehouseId;
   const isPickupPhase = shipment.status === 'ACCEPTED' || shipment.status === 'PICKED_UP';
+  const isReverse = shipment.type === 'REVERSE';
 
   // FIX: Fully null-safe destination for OUT_FOR_DELIVERY
   const shippingAddr = order.shippingAddress ?? null;
+
+  // In reverse logistics, Pickup = Customer, Dropoff = Warehouse
   const destination = isPickupPhase
-    ? (warehouse?.location ?? null)
-    : (shippingAddr?.location ?? shippingAddr ?? null);
+    ? (isReverse ? (shippingAddr?.location ?? shippingAddr ?? null) : (warehouse?.location ?? null))
+    : (isReverse ? (warehouse?.location ?? null) : (shippingAddr?.location ?? shippingAddr ?? null));
+
   const destinationLabel = isPickupPhase
-    ? (warehouse?.name || 'Warehouse')
-    : (order.user?.name || 'Customer');
-  const destinationIcon = isPickupPhase ? 'business' : 'home';
+    ? (isReverse ? (order.user?.name || 'Customer') : (warehouse?.name || 'Warehouse'))
+    : (isReverse ? (warehouse?.name || 'Warehouse') : (order.user?.name || 'Customer'));
+
+  const destinationIcon = isPickupPhase
+    ? (isReverse ? 'home' : 'business')
+    : (isReverse ? 'business' : 'home');
 
   const statusColor = getOrderStatusColor(order.orderStatus);
   // FIX: Safe orderId slice — handle number/undefined/null cases
@@ -293,8 +312,6 @@ export default function ActiveDeliveryScreen() {
     ? String(order.orderId).slice(-8)
     : 'N/A';
 
-  // FIX: Safe items array — never undefined
-  const orderItems = Array.isArray(order?.items) ? order.items : [];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -310,25 +327,12 @@ export default function ActiveDeliveryScreen() {
       />
 
       {/* ── Header ── */}
-      <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight || '#818CF8']}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <View style={styles.headerDecor} />
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={Colors.white} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>ORDER DETAIL</Text>
-          <Text style={styles.headerOrderId}>#{orderId}</Text>
-        </View>
-        <View style={[styles.statusPill, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <Text style={styles.statusPillText}>{getOrderStatusLabel(order.orderStatus)}</Text>
-        </View>
-      </LinearGradient>
+      <DeliveryHeader
+        orderId={orderId}
+        statusLabel={getOrderStatusLabel(order.orderStatus)}
+        statusColor={statusColor}
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -354,141 +358,33 @@ export default function ActiveDeliveryScreen() {
         </TouchableOpacity>
 
         {/* ── Phase card ── */}
-        <View style={styles.phaseCard}>
-          <View style={styles.phaseHeaderRow}>
-            <View style={styles.stepChip}>
-              <Text style={styles.stepChipText}>{isPickupPhase ? 'STEP 1' : 'STEP 2'}</Text>
-            </View>
-            <Text style={styles.phaseTitle}>
-              {isPickupPhase ? 'Pick up from Warehouse' : 'Deliver to Customer'}
-            </Text>
-          </View>
-
-          {(isPickupPhase && shipment.status !== 'PICKED_UP') ? (
-            <View style={styles.navBtnDisabledWrap}>
-              <Text style={styles.navDisabledText}>
-                ⚠️ Wait for warehouse manager to verify the OTP before navigating to customer.
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity onPress={handleNavigate} activeOpacity={0.88} style={styles.navBtnWrap}>
-              <LinearGradient
-                colors={[Colors.accent || '#0EA5E9', '#0284C7']}
-                style={styles.navBtn}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Ionicons name="navigate" size={18} color={Colors.white} />
-                <Text style={styles.navBtnText}>
-                  Navigate to {isPickupPhase ? 'Warehouse' : 'Customer'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-        </View>
+        <PhaseCard
+          isPickupPhase={isPickupPhase}
+          status={shipment.status}
+          isReverse={isReverse}
+          onNavigate={handleNavigate}
+          destinationLabel={isPickupPhase ? (isReverse ? 'Customer' : 'Warehouse') : (isReverse ? 'Warehouse' : 'Customer')}
+        />
 
         {/* ── Destination detail ── */}
-        <View style={styles.detailCard}>
-          {isPickupPhase ? (
-            <>
-              <SectionLabel icon="business-outline" text="WAREHOUSE DETAILS" />
-              <Text style={styles.detailTitle}>{warehouse?.name || 'Warehouse'}</Text>
-              <View style={styles.detailAddrRow}>
-                <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
-                <Text style={styles.detailSub}>
-                  {[warehouse?.address?.addressLine1, warehouse?.address?.city]
-                    .filter(Boolean)
-                    .join(', ') || 'Address not available'}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <>
-              {/* FIX: OUT_FOR_DELIVERY — fully null-safe customer section */}
-              <View style={styles.customerRow}>
-                <View style={{ flex: 1 }}>
-                  <SectionLabel icon="person-circle-outline" text="CUSTOMER" />
-                  <Text style={styles.detailTitle}>
-                    {order.user?.name || 'Customer'}
-                  </Text>
-                  <View style={styles.detailAddrRow}>
-                    <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
-                    <Text style={styles.detailSub}>
-                      {[shippingAddr?.street, shippingAddr?.city]
-                        .filter(Boolean)
-                        .join(', ') || 'Address not available'}
-                    </Text>
-                  </View>
-                </View>
-                {/* FIX: Only render call button if phone exists */}
-                {order.user?.phone ? (
-                  <TouchableOpacity
-                    onPress={handleCallCustomer}
-                    style={styles.callBtn}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient
-                      colors={[Colors.success, '#059669']}
-                      style={styles.callGradient}
-                    >
-                      <Ionicons name="call" size={20} color={Colors.white} />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </>
-          )}
-        </View>
+        <DestinationCard
+          label={isPickupPhase ? (isReverse ? 'CUSTOMER (PICKUP)' : 'WAREHOUSE DETAILS') : (isReverse ? 'WAREHOUSE (DROPOFF)' : 'CUSTOMER')}
+          title={isPickupPhase ? (isReverse ? (order.user?.name || 'Customer') : (warehouse?.name || 'Warehouse')) : (isReverse ? (warehouse?.name || 'Warehouse') : (order.user?.name || 'Customer'))}
+          address={isPickupPhase
+            ? (isReverse ? ([shippingAddr?.street, shippingAddr?.city].filter(Boolean).join(', ') || 'Address not available') : ([warehouse?.address?.addressLine1, warehouse?.address?.city].filter(Boolean).join(', ') || 'Address not available'))
+            : (isReverse ? ([warehouse?.address?.addressLine1, warehouse?.address?.city].filter(Boolean).join(', ') || 'Address not available') : ([shippingAddr?.street, shippingAddr?.city].filter(Boolean).join(', ') || 'Address not available'))
+          }
+          phone={(!isPickupPhase && !isReverse) || (isPickupPhase && isReverse) ? order.user?.phone : undefined}
+          onCall={handleCallCustomer}
+          icon={destinationIcon}
+        />
 
-        {/* ── Payment & Items ── */}
-        <View style={styles.detailCard}>
-          <View style={styles.paymentRow}>
-            <View style={{ flex: 1 }}>
-              <SectionLabel icon="card-outline" text="PAYMENT" />
-              <View style={styles.paymentBadgeRow}>
-                <View style={[
-                  styles.paymentBadge,
-                  { backgroundColor: isCOD(order.paymentMethod) ? '#FEF3C7' : '#D1FAE5' }
-                ]}>
-                  <Ionicons
-                    name={isCOD(order.paymentMethod) ? 'cash' : 'checkmark-circle'}
-                    size={14}
-                    color={isCOD(order.paymentMethod) ? '#D97706' : '#059669'}
-                  />
-                  <Text style={[
-                    styles.paymentBadgeText,
-                    { color: isCOD(order.paymentMethod) ? '#D97706' : '#059669' }
-                  ]}>
-                    {isCOD(order.paymentMethod) ? 'Cash on Delivery — Collect' : 'Prepaid'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            {/* FIX: null-safe totalAmount */}
-            <Text style={styles.amountText}>
-              {order.totalAmount != null ? formatCurrency(order.totalAmount) : '—'}
-            </Text>
-          </View>
-
-          <View style={styles.cardDivider} />
-
-          {/* FIX: Use safe orderItems array */}
-          <SectionLabel icon="cube-outline" text={`ITEMS (${orderItems.length})`} />
-          <View style={{ gap: 6, marginTop: 6 }}>
-            {orderItems.length > 0 ? (
-              orderItems.map((item, idx) => (
-                <View key={item?._id ?? idx} style={styles.itemRow}>
-                  <View style={styles.itemDot} />
-                  <Text style={styles.itemText} numberOfLines={1}>
-                    {item?.quantity ?? 1}× {item?.title || 'Product'}
-                  </Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.detailSub}>No items found</Text>
-            )}
-          </View>
-        </View>
+        {/* Payment & Items */}
+        <PaymentItems
+          items={orderItems}
+          paymentMethod={order.paymentMethod}
+          totalAmount={order.totalAmount ?? 0}
+        />
 
         {/* ── Pickup OTP ── */}
         {isPickupPhase && shipment.pickupOtp ? (
@@ -497,11 +393,16 @@ export default function ActiveDeliveryScreen() {
               colors={[Colors.primary + '15', Colors.primary + '08']}
               style={styles.otpGradient}
             >
-              <SectionLabel icon="key-outline" text="PICKUP OTP" />
+              <View style={styles.sectionLabelRow}>
+                <Ionicons name="key-outline" size={13} color={Colors.textSecondary} />
+                <Text style={styles.sectionLabel}>PICKUP OTP</Text>
+              </View>
               <Text style={styles.otpValue}>{shipment.pickupOtp}</Text>
               <View style={styles.otpHintRow}>
                 <Ionicons name="information-circle-outline" size={13} color={Colors.textSecondary} />
-                <Text style={styles.otpHint}>Show this to the Warehouse Manager</Text>
+                <Text style={styles.otpHint}>
+                  {isReverse ? 'Show this to the Customer' : 'Show this to the Warehouse Manager'}
+                </Text>
               </View>
             </LinearGradient>
           </View>
@@ -513,26 +414,43 @@ export default function ActiveDeliveryScreen() {
       {/* ── Action Footer ── */}
       <View style={styles.actionBar}>
         {canPickup && (
-          <TouchableOpacity
-            onPress={handleCheckStatus}
-            disabled={isRefreshing || isRefetching}
-            activeOpacity={0.85}
-            style={{ flex: 1 }}
-          >
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryLight || '#818CF8']}
-              style={styles.actionBtn}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          isReverse ? (
+            <TouchableOpacity
+              onPress={handleVerifyPickup}
+              activeOpacity={0.85}
+              style={{ flex: 1 }}
             >
-              {(isRefreshing || isRefetching)
-                ? <ActivityIndicator color={Colors.white} />
-                : <>
-                  <Ionicons name="refresh" size={18} color={Colors.white} />
-                  <Text style={styles.actionBtnText}>Check Pickup Status</Text>
-                </>
-              }
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={[Colors.success, '#059669']}
+                style={styles.actionBtn}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              >
+                <Ionicons name="barcode-outline" size={18} color={Colors.white} />
+                <Text style={styles.actionBtnText}>Verify & Pickup</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={handleCheckStatus}
+              disabled={isRefreshing || isRefetching}
+              activeOpacity={0.85}
+              style={{ flex: 1 }}
+            >
+              <LinearGradient
+                colors={[Colors.primary, Colors.primaryLight || '#818CF8']}
+                style={styles.actionBtn}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              >
+                {(isRefreshing || isRefetching)
+                  ? <ActivityIndicator color={Colors.white} />
+                  : <>
+                    <Ionicons name="refresh" size={18} color={Colors.white} />
+                    <Text style={styles.actionBtnText}>Check Pickup Status</Text>
+                  </>
+                }
+              </LinearGradient>
+            </TouchableOpacity>
+          )
         )}
 
         {canStart && (
@@ -608,110 +526,28 @@ export default function ActiveDeliveryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ── Fail / Issue Modal ── */}
-      <Modal visible={failModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalTitleRow}>
-              <Ionicons name="warning-outline" size={22} color={Colors.danger} />
-              <Text style={styles.modalTitle}>Report Issue</Text>
-            </View>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Describe the issue..."
-              placeholderTextColor={Colors.textMuted}
-              value={failReason}
-              onChangeText={setFailReason}
-              multiline
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                onPress={() => { setFailModalVisible(false); setFailReason(''); }}
-                style={styles.modalCancelBtn}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCancelAssignment}
-                disabled={rejectOrder.isPending}
-                style={[styles.modalActionBtn, { backgroundColor: '#F59E0B' }]}
-              >
-                {rejectOrder.isPending
-                  ? <ActivityIndicator color={Colors.white} size="small" />
-                  : <>
-                    <Ionicons name="close-circle-outline" size={15} color={Colors.white} />
-                    <Text style={styles.modalActionBtnText}>Cancel Assignment</Text>
-                  </>
-                }
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleFailDelivery}
-                disabled={failDelivery.isPending}
-                style={[styles.modalActionBtn, { backgroundColor: Colors.danger }]}
-              >
-                {failDelivery.isPending
-                  ? <ActivityIndicator color={Colors.white} size="small" />
-                  : <>
-                    <Ionicons name="alert-circle-outline" size={15} color={Colors.white} />
-                    <Text style={styles.modalActionBtnText}>Report Failure</Text>
-                  </>
-                }
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <IssueModal
+        visible={failModalVisible}
+        onClose={() => { setFailModalVisible(false); setFailReason(''); }}
+        value={failReason}
+        onChange={setFailReason}
+        onCancelAssignment={handleCancelAssignment}
+        onFailDelivery={handleFailDelivery}
+        isRejectPending={rejectOrder.isPending}
+        isFailPending={failDelivery.isPending}
+      />
 
-      {/* ── OTP Modal ── */}
-      <Modal visible={otpModalVisible} animationType="fade" transparent>
-        <View style={styles.otpModalOverlay}>
-          <View style={styles.otpModalCard}>
-            <View style={styles.otpModalIconWrap}>
-              <Ionicons name="shield-checkmark" size={32} color={Colors.primary} />
-            </View>
-            <Text style={styles.modalTitle}>Verify Delivery</Text>
-            <Text style={styles.otpModalSubtitle}>
-              Enter the 6-digit OTP sent to the customer
-            </Text>
-            <TextInput
-              style={styles.otpInput}
-              placeholder="• • • • • •"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={otpValue}
-              onChangeText={setOtpValue}
-              placeholderTextColor={Colors.textMuted}
-            />
-            <TouchableOpacity
-              onPress={handleVerifyDelivery}
-              disabled={verifyDeliveryOtp.isPending || otpValue.trim().length !== 6}
-              style={[styles.otpVerifyBtn, { opacity: otpValue.trim().length !== 6 ? 0.5 : 1 }]}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={[Colors.success, '#059669']}
-                style={styles.otpVerifyGradient}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              >
-                {verifyDeliveryOtp.isPending
-                  ? <ActivityIndicator color={Colors.white} />
-                  : <>
-                    <Ionicons name="checkmark-circle" size={18} color={Colors.white} />
-                    <Text style={styles.otpVerifyText}>Verify & Complete</Text>
-                  </>
-                }
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => { setOtpModalVisible(false); setOtpValue(''); }}
-              style={styles.otpCloseBtn}
-            >
-              <Text style={styles.otpCloseText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <OtpModal
+        visible={otpModalVisible}
+        onClose={() => { setOtpModalVisible(false); setOtpValue(''); }}
+        title={`Verify ${isReverse ? 'Warehouse Dropoff' : 'Delivery'}`}
+        subtitle={`Enter the 6-digit OTP sent to the ${isReverse ? 'Warehouse Manager' : 'customer'}`}
+        value={otpValue}
+        onChange={setOtpValue}
+        onVerify={handleVerifyDelivery}
+        isPending={verifyDeliveryOtp.isPending}
+      />
+
     </SafeAreaView>
   );
 }
@@ -734,29 +570,6 @@ const styles = StyleSheet.create({
   },
   notFoundBtnText: { color: Colors.white, fontWeight: '700' },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingVertical: 14,
-    gap: 12, overflow: 'hidden',
-  },
-  headerDecor: {
-    position: 'absolute', width: 160, height: 160, borderRadius: 80,
-    backgroundColor: 'rgba(255,255,255,0.07)', top: -60, right: -40,
-  },
-  backBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerLabel: { fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: '700', letterSpacing: 1.2 },
-  headerOrderId: { fontSize: FontSize.lg, fontWeight: '900', color: Colors.white, letterSpacing: -0.3, marginTop: 2 },
-  statusPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-  },
-  statusDot: { width: 7, height: 7, borderRadius: 4 },
-  statusPillText: { color: Colors.white, fontSize: 11, fontWeight: '800' },
-
   content: { padding: Spacing.md, gap: Spacing.md },
 
   sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 },
@@ -770,67 +583,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12,
   },
   mapHintText: { color: Colors.white, fontSize: 10, fontWeight: '700' },
-
-  phaseCard: {
-    backgroundColor: Colors.white, borderRadius: 18,
-    overflow: 'hidden', ...Shadow.sm,
-  },
-  phaseHeaderRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 14, backgroundColor: Colors.background,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  stepChip: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
-  },
-  stepChipText: { color: Colors.white, fontSize: 10, fontWeight: '900' },
-  phaseTitle: { fontSize: FontSize.md, fontWeight: '800', color: Colors.textPrimary },
-  navBtnWrap: { margin: 12 },
-  navBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 14, borderRadius: BorderRadius.md,
-  },
-  navBtnText: { color: Colors.white, fontWeight: '800', fontSize: FontSize.sm },
-  navBtnDisabledWrap: {
-    margin: 12,
-    backgroundColor: '#FFFBEB',
-    padding: 12,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  navDisabledText: {
-    color: '#D97706',
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  detailCard: {
-    backgroundColor: Colors.white, borderRadius: 18,
-    padding: 16, ...Shadow.sm,
-  },
-  detailTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
-  detailAddrRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5 },
-  detailSub: { flex: 1, fontSize: FontSize.sm, color: Colors.textSecondary },
-  customerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  callBtn: { borderRadius: 24, overflow: 'hidden' },
-  callGradient: { width: 50, height: 50, alignItems: 'center', justifyContent: 'center' },
-
-  paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  paymentBadgeRow: { flexDirection: 'row', marginTop: 4 },
-  paymentBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-  },
-  paymentBadgeText: { fontSize: 12, fontWeight: '800' },
-  amountText: { fontSize: FontSize.xl, fontWeight: '900', color: Colors.textPrimary },
-  cardDivider: { height: 1, backgroundColor: Colors.border, marginVertical: 12 },
-
-  itemRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  itemDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
-  itemText: { flex: 1, fontSize: FontSize.sm, color: Colors.textPrimary },
 
   otpCard: { borderRadius: 18, overflow: 'hidden', ...Shadow.sm },
   otpGradient: {
@@ -859,69 +611,4 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: Colors.border,
   },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalCard: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: Spacing.xl, paddingBottom: 40,
-  },
-  modalHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: Colors.border, alignSelf: 'center', marginBottom: 20,
-  },
-  modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
-  modalTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
-  modalInput: {
-    backgroundColor: Colors.background,
-    borderWidth: 1, borderColor: Colors.border,
-    borderRadius: BorderRadius.md, padding: Spacing.md,
-    minHeight: 100, marginBottom: 20,
-    fontSize: FontSize.md, color: Colors.textPrimary,
-    textAlignVertical: 'top',
-  },
-  modalActions: { flexDirection: 'row', gap: 10 },
-  modalCancelBtn: {
-    flex: 1, paddingVertical: 13, alignItems: 'center',
-    borderWidth: 1.5, borderColor: Colors.border, borderRadius: BorderRadius.md,
-  },
-  modalCancelText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
-  modalActionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 5, paddingVertical: 13, borderRadius: BorderRadius.md,
-  },
-  modalActionBtnText: { color: Colors.white, fontWeight: '700', fontSize: 11 },
-
-  otpModalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center', padding: 24,
-  },
-  otpModalCard: {
-    backgroundColor: Colors.white, borderRadius: 24,
-    padding: 28, alignItems: 'center', gap: 8,
-  },
-  otpModalIconWrap: {
-    width: 68, height: 68, borderRadius: 34,
-    backgroundColor: Colors.primary + '12',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
-  },
-  otpModalSubtitle: {
-    fontSize: FontSize.sm, color: Colors.textSecondary,
-    textAlign: 'center', marginBottom: 8,
-  },
-  otpInput: {
-    width: '100%', backgroundColor: Colors.background,
-    borderWidth: 1.5, borderColor: Colors.border,
-    borderRadius: BorderRadius.md, padding: 16,
-    fontSize: 28, textAlign: 'center', letterSpacing: 10,
-    fontWeight: '900', color: Colors.textPrimary,
-  },
-  otpVerifyBtn: { width: '100%', marginTop: 6 },
-  otpVerifyGradient: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14, borderRadius: BorderRadius.md,
-  },
-  otpVerifyText: { color: Colors.white, fontWeight: '800', fontSize: FontSize.md },
-  otpCloseBtn: { marginTop: 8 },
-  otpCloseText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '600' },
 });

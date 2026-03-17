@@ -16,7 +16,7 @@ import {
   UpdateShipmentStatusDto,
   UpdateTrackingLocationDto,
 } from './dto/shipment.dto';
-import { Order, OrderStatus } from '../orders/schemas/order.schema';
+import { Order, OrderStatus, PaymentStatus } from '../orders/schemas/order.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/schemas/notification.schema';
 import {
@@ -25,7 +25,18 @@ import {
 } from '../delivery-partners/schemas/delivery-partner.schema';
 import { InventoryService } from '../warehouses/inventory.service';
 import { EventsGateway } from '../events/events.gateway';
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ReturnRequest,
+  ReturnRequestDocument,
+  ReturnRequestStatus,
+} from '../products/schemas/product.schema';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { from } from 'rxjs';
 
@@ -45,6 +56,8 @@ export class ShipmentsService {
     private inventoryService: InventoryService,
     @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
+    @InjectModel(ReturnRequest.name)
+    private returnRequestModel: Model<ReturnRequestDocument>,
   ) { }
 
   private generateTrackingNumber(): string {
@@ -262,7 +275,7 @@ export class ShipmentsService {
   }
 
   async requestPickupOtp(shipmentId: string): Promise<{ message: string }> {
-    const shipment = await this.shipmentModel.findById(shipmentId);
+    const shipment = await this.shipmentModel.findById(shipmentId).populate('orderId');
     if (!shipment) throw new NotFoundException('Shipment not found');
 
     if (shipment.status !== ShipmentStatus.ACCEPTED) {
@@ -276,24 +289,41 @@ export class ShipmentsService {
     shipment.pickupOtpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
     await shipment.save();
 
-    // Notify Delivery Partner
-    if (shipment.deliveryPartnerId) {
-      await this.notificationsService.create({
-        title: 'Pickup OTP',
-        message: `Your OTP for order pickup (Tracking: ${shipment.trackingNumber}) is ${otp}. Valid for 15 minutes.`,
-        type: NotificationType.SHIPMENT,
-        recipientRole: 'delivery_partner',
-        recipientId: shipment.deliveryPartnerId.toString(),
-        metadata: { shipmentId: shipment._id, otp },
-      });
+    if (shipment.type === ShipmentType.REVERSE) {
+      // Reverse Pickup: OTP goes to Customer
+      const order = shipment.orderId as any;
+      if (order && order.user) {
+        await this.notificationsService.create({
+          title: 'Return Pickup OTP',
+          message: `Your OTP for return pickup (Tracking: ${shipment.trackingNumber}) is ${otp}. Please share this with the delivery partner. Valid for 15 minutes.`,
+          type: NotificationType.SHIPMENT,
+          recipientRole: 'customer',
+          recipientId: (order.user as any)?._id?.toString() || order.user.toString(),
+          metadata: { shipmentId: shipment._id, otp },
+        });
+      }
+      return { message: 'OTP sent to customer for return pickup' };
+    } else {
+      // Forward Delivery Phase 1 (Pickup from Warehouse): OTP goes to Delivery Partner
+      if (shipment.deliveryPartnerId) {
+        await this.notificationsService.create({
+          title: 'Pickup OTP',
+          message: `Your OTP for order pickup (Tracking: ${shipment.trackingNumber}) is ${otp}. Valid for 15 minutes.`,
+          type: NotificationType.SHIPMENT,
+          recipientRole: 'delivery_partner',
+          recipientId: shipment.deliveryPartnerId.toString(),
+          metadata: { shipmentId: shipment._id, otp },
+        });
+      }
+      return { message: 'OTP sent to delivery partner' };
     }
-
-    return { message: 'OTP sent to delivery partner' };
   }
 
   async verifyPickupOtp(
     shipmentId: string,
     otp: string,
+    verificationMedia?: { url: string; publicId: string }[],
+    notes?: string,
   ): Promise<ShipmentDocument> {
     const shipment = await this.shipmentModel.findById(shipmentId);
     if (!shipment) throw new NotFoundException('Shipment not found');
@@ -314,37 +344,95 @@ export class ShipmentsService {
     shipment.pickupOtp = undefined;
     shipment.pickupOtpExpires = undefined;
 
+    if (verificationMedia) {
+      shipment.verificationMedia = verificationMedia;
+    }
+    if (notes) {
+      shipment.pickupNotes = notes;
+    }
+
+    // Assign commission for successful return pickup
+    if (shipment.type === ShipmentType.REVERSE) {
+      shipment.commissionEarned = 40; // Example commission
+    }
+
     const updatedShipment = await shipment.save();
 
-    // Trigger stock reduction
-    const order = await this.orderModel.findById(shipment.orderId);
-    if (order) {
-      for (const item of order.items) {
-        if (
-          item.warehouse?.toString() === shipment.warehouseId.toString() &&
-          item.status !== OrderStatus.CANCELLED
-        ) {
-          try {
-            await this.inventoryService.confirmDispatch(
-              item.variant.toString(),
-              shipment.warehouseId.toString(),
-              item.quantity,
-            );
-          } catch (error) {
-            this.logger.error(`Stock dispatch failed: ${error.message}`);
+    // Trigger stock reduction only for FORWARD shipments
+    if (shipment.type !== ShipmentType.REVERSE) {
+      const order = await this.orderModel.findById(shipment.orderId);
+      if (order) {
+        for (const item of order.items) {
+          if (
+            item.warehouse?.toString() === shipment.warehouseId.toString() &&
+            item.status !== OrderStatus.CANCELLED
+          ) {
+            try {
+              await this.inventoryService.confirmDispatch(
+                item.variant.toString(),
+                shipment.warehouseId.toString(),
+                item.quantity,
+              );
+            } catch (error) {
+              this.logger.error(`Stock dispatch failed: ${error.message}`);
+            }
           }
         }
       }
     }
 
     await this.syncWithOrder(updatedShipment);
+    await this.addTrackingLocation(shipmentId, {
+      status: ShipmentStatus.PICKED_UP,
+      latitude: 0,
+      longitude: 0,
+      verificationMedia: verificationMedia,
+      notes: notes
+    });
+
+    return updatedShipment;
+  }
+
+  async failPickup(
+    shipmentId: string,
+    verificationMedia: { url: string; publicId: string }[],
+    notes: string,
+  ): Promise<ShipmentDocument> {
+    const shipment = await this.shipmentModel.findById(shipmentId);
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    if (shipment.type !== ShipmentType.REVERSE) {
+      throw new BadRequestException('Only return pickups can be failed this way');
+    }
+
+    shipment.status = ShipmentStatus.FAILED_PICKUP;
+    shipment.verificationMedia = verificationMedia;
+    shipment.pickupNotes = notes;
+
+    // Assign commission for return pickup attempt
+    shipment.commissionEarned = 20; // Example commission for attempt
+
+    const updatedShipment = await shipment.save();
+
+    await this.syncWithOrder(updatedShipment);
+ 
+    // Record in history
+    await this.addTrackingLocation(shipmentId, {
+      status: ShipmentStatus.FAILED_PICKUP,
+      latitude: 0,
+      longitude: 0,
+      verificationMedia: verificationMedia,
+      notes: `Failed Pickup: ${notes}`
+    });
+
     return updatedShipment;
   }
 
   async requestDeliveryOtp(shipmentId: string): Promise<{ message: string }> {
     const shipment = await this.shipmentModel
       .findById(shipmentId)
-      .populate('orderId');
+      .populate('orderId')
+      .populate('warehouseId');
     if (!shipment) throw new NotFoundException('Shipment not found');
 
     if (shipment.status !== ShipmentStatus.OUT_FOR_DELIVERY) {
@@ -358,20 +446,35 @@ export class ShipmentsService {
     shipment.deliveryOtpExpires = new Date(Date.now() + 15 * 60 * 1000);
     await shipment.save();
 
-    // Notify Customer (Order User)
-    const order = shipment.orderId as any;
-    if (order && order.user) {
-      await this.notificationsService.create({
-        title: 'Delivery OTP',
-        message: `Your OTP for order delivery (Tracking: ${shipment.trackingNumber}) is ${otp}. Please share this with the delivery partner.`,
-        type: NotificationType.SHIPMENT,
-        recipientRole: 'customer',
-        recipientId: order.user.toString(),
-        metadata: { shipmentId: shipment._id, otp },
-      });
+    if (shipment.type === ShipmentType.REVERSE) {
+      // Reverse Delivery: OTP goes to Warehouse Manager
+      const warehouse = shipment.warehouseId as any;
+      if (warehouse && warehouse.managerId) {
+        await this.notificationsService.create({
+          title: 'Return Delivery OTP',
+          message: `OTP for return delivery (Tracking: ${shipment.trackingNumber}) is ${otp}. Please share with delivery partner upon receipt.`,
+          type: NotificationType.SHIPMENT,
+          recipientRole: 'manager',
+          recipientId: (warehouse.managerId as any)?._id?.toString() || warehouse.managerId.toString(),
+          metadata: { shipmentId: shipment._id, otp },
+        });
+      }
+      return { message: 'OTP sent to warehouse manager' };
+    } else {
+      // Forward Delivery: OTP goes to Customer
+      const order = shipment.orderId as any;
+      if (order && order.user) {
+        await this.notificationsService.create({
+          title: 'Delivery OTP',
+          message: `Your OTP for order delivery (Tracking: ${shipment.trackingNumber}) is ${otp}. Please share this with the delivery partner.`,
+          type: NotificationType.SHIPMENT,
+          recipientRole: 'customer',
+          recipientId: (order.user as any)?._id?.toString() || order.user.toString(),
+          metadata: { shipmentId: shipment._id, otp },
+        });
+      }
+      return { message: 'OTP sent to customer' };
     }
-
-    return { message: 'OTP sent to customer' };
   }
 
   async verifyDeliveryOtp(
@@ -398,6 +501,31 @@ export class ShipmentsService {
     shipment.deliveryOtpExpires = undefined;
 
     const updatedShipment = await shipment.save();
+
+    // Trigger stock restoration for REVERSE shipments
+    if (shipment.type === ShipmentType.REVERSE) {
+      const order = await this.orderModel.findById(shipment.orderId);
+      if (order) {
+        for (const item of order.items) {
+          if (
+            item.warehouse?.toString() === shipment.warehouseId.toString() &&
+            item.status !== OrderStatus.CANCELLED
+          ) {
+            try {
+              await this.inventoryService.adjustStock({
+                variantId: item.variant.toString(),
+                warehouseId: shipment.warehouseId.toString(),
+                amount: item.quantity,
+                source: `Return Shipment ${shipment.trackingNumber}`,
+              });
+            } catch (error) {
+              this.logger.error(`Stock restoration failed: ${error.message}`);
+            }
+          }
+        }
+      }
+    }
+
     await this.syncWithOrder(updatedShipment);
     return updatedShipment;
   }
@@ -416,6 +544,31 @@ export class ShipmentsService {
     shipment.outForDeliveryAt = new Date();
 
     const updatedShipment = await shipment.save();
+
+    // Trigger stock restoration for REVERSE shipments
+    if (shipment.type === ShipmentType.REVERSE) {
+      const order = await this.orderModel.findById(shipment.orderId);
+      if (order) {
+        for (const item of order.items) {
+          if (
+            item.warehouse?.toString() === shipment.warehouseId.toString() &&
+            item.status !== OrderStatus.CANCELLED
+          ) {
+            try {
+              await this.inventoryService.adjustStock({
+                variantId: item.variant.toString(),
+                warehouseId: shipment.warehouseId.toString(),
+                amount: item.quantity,
+                source: `Return Shipment ${shipment.trackingNumber}`,
+              });
+            } catch (error) {
+              this.logger.error(`Stock restoration failed: ${error.message}`);
+            }
+          }
+        }
+      }
+    }
+
     await this.syncWithOrder(updatedShipment);
     return updatedShipment;
   }
@@ -430,18 +583,34 @@ export class ShipmentsService {
       );
     }
 
+    // ✅ Update status
     shipment.status = ShipmentStatus.DELIVERED;
     shipment.deliveredAt = new Date();
 
+    // ✅ Assign commission (before save)
+    shipment.commissionEarned = 40; // you can make this dynamic later
+
+    // ✅ Save once only
     const updatedShipment = await shipment.save();
+
+    // ✅ Sync with order
     await this.syncWithOrder(updatedShipment);
 
-    // Emit live stats update
+    // ✅ Emit live stats update
     this.emitStatsUpdate(shipment.deliveryPartnerId.toString());
 
-    // TODO: Trigger Commission Calculation logic here
+    // ✅ Increment total deliveries
+    if (shipment.deliveryPartnerId) {
+      await this.deliveryPartnerModel.findByIdAndUpdate(
+        shipment.deliveryPartnerId,
+        {
+          $inc: { totalDeliveries: 1 },
+        },
+      );
+    }
+
     this.logger.log(
-      `Delivery completed for shipment ${shipment.trackingNumber}. Triggering commission calculation...`,
+      `Delivery completed for shipment ${shipment.trackingNumber}. Commission assigned.`,
     );
 
     return updatedShipment;
@@ -476,7 +645,7 @@ export class ShipmentsService {
         message: `No available partners to reassign shipment ${shipment.trackingNumber}.`,
         type: NotificationType.SHIPMENT,
         recipientRole: 'manager',
-        recipientId: (shipment as any).warehouseId?.managerId?.toString(), // Assuming populated or reachable
+        recipientId: (shipment as any).warehouseId?.managerId?._id?.toString() || (shipment as any).warehouseId?.managerId?.toString(),
       });
     }
   }
@@ -535,7 +704,7 @@ export class ShipmentsService {
 
     const updatedShipment = await shipment.save();
     await this.syncWithOrder(updatedShipment);
-
+ 
     // Emit live stats update if delivered
     if (dto.status === ShipmentStatus.DELIVERED) {
       this.emitStatsUpdate(shipment.deliveryPartnerId.toString());
@@ -608,7 +777,75 @@ export class ShipmentsService {
       }
     });
 
+    if (targetOrderStatus) {
+      order.orderStatus = targetOrderStatus;
+
+      // Automatically set payment status to PAID if order is delivered
+      if (targetOrderStatus === OrderStatus.DELIVERED && order.paymentStatus === PaymentStatus.PENDING) {
+        order.paymentStatus = PaymentStatus.PAID;
+      }
+    }
+
     await order.save();
+    await this.syncWithReturnRequest(shipment);
+  }
+ 
+  private async syncWithReturnRequest(shipment: ShipmentDocument) {
+    if (shipment.type !== ShipmentType.REVERSE) return;
+ 
+    // Find associated return request
+    const returnRequest = await this.returnRequestModel.findOne({
+      returnShipmentId: shipment._id,
+    });
+ 
+    if (!returnRequest) return;
+ 
+    let targetStatus: ReturnRequestStatus | null = null;
+ 
+    switch (shipment.status) {
+      case ShipmentStatus.PICKED_UP:
+        targetStatus = ReturnRequestStatus.PICKED_UP;
+        break;
+      case ShipmentStatus.FAILED_PICKUP:
+        targetStatus = ReturnRequestStatus.FAILED_PICKUP;
+        break;
+      case ShipmentStatus.DELIVERED:
+        targetStatus = ReturnRequestStatus.RECEIVED_AT_WAREHOUSE;
+        break;
+      case ShipmentStatus.ACCEPTED:
+      case ShipmentStatus.ASSIGNED_TO_DELIVERY:
+        targetStatus = ReturnRequestStatus.PICKUP_SCHEDULED;
+        break;
+    }
+ 
+    let changed = false;
+    if (targetStatus && returnRequest.status !== targetStatus) {
+      returnRequest.status = targetStatus;
+ 
+      if (targetStatus === ReturnRequestStatus.PICKED_UP) {
+        (returnRequest as any).pickedAt = new Date();
+      } else if (targetStatus === ReturnRequestStatus.RECEIVED_AT_WAREHOUSE) {
+        (returnRequest as any).warehouseReceivedAt = new Date();
+      }
+      changed = true;
+    }
+ 
+    // Sync media and notes for failure/pickup
+    if (shipment.pickupNotes && returnRequest.pickupNotes !== shipment.pickupNotes) {
+      returnRequest.pickupNotes = shipment.pickupNotes;
+      changed = true;
+    }
+    if (shipment.verificationMedia && shipment.verificationMedia.length > 0) {
+      returnRequest.verificationMedia = shipment.verificationMedia;
+      changed = true;
+    }
+ 
+    if (changed) {
+      await returnRequest.save();
+      this.logger.log(
+        `Synced ReturnRequest ${returnRequest._id} with Shipment ${shipment.trackingNumber} status: ${targetStatus || returnRequest.status}`,
+      );
+    }
   }
 
   async findAll(query: {
@@ -642,7 +879,7 @@ export class ShipmentsService {
           path: 'orderId',
           populate: [
             { path: 'user', select: 'name phone email' },
-            { path: 'items.product', select: 'title images' },
+            { path: 'items.product', select: 'title images returnPolicy' },
             { path: 'items.variant', select: 'sku images' },
           ],
         })
@@ -671,7 +908,7 @@ export class ShipmentsService {
         path: 'orderId',
         populate: [
           { path: 'user', select: 'name phone email' },
-          { path: 'items.product', select: 'title images' },
+          { path: 'items.product', select: 'title images returnPolicy' },
           { path: 'items.variant', select: 'sku images' },
         ],
       })
@@ -700,6 +937,8 @@ export class ShipmentsService {
         latitude: dto.latitude,
         longitude: dto.longitude,
       },
+      verificationMedia: dto.verificationMedia,
+      notes: dto.notes,
     });
 
     return history.save();
@@ -738,10 +977,8 @@ export class ShipmentsService {
 
     if (!partner) throw new NotFoundException('Partner not found');
 
-    // Earnings calculation (simplified: let's say 40 per delivery for now, or use order data if commissions existed)
-    // Looking at the implementation, there's no explicit commission yet.
-    // I will use a placeholder logic or try to find if there's any payment/commission info.
-    const todayEarnings = todayDeliveriesCount * 40; // Example: ₹40 per delivery
+    // Calculate earnings from the actual commissionEarned field
+    const todayEarnings = todayShipments.reduce((sum, s) => sum + (s.commissionEarned || 0), 0);
 
     return {
       todayEarnings,

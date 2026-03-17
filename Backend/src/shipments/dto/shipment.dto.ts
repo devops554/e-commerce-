@@ -50,6 +50,13 @@ export class UpdateTrackingLocationDto {
   @IsString()
   @IsNotEmpty()
   status: string;
+
+  @IsOptional()
+  verificationMedia?: { url: string; publicId: string }[];
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class VerifyOtpDto {

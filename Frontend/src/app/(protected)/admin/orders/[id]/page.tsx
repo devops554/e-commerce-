@@ -5,6 +5,7 @@
 
 import { useOrderById } from '@/hooks/useOrders'
 import { useShipments } from '@/hooks/useShipments'
+import { useReturns } from '@/hooks/useReturns'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +40,7 @@ import { OrderPaymentCard } from '@/components/order/OrderPaymentCard'
 import { OrderMetaCard } from '@/components/order/OrderMetaCard'
 import { OrderHistoryCard } from '@/components/order/OrderHistoryCard'
 import AdminOrderGstCard from '@/components/admin/AdminOrderGstCard'
+import { ReturnFailureDetails } from '@/components/returns/ReturnFailureDetails'
 import {
     Select,
     SelectContent,
@@ -67,6 +69,7 @@ export default function AdminOrderDetailsPage() {
 
     const { data: order, isLoading: isOrderLoading, error } = useOrderById(orderId)
     const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({ orderId: order?._id })
+    const { data: returnsData } = useReturns({ orderId: order?._id })
 
     React.useEffect(() => {
         setBreadcrumbs([
@@ -390,24 +393,31 @@ export default function AdminOrderDetailsPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-6 py-6 space-y-5">
-                            {order.items.map((item: any, i: number) => (
-                                <div key={item._id ?? i} className="relative group">
-                                    <OrderItemCard
-                                        item={item}
-                                        isLast={i === order.items.length - 1}
-                                        action={
-                                            item.status === 'PENDING_REASSIGNMENT' ? (
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl text-[10px] h-7 px-3"
-                                                    onClick={() => setReassignData({ oldWarehouseId: item.warehouse?._id || item.warehouse })}
-                                                >
-                                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                                    Reassign Warehouse
-                                                </Button>
-                                            ) : null
-                                        }
-                                    />
+                            {order.items.map((item: any, i: number) => {
+                                const itemReturn = returnsData?.data?.find(
+                                    (r: any) => r.orderItemId === item._id
+                                )
+                                return (
+                                    <div key={item._id ?? i} className="relative group">
+                                        <OrderItemCard
+                                            item={item}
+                                            isLast={i === order.items.length - 1}
+                                            returnStatus={itemReturn?.status}
+                                            returnRejectionReason={itemReturn?.rejectionReason}
+                                            returnRequest={itemReturn}
+                                            action={
+                                                item.status === 'PENDING_REASSIGNMENT' ? (
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl text-[10px] h-7 px-3"
+                                                        onClick={() => setReassignData({ oldWarehouseId: item.warehouse?._id || item.warehouse })}
+                                                    >
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Reassign Warehouse
+                                                    </Button>
+                                                ) : null
+                                            }
+                                        />
                                     {item.status !== 'cancelled' && order.orderStatus !== 'delivered' && order.orderStatus !== 'cancelled' && (
                                         <Button
                                             variant="ghost"
@@ -418,8 +428,18 @@ export default function AdminOrderDetailsPage() {
                                             Cancel Item
                                         </Button>
                                     )}
+
+                                    {(itemReturn?.status === 'FAILED_PICKUP' || (itemReturn?.returnShipmentId as any)?.status === 'FAILED_PICKUP') && (
+                                        <div className="mt-4 px-2">
+                                            <ReturnFailureDetails 
+                                                pickupNotes={(itemReturn?.returnShipmentId as any)?.pickupNotes || itemReturn?.pickupNotes} 
+                                                verificationMedia={(itemReturn?.returnShipmentId as any)?.verificationMedia || itemReturn?.verificationMedia} 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
+                                );
+                            })}
 
                             <div className="bg-slate-50 rounded-2xl p-5 space-y-3 mt-4 border border-slate-100">
                                 <div className="flex justify-between text-sm font-medium text-slate-500">

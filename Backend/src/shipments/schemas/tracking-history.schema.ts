@@ -25,6 +25,12 @@ export class TrackingHistory {
 
   @Prop({ default: Date.now })
   timestamp: Date;
+
+  @Prop([{ url: String, publicId: String }])
+  verificationMedia?: { url: string; publicId: string }[];
+
+  @Prop()
+  notes?: string;
 }
 
 export const TrackingHistorySchema =

@@ -19,6 +19,7 @@ import {
 } from '../delivery-partners/schemas/delivery-partner.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
+import { ReturnRequest, ReturnRequestSchema } from '../products/schemas/product.schema';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
       { name: TrackingHistory.name, schema: TrackingHistorySchema },
       { name: Order.name, schema: OrderSchema },
       { name: DeliveryPartner.name, schema: DeliveryPartnerSchema },
+      { name: ReturnRequest.name, schema: ReturnRequestSchema },
     ]),
     ConfigModule,
     UsersModule,

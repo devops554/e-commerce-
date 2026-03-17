@@ -1,42 +1,86 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog"
-import { UserCheck, Search, Loader2, Bike } from 'lucide-react'
+import { UserCheck, Search, Loader2, Bike, Navigation, Package, Star, ExternalLink } from 'lucide-react'
 import { useDeliveryPartners } from '@/hooks/useDeliveryPartners'
 import { useCreateShipment } from '@/hooks/useShipments'
+import { useManagerWarehouse } from '@/hooks/useWarehouses'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+
+// ─── Haversine ────────────────────────────────────────────────────────────────
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+function fmtDist(km: number | null) {
+    if (km === null) return null
+    return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`
+}
 
 interface AssignPartnerDialogProps {
     open: boolean
     onClose: () => void
     orderId: string
     warehouseId: string
+    type?: 'FORWARD' | 'REVERSE'
 }
 
-export function AssignPartnerDialog({ open, onClose, orderId, warehouseId }: AssignPartnerDialogProps) {
+export function AssignPartnerDialog({ open, onClose, orderId, warehouseId, type = 'FORWARD' }: AssignPartnerDialogProps) {
+    const router = useRouter()
     const [search, setSearch] = useState('')
     const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null)
     const createShipment = useCreateShipment()
+    const { data: warehouse } = useManagerWarehouse()
 
     const { data: partnersData, isLoading } = useDeliveryPartners({ warehouseId, limit: 100 })
     const partners = partnersData?.data || []
 
-    const filtered = partners.filter((p: any) =>
+    const wLat = warehouse?.location?.latitude
+    const wLng = warehouse?.location?.longitude
+
+    const enriched = useMemo(() => partners.map((p: any) => {
+        const pLat = p.currentLocation?.latitude
+        const pLng = p.currentLocation?.longitude
+        const dist = pLat != null && pLng != null && wLat != null && wLng != null
+            ? haversineKm(wLat, wLng, pLat, pLng) : null
+        return { ...p, dist }
+    }).sort((a: any, b: any) => {
+        if (a.dist === null) return 1
+        if (b.dist === null) return -1
+        return a.dist - b.dist
+    }), [partners, wLat, wLng])
+
+    const filtered = enriched.filter((p: any) =>
         !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.phone.includes(search)
     )
 
     const handleAssign = async () => {
         if (!selectedPartnerId) return
+
+        // BUG FIX: Fallback to manager's warehouse if prop is empty
+        const effectiveWarehouseId = warehouseId || warehouse?._id || ''
+
+        if (!effectiveWarehouseId) {
+            toast.error('Warehouse ID is missing. Please contact support.')
+            return
+        }
+
         try {
             await createShipment.mutateAsync({
                 orderId,
-                warehouseId,
+                warehouseId: effectiveWarehouseId,
                 deliveryPartnerId: selectedPartnerId,
+                type
             })
             toast.success('Delivery partner assigned successfully')
             setSelectedPartnerId(null)
@@ -56,11 +100,25 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId }: Ass
                         Assign Delivery Partner
                     </DialogTitle>
                     <DialogDescription className="text-slate-500 font-medium text-sm mt-1">
-                        Select a delivery partner to dispatch this order.
+                        Sorted by distance from warehouse · {filtered.filter((p: any) => p.availabilityStatus === 'ONLINE').length} online
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="px-6 py-4 space-y-4">
+                    {/* Open Full Page Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-9 rounded-xl border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold text-xs"
+                        onClick={() => {
+                            onClose()
+                            router.push(`/manager/orders/${orderId}/assign-partner?type=${type}`)
+                        }}
+                    >
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        Open Full Assignment View
+                    </Button>
+
                     {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -86,6 +144,7 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId }: Ass
                             filtered.map((partner: any) => {
                                 const isSelected = selectedPartnerId === partner._id
                                 const isUnavailable = partner.availabilityStatus === 'BUSY'
+                                const distStr = fmtDist(partner.dist)
                                 return (
                                     <button
                                         key={partner._id}
@@ -106,15 +165,35 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId }: Ass
                                             <p className={`font-black text-sm truncate ${isSelected ? 'text-white' : 'text-slate-900'}`}>
                                                 {partner.name}
                                             </p>
-                                            <p className={`text-xs font-medium truncate ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
-                                                {partner.phone} · {partner.vehicleType}
-                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                                <p className={`text-xs font-medium truncate ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                    {partner.phone} · {partner.vehicleType}
+                                                </p>
+                                                {/* Distance */}
+                                                {distStr && (
+                                                    <span className={`text-[10px] font-black flex items-center gap-0.5 ${isSelected ? 'text-indigo-200' : partner.dist < 5 ? 'text-emerald-600' : partner.dist < 15 ? 'text-amber-600' : 'text-slate-400'}`}>
+                                                        <Navigation className="h-2.5 w-2.5" />{distStr}
+                                                    </span>
+                                                )}
+                                                {/* Active Orders */}
+                                                {(partner.activeOrders ?? 0) > 0 && (
+                                                    <span className={`text-[10px] font-black flex items-center gap-0.5 ${isSelected ? 'text-indigo-200' : 'text-orange-500'}`}>
+                                                        <Package className="h-2.5 w-2.5" />{partner.activeOrders} active
+                                                    </span>
+                                                )}
+                                                {/* Rating */}
+                                                {partner.rating > 0 && (
+                                                    <span className={`text-[10px] font-black flex items-center gap-0.5 ${isSelected ? 'text-indigo-200' : 'text-amber-500'}`}>
+                                                        <Star className="h-2.5 w-2.5 fill-current" />{partner.rating.toFixed(1)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <span className={`text-[10px] font-black px-2 py-1 rounded-full shrink-0 ${partner.availabilityStatus === 'ONLINE'
-                                                ? (isSelected ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700')
-                                                : partner.availabilityStatus === 'BUSY'
-                                                    ? 'bg-orange-100 text-orange-700'
-                                                    : (isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600')
+                                            ? (isSelected ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700')
+                                            : partner.availabilityStatus === 'BUSY'
+                                                ? 'bg-orange-100 text-orange-700'
+                                                : (isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600')
                                             }`}>
                                             {partner.availabilityStatus}
                                         </span>
@@ -127,11 +206,7 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId }: Ass
 
                 {/* Footer */}
                 <div className="px-6 pb-6 flex gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        className="flex-1 h-11 rounded-2xl font-bold"
-                    >
+                    <Button variant="outline" onClick={onClose} className="flex-1 h-11 rounded-2xl font-bold">
                         Cancel
                     </Button>
                     <Button

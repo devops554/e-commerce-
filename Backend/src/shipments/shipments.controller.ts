@@ -103,9 +103,27 @@ export class ShipmentsController {
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   async verifyPickupOtp(
     @Param('id') id: string,
-    @Body() dto: { otp: string },
+    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string },
   ) {
-    return this.shipmentsService.verifyPickupOtp(id, dto.otp);
+    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes);
+  }
+
+  @Patch(':id/verify-pickup/partner')
+  @UseGuards(DeliveryPartnerJwtGuard)
+  async verifyPickupOtpPartner(
+    @Param('id') id: string,
+    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string },
+  ) {
+    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes);
+  }
+
+  @Patch(':id/fail-pickup/partner')
+  @UseGuards(DeliveryPartnerJwtGuard)
+  async failPickupPartner(
+    @Param('id') id: string,
+    @Body() dto: { verificationMedia: { url: string; publicId: string }[]; notes: string },
+  ) {
+    return this.shipmentsService.failPickup(id, dto.verificationMedia, dto.notes);
   }
 
   // ─── DELIVERY OTP — called by DELIVERY PARTNER at customer doorstep ───────

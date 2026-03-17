@@ -140,8 +140,8 @@ export const useRequestPickupOtp = () => {
 export const useVerifyPickupOtp = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
-      ordersAPI.verifyPickupOtp(shipmentId, otp),
+    mutationFn: ({ shipmentId, otp, verificationMedia, notes }: { shipmentId: string; otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string }) =>
+      ordersAPI.verifyPickupOtp(shipmentId, otp, verificationMedia, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -188,6 +188,16 @@ export const useShipmentById = (shipmentId: string) => {
   });
 };
 
+export const useFailPickup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, verificationMedia, notes }: { shipmentId: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string }) =>
+      ordersAPI.failPickup(shipmentId, verificationMedia || [], notes || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
 // The list screen uses useActiveOrders() which returns an array of shipments.
 // Add this to your hooks/useQueries.ts:
 

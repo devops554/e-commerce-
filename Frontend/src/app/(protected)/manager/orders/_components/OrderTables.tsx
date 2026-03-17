@@ -6,10 +6,11 @@ import {
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Check, MapPin, ShoppingCart, UserCheck, FileText } from 'lucide-react'
+import { Eye, Check, MapPin, ShoppingCart, UserCheck, FileText, Bike, RefreshCw, XCircle, CheckCircle2, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { AssignPartnerDialog } from './AssignPartnerDialog'
+import { useShipments } from '@/hooks/useShipments'
 
 const STATUS_COLOR: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -157,12 +158,105 @@ export function ConfirmOrdersTable({ orders, isMyItem, onConfirm, onBulkConfirm,
     )
 }
 
+// ─── Partner Status Cell ─────────────────────────────────────────────────────
+
+function PartnerStatusCell({
+    orderId,
+    warehouseId,
+    onReassign
+}: {
+    orderId: string
+    warehouseId: string | undefined
+    onReassign: () => void
+}) {
+    const router = useRouter()
+    const { data, isLoading } = useShipments({ orderId, warehouseId })
+    const shipment = data?.data?.[0]
+    const partner = shipment?.deliveryPartnerId
+
+    const handleAssign = () => router.push(`/manager/orders/${orderId}/assign-partner`)
+
+    if (isLoading) {
+        return <p className="text-[10px] text-slate-400 font-medium">Loading...</p>
+    }
+
+    if (!shipment || !partner) {
+        return (
+            <div className="flex flex-col gap-1.5 items-start">
+                <span className="text-[10px] text-slate-400 font-bold">Not assigned yet</span>
+                <Button
+                    size="sm"
+                    onClick={handleAssign}
+                    className="h-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] px-2.5 rounded-lg shadow-sm shadow-indigo-200"
+                >
+                    <UserCheck className="h-3 w-3 mr-1" />
+                    Assign
+                </Button>
+            </div>
+        )
+    }
+
+    const shipmentStatus = shipment.status?.toUpperCase()
+    const statusConfig: Record<string, { icon: React.ReactNode; label: string; cls: string }> = {
+        ASSIGNED_TO_DELIVERY: {
+            icon: <Clock className="h-2.5 w-2.5 mr-1" />,
+            label: 'Awaiting',
+            cls: 'bg-amber-100 text-amber-700 border-amber-200',
+        },
+        ACCEPTED: {
+            icon: <CheckCircle2 className="h-2.5 w-2.5 mr-1" />,
+            label: 'Accepted',
+            cls: 'bg-green-100 text-green-700 border-green-200',
+        },
+        REJECTED: {
+            icon: <XCircle className="h-2.5 w-2.5 mr-1" />,
+            label: 'Rejected',
+            cls: 'bg-rose-100 text-rose-700 border-rose-200',
+        },
+    }
+    const cfg = statusConfig[shipmentStatus] ?? statusConfig['ASSIGNED_TO_DELIVERY']
+
+    return (
+        <div className="flex flex-col gap-1.5 items-start">
+            <div className="flex items-center gap-1.5">
+                <div className="h-6 w-6 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                    <Bike className="h-3 w-3 text-indigo-600" />
+                </div>
+                <div>
+                    <p className="text-xs font-black text-slate-800 leading-none">
+                        {typeof partner === 'object' ? partner?.name : 'Partner'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                        {typeof partner === 'object' ? partner?.phone : ''}
+                    </p>
+                </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+                <Badge
+                    variant="outline"
+                    className={`text-[9px] font-black px-1.5 py-0.5 flex items-center h-auto ${cfg.cls}`}
+                >
+                    {cfg.icon}{cfg.label}
+                </Badge>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                    title="Reassign partner"
+                    onClick={handleAssign}
+                >
+                    <RefreshCw className="h-2.5 w-2.5" />
+                </Button>
+            </div>
+        </div>
+    )
+}
+
 // ─── Assign Delivery Table ───────────────────────────────────────────────────
 
 export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTableProps) {
     const router = useRouter()
     const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null)
-    const [packingSlipOrderId, setPackingSlipOrderId] = useState<string | null>(null)
 
     if (orders.length === 0) return <EmptyState label="No Orders Awaiting Assignment" />
 
@@ -174,6 +268,7 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                         <TableHead className="font-bold text-slate-600 w-[130px]">Order ID</TableHead>
                         <TableHead className="font-bold text-slate-600">Customer & Destination</TableHead>
                         <TableHead className="font-bold text-slate-600">Packed Items</TableHead>
+                        <TableHead className="font-bold text-slate-600">Delivery Partner</TableHead>
                         <TableHead className="font-bold text-slate-600">Date</TableHead>
                         <TableHead className="font-bold text-slate-600 text-right pr-6">Actions</TableHead>
                     </TableRow>
@@ -203,7 +298,7 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                                         {warehouseItems.map((item: any, idx: number) => (
                                             <div key={idx} className="flex items-center gap-2">
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-slate-800 truncate max-w-[180px]">{item.title}</p>
+                                                    <p className="text-xs font-bold text-slate-800 truncate max-w-[140px]">{item.title}</p>
                                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                                         <p className="text-[10px] text-slate-500 font-medium">Qty: {item.quantity}</p>
                                                         {item.hsnCode && <span className="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">HSN {item.hsnCode}</span>}
@@ -216,6 +311,13 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                                             </div>
                                         ))}
                                     </div>
+                                </TableCell>
+                                <TableCell>
+                                    <PartnerStatusCell
+                                        orderId={order._id}
+                                        warehouseId={warehouseId}
+                                        onReassign={() => setAssigningOrderId(order._id)}
+                                    />
                                 </TableCell>
                                 <TableCell>
                                     <p className="text-xs text-slate-500 font-medium">
@@ -241,13 +343,6 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                                                 <FileText className="w-4 h-4" />
                                             </Button>
                                         </div>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => setAssigningOrderId(order._id)}
-                                            className="h-7 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] px-3 rounded-lg shadow-sm shadow-indigo-200"
-                                        >
-                                            <UserCheck className="h-3 w-3 mr-1" /> Assign Partner
-                                        </Button>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -264,7 +359,6 @@ export function AssignDeliveryTable({ orders, warehouseId, isMyItem }: OrderTabl
                     warehouseId={warehouseId}
                 />
             )}
-
         </>
     )
 }

@@ -113,8 +113,12 @@ export const ordersAPI = {
     await apiClient.post(`/shipments/${shipmentId}/pickup-otp`);
   },
 
-  verifyPickupOtp: async (shipmentId: string, otp: string): Promise<void> => {
-    await apiClient.patch(`/shipments/${shipmentId}/verify-pickup`, { otp });
+  verifyPickupOtp: async (shipmentId: string, otp: string, verificationMedia?: { url: string; publicId: string }[], notes?: string): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/verify-pickup/partner`, { otp, verificationMedia, notes });
+  },
+
+  failPickup: async (shipmentId: string, verificationMedia: { url: string; publicId: string }[], notes: string): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/fail-pickup/partner`, { verificationMedia, notes });
   },
 
   requestDeliveryOtp: async (shipmentId: string): Promise<void> => {
@@ -125,8 +129,8 @@ export const ordersAPI = {
     await apiClient.patch(`/shipments/${shipmentId}/verify-delivery`, { otp });
   },
 
-  getOrderHistory: async (filter: 'today' | 'week' | 'month'): Promise<Order[]> => {
-    const { data } = await apiClient.get<Order[]>(`/delivery/orders/history?filter=${filter}`);
+  getOrderHistory: async (filter: 'today' | 'week' | 'month'): Promise<Shipment[]> => {
+    const { data } = await apiClient.get<Shipment[]>(`/delivery/orders/history?filter=${filter}`);
     return data;
   },
 

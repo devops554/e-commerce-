@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Truck, Info, AlertCircle, User, Calendar, Hash, Check } from 'lucide-react'
+import { Truck, Info, AlertCircle, User, Calendar, Hash, Check, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FaWhatsapp } from 'react-icons/fa'
 import { format } from 'date-fns'
@@ -11,6 +11,31 @@ interface LogisticsCardProps {
     partner: any
     onAssignPartner: () => void
     onViewPartner: (id: string) => void
+}
+
+function PartnerAcceptanceBadge({ status }: { status?: string }) {
+    if (!status) return null
+    const s = status.toUpperCase()
+    if (s === 'ACCEPTED') {
+        return (
+            <Badge className="bg-green-100 text-green-700 border-green-200 font-black text-[10px] px-2 py-0.5 flex items-center gap-1 w-fit">
+                <CheckCircle2 className="h-3 w-3" /> Confirmed by Partner
+            </Badge>
+        )
+    }
+    if (s === 'REJECTED') {
+        return (
+            <Badge className="bg-rose-100 text-rose-700 border-rose-200 font-black text-[10px] px-2 py-0.5 flex items-center gap-1 w-fit">
+                <XCircle className="h-3 w-3" /> Rejected by Partner
+            </Badge>
+        )
+    }
+    // ASSIGNED_TO_DELIVERY or default
+    return (
+        <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-black text-[10px] px-2 py-0.5 flex items-center gap-1 w-fit">
+            <Clock className="h-3 w-3" /> Awaiting Confirmation
+        </Badge>
+    )
 }
 
 export function LogisticsCard({ shipment, partner, onAssignPartner, onViewPartner }: LogisticsCardProps) {
@@ -50,27 +75,40 @@ export function LogisticsCard({ shipment, partner, onAssignPartner, onViewPartne
                                         <Button onClick={onAssignPartner} className="rounded-xl bg-slate-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest h-10 w-full">Assign Partner Now</Button>
                                     </div>
                                 ) : (
-                                    <div onClick={() => onViewPartner(partner._id)} className="flex cursor-pointer items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                                        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-                                            <User className="w-5 h-5 text-indigo-600" />
+                                    <div className="flex flex-col gap-2">
+                                        <div onClick={() => onViewPartner(partner._id)} className="flex cursor-pointer items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                                                <User className="w-5 h-5 text-indigo-600" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-black text-slate-900 truncate">{partner.name || 'N/A'}</p>
+                                                <p className="text-[10px] text-slate-500 font-bold">{partner.phone || 'No phone'}</p>
+                                            </div>
+                                            <div className="ml-auto flex items-center gap-1">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="rounded-full h-8 w-8 cursor-pointer text-green-500" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        partner.phone && window.open(`https://wa.me/${partner.phone}`, '_blank')
+                                                    }}
+                                                >
+                                                    <FaWhatsapp size={18} />
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-black text-slate-900 truncate">{partner.name || 'N/A'}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold">{partner.phone || 'No phone'}</p>
-                                        </div>
-                                        <div className="ml-auto flex items-center gap-1">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="rounded-full h-8 w-8 cursor-pointer text-green-500" 
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    partner.phone && window.open(`https://wa.me/${partner.phone}`, '_blank')
-                                                }}
+                                        {/* Partner Acceptance Status */}
+                                        <PartnerAcceptanceBadge status={shipment.status} />
+                                        {shipment.status?.toUpperCase() === 'REJECTED' && (
+                                            <Button
+                                                onClick={onAssignPartner}
+                                                size="sm"
+                                                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] h-8 w-full"
                                             >
-                                                <FaWhatsapp size={18} />
+                                                Reassign to Another Partner
                                             </Button>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

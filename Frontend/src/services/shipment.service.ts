@@ -12,7 +12,8 @@ export enum ShipmentStatus {
     DELIVERED = 'DELIVERED',
     FAILED_DELIVERY = 'FAILED_DELIVERY',
     RETURNED = 'RETURNED',
-    CANCELLED = 'CANCELLED'
+    CANCELLED = 'CANCELLED',
+    FAILED_PICKUP = 'FAILED_PICKUP'
 }
 
 export interface Shipment {
@@ -25,6 +26,9 @@ export interface Shipment {
     assignedAt?: string;
     pickedAt?: string;
     deliveredAt?: string;
+    pickupNotes?: string;
+    verificationMedia?: { url: string; publicId?: string }[];
+    type?: 'FORWARD' | 'REVERSE';
     createdAt: string;
     updatedAt: string;
 }
@@ -33,6 +37,7 @@ export interface CreateShipmentDto {
     orderId: string;
     warehouseId: string;
     deliveryPartnerId?: string;
+    type?: 'FORWARD' | 'REVERSE';
 }
 
 export interface AssignShipmentDto {

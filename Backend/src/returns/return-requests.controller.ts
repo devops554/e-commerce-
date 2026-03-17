@@ -8,8 +8,10 @@ import {
   Query,
   UseGuards,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { ReturnRequestsService } from './return-requests.service';
+import { WarehousesService } from '../warehouses/warehouses.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -19,7 +21,10 @@ import { UserRole } from '../users/schemas/user.schema';
 @Controller('return-requests')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ReturnRequestsController {
-  constructor(private readonly returnsService: ReturnRequestsService) { }
+  constructor(
+    private readonly returnsService: ReturnRequestsService,
+    private readonly warehousesService: WarehousesService,
+  ) { }
 
   @Post()
   @Roles(UserRole.CUSTOMER)
@@ -28,10 +33,22 @@ export class ReturnRequestsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  async findAll(@Query() query: any) {
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CUSTOMER)
+  async findAll(@Req() req: any, @Query() query: any) {
+    if (req.user.role === UserRole.CUSTOMER) {
+      return this.returnsService.findAll({ ...query, customerId: req.user._id });
+    }
+    if (req.user.role === UserRole.MANAGER) {
+      const warehouse = await this.warehousesService.findByManager(req.user._id);
+      if (!warehouse) {
+        throw new NotFoundException('Warehouse not found for manager');
+      }
+      return this.returnsService.findAll({ ...query, warehouseId: (warehouse as any)._id });
+    }
+    // Admin — no restriction
     return this.returnsService.findAll(query);
   }
+
 
   @Get('my')
   @Roles(UserRole.CUSTOMER)

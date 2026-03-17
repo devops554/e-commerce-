@@ -379,6 +379,7 @@ export enum ReturnRequestStatus {
   QC_FAILED = 'QC_FAILED',
   REFUND_INITIATED = 'REFUND_INITIATED',
   REFUND_COMPLETED = 'REFUND_COMPLETED',
+  FAILED_PICKUP = 'FAILED_PICKUP',
   CLOSED = 'CLOSED',
 }
 
@@ -406,7 +407,7 @@ export class ReturnRequest {
   @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
   orderId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'OrderItem', required: true })
+  @Prop({ type: Types.ObjectId, required: true })
   orderItemId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
@@ -500,12 +501,34 @@ export class ReturnRequest {
   @Prop({ type: Number, required: true, min: 1, default: 1 })
   quantity: number;
 
+  @Prop({
+    type: {
+      accountHolderName: String,
+      accountNumber: String,
+      ifscCode: String,
+      bankName: String,
+    },
+    _id: false,
+  })
+  bankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+  };
+
   // ── Admin ──
   @Prop({ type: Types.ObjectId, ref: 'User' })
   reviewedBy?: Types.ObjectId;
 
   @Prop({ type: String })
   adminNote?: string;
+ 
+  @Prop({ type: String })
+  pickupNotes?: string;
+ 
+  @Prop([{ url: String, publicId: String }])
+  verificationMedia?: { url: string; publicId: string }[];
 }
 
 export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);

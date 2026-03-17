@@ -95,9 +95,33 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
   const cod = isCOD(order.paymentMethod);
 
   const warehouse = (shipment as any).warehouseId;
+  const isReverse = shipment.type === 'REVERSE';
   const warehouseLocation = warehouse?.location ?? null;
   const warehouseName = warehouse?.name ?? 'Warehouse';
   const warehouseAddress = formatWarehouseAddress(warehouse?.address);
+
+  // If REVERSE: Pickup is from Customer, Delivery is to Warehouse
+  const pickupLabel = isReverse ? 'RETURN PICKUP' : 'PICKUP FROM';
+  const dropoffLabel = isReverse ? 'WAREHOUSE DESTINATION' : 'DELIVERY ADDRESS';
+  
+  const pickupName = isReverse ? order.user?.name || 'Customer' : warehouseName;
+  const pickupAddress = isReverse 
+    ? [order.shippingAddress.street, order.shippingAddress.city].filter(Boolean).join(', ')
+    : warehouseAddress;
+
+  const dropoffAddress = isReverse 
+    ? {
+        fullName: warehouseName,
+        phone: '', // Warehouse phone usually not needed for dropoff display here
+        street: warehouse?.address?.addressLine1 || '',
+        landmark: warehouse?.address?.addressLine2 || '',
+        city: warehouse?.address?.city || '',
+        state: warehouse?.address?.state || '',
+        postalCode: warehouse?.address?.pincode || '',
+        country: warehouse?.address?.country || 'India',
+        location: warehouse?.location
+      } 
+    : order.shippingAddress;
 
   return (
     <Animated.View style={[
@@ -107,7 +131,10 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
       {/* ── Card Header ── */}
       <LinearGradient
-        colors={[Colors.primary + 'F0', Colors.primaryLight || '#818CF8']}
+        colors={isReverse 
+          ? [Colors.secondary || '#8B5CF6', '#A78BFA'] 
+          : [Colors.primary + 'F0', Colors.primaryLight || '#818CF8']
+        }
         style={styles.cardHeader}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -117,10 +144,10 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
         <View style={styles.cardHeaderContent}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.cardHeaderLabel}>ORDER REQUEST</Text>
+            <Text style={styles.cardHeaderLabel}>{isReverse ? 'RETURN REQUEST' : 'ORDER REQUEST'}</Text>
             <Text style={styles.cardOrderId} numberOfLines={1}>#{order.orderId}</Text>
             <View style={styles.cardHeaderMeta}>
-              <Ionicons name="cube-outline" size={12} color="rgba(255,255,255,0.75)" />
+              <Ionicons name={isReverse ? "return-up-back" : "cube-outline"} size={12} color="rgba(255,255,255,0.75)" />
               <Text style={styles.cardHeaderMetaText}>
                 {totalItems} item{totalItems !== 1 ? 's' : ''}
               </Text>
@@ -174,18 +201,18 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
         <View style={styles.warehouseSection}>
           <View style={styles.warehouseTitleRow}>
             <View style={styles.warehouseIconWrap}>
-              <Ionicons name="business" size={14} color={Colors.primary} />
+              <Ionicons name={isReverse ? "person" : "business"} size={14} color={Colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.warehouseSectionLabel}>PICKUP FROM</Text>
-              <Text style={styles.warehouseName}>{warehouseName}</Text>
+              <Text style={styles.warehouseSectionLabel}>{pickupLabel}</Text>
+              <Text style={styles.warehouseName} numberOfLines={1}>{pickupName}</Text>
             </View>
           </View>
-          {warehouseAddress ? (
+          {pickupAddress ? (
             <View style={styles.warehouseAddressRow}>
               <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
               <Text style={styles.warehouseAddress} numberOfLines={2}>
-                {warehouseAddress}
+                {pickupAddress}
               </Text>
             </View>
           ) : null}
@@ -193,11 +220,12 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
         <View style={styles.divider} />
 
-        {/* Delivery Address */}
+        {/* Delivery Address / Warehouse Destination */}
         <DeliveryAddressCard
-          address={order.shippingAddress}
+          address={dropoffAddress as any}
+          label={dropoffLabel}
           partnerLocation={partnerLocation}
-          warehouseLocation={warehouseLocation}
+          warehouseLocation={isReverse ? null : warehouseLocation}
           backendDistanceKm={shipment.distance}
         />
 

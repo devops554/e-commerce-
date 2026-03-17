@@ -580,6 +580,11 @@ export class OrdersService {
       }
 
       order.orderStatus = status;
+
+      // Automatically set payment status to PAID if order is delivered
+      if (status === OrderStatus.DELIVERED && order.paymentStatus === PaymentStatus.PENDING) {
+        order.paymentStatus = PaymentStatus.PAID;
+      }
       order.history.push({
         actor: new Types.ObjectId(actorId),
         actorRole,

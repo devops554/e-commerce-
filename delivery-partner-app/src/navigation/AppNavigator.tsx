@@ -30,6 +30,7 @@ import UploadDocumentsScreen from '../screens/profile/UploadDocumentsScreen';
 import ViewDocumentScreen from '../screens/profile/ViewDocumentScreen';
 import { Colors, FontSize } from '../utils/theme';
 import ActiveOrdersListScreen from '../screens/orders/Activeorderslistscreen';
+import ReturnItemReviewScreen from '../screens/orders/ReturnItemReviewScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -261,6 +262,11 @@ function RootNavigator() {
           <Stack.Screen
             name="Notifications"
             component={NotificationsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ReturnItemReview"
+            component={ReturnItemReviewScreen}
             options={{ headerShown: false }}
           />
         </>

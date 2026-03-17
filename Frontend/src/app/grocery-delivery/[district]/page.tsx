@@ -1,9 +1,5 @@
-// 📁 app/grocery-delivery/[district]/page.tsx
-// This single file auto-generates SEO pages for all 38 Bihar districts!
-
 import type { Metadata } from 'next';
 
-// ✅ All 38 Bihar Districts Data
 const districts = [
   { slug: 'patna', name: 'Patna', hindi: 'पटना', population: '20 lakh+', type: 'Capital City' },
   { slug: 'muzaffarpur', name: 'Muzaffarpur', hindi: 'मुजफ्फरपुर', population: '12 lakh+', type: 'Major City' },
@@ -45,30 +41,29 @@ const districts = [
   { slug: 'sheohar', name: 'Sheohar', hindi: 'शिवहर', population: '1.5 lakh+', type: 'District' },
 ];
 
+type Props = {
+  params: Promise<{ district: string }>;
+};
+
 export async function generateStaticParams() {
   return districts.map((d) => ({ district: d.slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { district: string };
-}): Promise<Metadata> {
-  const district = districts.find((d) => d.slug === params.district);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { district: districtSlug } = await params;
+  const district = districts.find((d) => d.slug === districtSlug);
   if (!district) return {};
 
   return {
     title: `Grocery Delivery in ${district.name} | Kiranase - Bazaar se Sasta`,
-    description: `Order groceries online in ${district.name} (${district.hindi}) at prices cheaper than local bazaar. 7000+ products delivered in 30 minutes. Free delivery above ₹299. Best online kirana store in ${district.name}, Bihar.`,
+    description: `Order groceries online in ${district.name} (${district.hindi}) at prices cheaper than local bazaar. 7000+ products delivered in 30 minutes. Free delivery above ₹299.`,
     keywords: [
       `grocery delivery ${district.name}`,
       `online grocery ${district.name}`,
       `kirana delivery ${district.name}`,
       `${district.hindi} किराना डिलीवरी`,
       `grocery delivery ${district.name} bihar`,
-      `online shopping ${district.name}`,
       `30 minute delivery ${district.name}`,
-      `fresh vegetables ${district.name}`,
       `kiranase ${district.name}`,
     ],
     openGraph: {
@@ -84,8 +79,9 @@ export async function generateMetadata({
   };
 }
 
-export default function DistrictPage({ params }: { params: { district: string } }) {
-  const district = districts.find((d) => d.slug === params.district);
+export default async function DistrictPage({ params }: Props) {
+  const { district: districtSlug } = await params;
+  const district = districts.find((d) => d.slug === districtSlug);
 
   if (!district) {
     return <div>District not found</div>;
@@ -105,19 +101,11 @@ export default function DistrictPage({ params }: { params: { district: string } 
       containedInPlace: {
         '@type': 'State',
         name: 'Bihar',
-        containedInPlace: {
-          '@type': 'Country',
-          name: 'India',
-        },
+        containedInPlace: { '@type': 'Country', name: 'India' },
       },
     },
     priceRange: '₹',
     openingHours: 'Mo-Su 09:00-21:00',
-    hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: 'Grocery Products',
-      numberOfItems: 7000,
-    },
   };
 
   const categories = [

@@ -20,7 +20,7 @@ export const HierarchicalCategoryFlow = ({ parentCategory }: HierarchicalCategor
     return (
         <div className="space-y-6">
             {/* 1. Parent Category Products */}
-            <div className="bg-white py-4">
+            <div className="bg-white">
                 <ProductCategoryRow category={parentCategory} />
             </div>
 

@@ -16,6 +16,12 @@ async function bootstrap() {
     origin: origins,
     credentials: true,
   });
+  // Health check — keeps Render alive
+const httpAdapter = app.getHttpAdapter();
+httpAdapter.get('/health', (req: any, res: any) => {
+  res.status(200).json({ status: 'ok', message: 'Kiranase backend is alive' });
+});
+
   await app.listen(process.env.PORT ?? 5000);
 }
 bootstrap();

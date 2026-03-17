@@ -4,7 +4,7 @@ import React from 'react'
 import { useCategories } from '@/hooks/useCategories'
 import { Category } from '@/services/category.service'
 import { CategoryRowSkeleton } from './CategoryRowSkeleton'
-import { ProductCategoryRow } from './ProductCategoryRow'
+import { HierarchicalCategoryFlow } from './HierarchicalCategoryFlow'
 
 export const ProductDiscovery = () => {
     const [categories, setCategories] = React.useState<Category[]>([])
@@ -15,7 +15,6 @@ export const ProductDiscovery = () => {
 
     // Only fetch root categories to build the discovery rows
     const { data, isLoading, isError } = useCategories({
-        parentId: null,
         isActive: true,
         limit: 5,
         page: page
@@ -69,9 +68,9 @@ export const ProductDiscovery = () => {
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-0">
             {categories.map((category: Category) => (
-                <ProductCategoryRow key={category._id} category={category} />
+                <HierarchicalCategoryFlow key={category._id} parentCategory={category} />
             ))}
 
             {/* Sentinel for infinite scroll */}

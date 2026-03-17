@@ -38,12 +38,12 @@ export const ProductCategoryRow = ({ category }: ProductCategoryRowProps) => {
     if (products.length === 0) return null
 
     return (
-        <section className="space-y-4 py-6 px-4">
+        <section className="space-y-3 py-2 px-4">
             <div className="flex items-center justify-between px-2">
                 <div>
                     <h2 className="text-xl font-semibold text-slate-900 tracking-tight">{category.name}</h2>
                 </div>
-                <Button onClick={() => router.push(`/category/${category.slug}`)} variant="ghost" className="text-green-700 font-bold hover:text-green-800 hover:bg-green-50 rounded-xl">
+                <Button onClick={() => router.push(`/${category.parentId ? 'subcategory' : 'category'}/${category.slug}`)} variant="ghost" className="text-green-700 font-bold hover:text-green-800 hover:bg-green-50 rounded-xl">
                     See All <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </div>

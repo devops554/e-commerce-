@@ -75,7 +75,7 @@ export const SubcategorySidebar = ({ parentId }: SubcategorySidebarProps) => {
                             return (
                                 <Link
                                     key={cat._id}
-                                    href={`/category/${cat.slug}`}
+                                    href={`/subcategory/${cat.slug}`}
                                     className={`flex items-center gap-3 p-2 rounded-2xl transition-all duration-200 group ${isActive
                                         ? 'bg-primary/5 text-primary shadow-sm'
                                         : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'

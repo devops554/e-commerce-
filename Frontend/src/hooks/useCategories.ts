@@ -16,6 +16,20 @@ export const useCategories = (params: {
     });
 };
 
+export const useAllCategories = (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    productType?: string;
+    parentId?: string | null;
+    isActive?: boolean;
+}) => {
+    return useQuery({
+        queryKey: ['all-categories', params],
+        queryFn: () => categoryService.getAll(params),
+    });
+};
+
 export const useSubcategories = (parentId: string | null | undefined, params: {
     page?: number;
     limit?: number;

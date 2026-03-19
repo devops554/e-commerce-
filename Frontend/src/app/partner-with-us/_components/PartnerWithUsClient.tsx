@@ -7,7 +7,6 @@ import useEmblaCarousel, { UseEmblaCarouselType } from "embla-carousel-react";
 import type { EmblaCarouselType, EmblaPluginType } from "embla-carousel";
 import Autoplay from "embla-carousel-autoplay";
 
-// ─── shadcn/ui Carousel (self-contained) ─────────────────────────────────────
 interface CarouselContextType {
     emblaRef: UseEmblaCarouselType[0];
     scrollPrev: () => void;
@@ -118,7 +117,6 @@ function CarouselNext({ className, ...props }: React.ButtonHTMLAttributes<HTMLBu
         </button>
     );
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 const testimonials = [
     {
@@ -261,8 +259,7 @@ export default function PartnerWithUs() {
                     <span className="text-rose-400">Thrive Together</span>
                 </h1>
                 <p className="max-w-2xl mx-auto text-rose-800/60 text-lg leading-relaxed mb-10 font-light">
-                    BloomMart is India's fastest-growing community marketplace. Whether you sell unique
-                    products or love delivering smiles — there's a place for you in our ecosystem.
+                    Kiranase is Bihar's fastest growing hyperlocal delivery platform serving all 38 districts of Bihar and 10,000+ pincodes across India. Whether you sell unique products or love delivering smiles — there's a place for you in our ecosystem.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button onClick={() => router.push("/seller/login")} className="bg-rose-400 hover:bg-rose-500 text-white px-8 py-3.5 rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all">
@@ -277,7 +274,7 @@ export default function PartnerWithUs() {
                         { n: "2.4M+", l: "Happy Customers" },
                         { n: "85K+", l: "Active Sellers" },
                         { n: "12K+", l: "Delivery Partners" },
-                        { n: "420+", l: "Cities Covered" },
+                        { n: "10000+", l: "Cities Covered" },
                     ].map((s) => (
                         <div key={s.l} className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-rose-100">
                             <p className="text-3xl font-bold text-rose-500">{s.n}</p>
@@ -291,19 +288,15 @@ export default function PartnerWithUs() {
             <section className="max-w-7xl mx-auto px-8 py-16">
                 <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-10 md:p-14 border border-rose-100 grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                        <p className="text-rose-400 text-xs font-semibold uppercase tracking-widest mb-3">About BloomMart</p>
+                        <p className="text-rose-400 text-xs font-semibold uppercase tracking-widest mb-3">About Kiranase</p>
                         <h2 className="text-4xl text-rose-900 leading-tight mb-6">
                             We're building the future of community commerce
                         </h2>
                         <p className="text-rose-800/60 leading-relaxed mb-4 font-light">
-                            Founded in 2021, BloomMart started with a simple belief: every person with talent or
-                            drive deserves a platform to succeed. We've grown from a small team in Bengaluru to a
-                            nationwide network connecting buyers, sellers, and delivery heroes.
+                            Kiranase is Bihar's fastest growing hyperlocal delivery platform, serving all 38 districts of Bihar and 10,000+ pincodes across India. We deliver 7000+ products including fresh groceries, fruits, vegetables, dairy products, personal care, electronics and shaadi ka saman — all at prices cheaper than the local bazaar. We've grown from a small team in Bihar to a nationwide network connecting buyers, sellers, and delivery heroes.
                         </p>
                         <p className="text-rose-800/60 leading-relaxed font-light">
-                            Our technology empowers micro-entrepreneurs — from home bakers to artisan craftspeople —
-                            while giving delivery partners the freedom and income they deserve. We're not just a
-                            marketplace; we're a movement.
+                            Our technology empowers micro-entrepreneurs — from Farm to Consumer — while giving delivery partners the freedom and income they deserve. We're not just a marketplace; we're a movement.
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -339,8 +332,7 @@ export default function PartnerWithUs() {
                         <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center text-2xl mb-5">🛍️</div>
                         <h3 className="text-2xl text-rose-900 font-bold mb-2">Become a Seller</h3>
                         <p className="text-rose-700/60 text-sm leading-relaxed mb-5 font-light">
-                            List your products and reach millions of customers. From handmade goods to bulk items —
-                            your store, your rules. Zero listing fees to start.
+                            List your products and reach millions of customers. From handmade goods to bulk items — your store, your rules. Zero listing fees to start.
                         </p>
                         <ul className="space-y-2 mb-6">
                             {["Free storefront setup", "Real-time sales dashboard", "Marketing & SEO tools", "Dedicated seller support"].map((f) => (
@@ -371,8 +363,7 @@ export default function PartnerWithUs() {
                         <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-2xl mb-5">🚴</div>
                         <h3 className="text-2xl text-rose-900 font-bold mb-2">Delivery Partner</h3>
                         <p className="text-rose-700/60 text-sm leading-relaxed mb-5 font-light">
-                            Deliver happiness on your schedule. Earn competitive pay per delivery with weekly
-                            payouts and performance bonuses. Be your own boss.
+                            Deliver happiness on your schedule. Earn competitive pay per delivery with weekly payouts and performance bonuses. Be your own boss.
                         </p>
                         <ul className="space-y-2 mb-6">
                             {["Flexible working hours", "Weekly guaranteed payouts", "Fuel & insurance benefits", "24/7 rider support line"].map((f) => (
@@ -387,7 +378,7 @@ export default function PartnerWithUs() {
                             ))}
                         </ul>
                         <button
-                            onClick={(e) => { e.stopPropagation(); router.push("/delivery-signup"); }}
+                            onClick={(e) => { e.stopPropagation(); router.push("/delivery/signup"); }}
                             className="w-full bg-rose-400 hover:bg-rose-500 text-white py-3 rounded-2xl text-sm font-medium transition-colors shadow-sm"
                         >
                             Join as Rider →
@@ -426,27 +417,21 @@ export default function PartnerWithUs() {
                         <p className="text-rose-400 text-xs font-semibold uppercase tracking-widest mb-3">More About Us</p>
                         <h2 className="text-3xl text-rose-900 mb-5">A company built on trust & inclusion</h2>
                         <p className="text-rose-800/60 leading-relaxed font-light mb-4">
-                            BloomMart believes commerce should be accessible to everyone. Our platform is designed
-                            with rural entrepreneurs, urban hustlers, and everyday delivery heroes in mind. We
-                            provide the infrastructure so you can focus on what you do best.
+                            Kiranase believes commerce should be accessible to everyone. Our platform is designed with rural entrepreneurs, urban hustlers, and everyday delivery heroes in mind. We provide the infrastructure so you can focus on what you do best.
                         </p>
                         <p className="text-rose-800/60 leading-relaxed font-light mb-4">
-                            With operations in 420+ cities and partnerships with 50+ logistics companies, we've
-                            built a seamless experience from listing to last-mile delivery. Our proprietary AI
-                            matches products to the right buyers, increasing average seller revenue by 40%.
+                            With operations across all 38 districts of Bihar and partnerships with leading logistics companies, we've built a seamless experience from listing to last-mile delivery. Our technology matches products to the right buyers, increasing average seller revenue significantly.
                         </p>
                         <p className="text-rose-800/60 leading-relaxed font-light">
-                            We are Series B funded and backed by India's leading venture firms. In 2024, we were
-                            recognized as one of India's Top 10 Startups by Economic Times. Our mission: a million
-                            livelihoods by 2027.
+                            Kiranase is one of Bihar's fastest growing startups. Our mission is simple — to create a million livelihoods by 2027 by empowering local sellers, delivery partners and customers across Bihar and India.
                         </p>
                     </div>
                     <div className="flex flex-col gap-4">
                         {[
                             { label: "Year Founded", value: "2021", icon: "🏢" },
-                            { label: "Total Funding", value: "₹420 Cr", icon: "💰" },
+                            { label: "Products Available", value: "7000+", icon: "📦" },
                             { label: "Partner Satisfaction", value: "4.9 / 5", icon: "⭐" },
-                            { label: "Orders Delivered", value: "18M+", icon: "📦" },
+                            { label: "Pincodes Covered", value: "10,000+", icon: "📍" },
                         ].map((item) => (
                             <div key={item.label} className="bg-white/70 rounded-2xl p-5 border border-rose-100 flex items-center gap-4">
                                 <span className="text-2xl">{item.icon}</span>
@@ -471,14 +456,13 @@ export default function PartnerWithUs() {
                     <p className="text-rose-100 text-xs font-semibold uppercase tracking-widest mb-3">Ready to Begin?</p>
                     <h2 className="text-4xl font-bold mb-4">Your growth story starts here</h2>
                     <p className="text-rose-100 text-sm mb-8 max-w-lg mx-auto font-light">
-                        Join over 97,000 partners who've already transformed their lives with BloomMart.
-                        Application takes less than 5 minutes.
+                        Join thousands of partners who've already transformed their lives with Kiranase. Application takes less than 5 minutes.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button onClick={(e) => { e.stopPropagation(); router.push("/seller/login"); }} className="bg-white text-rose-500 hover:bg-rose-50 px-8 py-3.5 rounded-full text-sm font-semibold transition-colors shadow-md">
                             Apply as Seller →
                         </button>
-                        <button className="bg-white/20 hover:bg-white/30 text-white px-8 py-3.5 rounded-full text-sm font-medium border border-white/40 transition-colors">
+                        <button onClick={() => router.push("/delivery/signup")} className="bg-white/20 hover:bg-white/30 text-white px-8 py-3.5 rounded-full text-sm font-medium border border-white/40 transition-colors">
                             Become a Rider →
                         </button>
                     </div>

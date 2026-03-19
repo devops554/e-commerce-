@@ -167,7 +167,8 @@ export default function PrivacyPolicy() {
           Contact us anytime at care@kiranase.com
         </p>
         
-          href="https://www.kiranase.com"
+         <a href="https://www.kiranase.com"
+
           style={{ background: "white", color: "#16a34a", padding: "12px 32px", borderRadius: "50px", fontWeight: 700, fontSize: "1rem", textDecoration: "none", display: "inline-block" }}
         >
           🛒 Back to Shopping

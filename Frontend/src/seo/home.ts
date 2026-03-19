@@ -4,7 +4,7 @@ import { buildMetadata } from "./base";
 export const homeMetadata: Metadata = buildMetadata({
   title: "Kiranase - Bazaar se Sasta Har Din | 30 Min Delivery in Bihar",
   description:
-    "Kiranase delivers fresh groceries, electronics, shaadi ka saman at prices cheaper than local bazaar. Best Blinkit & Zepto alternative in Bihar & UP. Order Amul, Patanjali, Tata, Samsung, Havells & 7000+ products across all Bihar districts. Free delivery above ₹299. Delivered in 30 minutes.",
+    "Kiranase delivers fresh groceries, fruits, vegetables, personal care, electronics, Shaadi ka Saman & everything your home needs — cheaper than your local bazaar! 7000+ products across 10,000+ pincodes in India. Delivered in just 30 minutes. Free delivery above ₹299! 🛒",
   keywords: [
     // ==================
     // BRAND KEYWORDS

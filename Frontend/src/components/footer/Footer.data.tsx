@@ -97,11 +97,11 @@ export const CONTACT_ITEMS = [
 // Social Links
 // ─────────────────────────────────────────
 export const SOCIAL_LINKS = [
-    { Icon: Facebook, color: '#1877F2', label: 'Facebook', href: '#' },
+    { Icon: Facebook, color: '#1877F2', label: 'Facebook', href: 'https://www.facebook.com/kiranaseindia' },
     { Icon: Twitter, color: '#1DA1F2', label: 'Twitter', href: '#' },
-    { Icon: Instagram, color: '#E1306C', label: 'Instagram', href: '#' },
+    { Icon: Instagram, color: '#E1306C', label: 'Instagram', href: 'https://www.instagram.com/kiranase.official/' },
     { Icon: Youtube, color: '#FF0000', label: 'YouTube', href: '#' },
-    { Icon: FaWhatsapp, color: '#25D366', label: 'WhatsApp', href: 'https://wa.me/+918581901902' },
+    { Icon: FaWhatsapp, color: '#25D366', label: 'WhatsApp', href: 'https://wa.me/+919128801802' },
 ];
 
 // ─────────────────────────────────────────
@@ -136,11 +136,11 @@ export const LEGAL_ADDRESS = 'Bivha Technology Pvt. Ltd., Patna, Bihar – 80000
 // Bottom Bar Links
 // ─────────────────────────────────────────
 export const BOTTOM_LINKS = [
-    { label: 'Privacy Policy', href: '#' },
+    { label: 'Privacy Policy', href: '/privacy-policy' },
     { label: 'Terms of Use', href: '#' },
     { label: 'Cookie Policy', href: '#' },
     { label: 'Accessibility', href: '#' },
-    { label: 'Grievance Officer', href: '#' },
+    { label: 'Grievance Officer', href: 'mailto:care@kiranase.com' },
 ];
 
 export const COPYRIGHT = '© 2026 Kiranase — All Rights Reserved.';

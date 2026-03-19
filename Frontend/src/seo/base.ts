@@ -6,7 +6,7 @@ export const DEFAULT_OG_IMAGE = {
     url: "https://res.cloudinary.com/dxyopn9v0/image/upload/v1773670968/Kiranase_logo_Main_yugjoz.jpg",
     width: 1200,
     height: 630,
-    alt: "Kiranase - Bazaar se Sasta Har Din | 30 Min Delivery in Bihar",
+    alt: "Kiranase - Bazaar se Sasta Har Din | 30 Min Delivery",
 };
 
 export const baseMeta = {

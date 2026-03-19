@@ -1,4 +1,4 @@
-tsxexport const metadata = {
+export const metadata = {
   title: "Privacy Policy | Kiranase - Bihar's Fastest Grocery Delivery",
   description:
     "Read Kiranase's privacy policy. We are committed to protecting your personal information and your right to privacy.",

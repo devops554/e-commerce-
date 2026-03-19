@@ -10,6 +10,7 @@ const publicRoutes = [
     '/api/webhooks(.*)',
     '/product-type(.*)',
     '/category(.*)',
+    '/subcategory(.*)',
     '/search(.*)',
     '/partner-with-us(.*)',
     '/seller/signup',

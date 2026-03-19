@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 export const BASE_URL = "https://www.kiranase.com";
 
 export const DEFAULT_OG_IMAGE = {
-    url: "/photo/Kiranase-logo.png",
-    width: 512,   // ← logo ka actual size daalo
-    height: 512,  // ← actual size
-    alt: "Kiranase - Fresh Groceries Delivered in 30 Minutes",
+    url: "https://res.cloudinary.com/dxyopn9v0/image/upload/v1773670968/Kiranase_logo_Main_yugjoz.jpg",
+    width: 1200,
+    height: 630,
+    alt: "Kiranase - Bazaar se Sasta Har Din | 30 Min Delivery in Bihar",
 };
 
 export const baseMeta = {
@@ -29,15 +29,12 @@ export const baseMeta = {
     },
     manifest: "/site.webmanifest",
     other: {
-        "theme-color": "#ffffff",
+        "theme-color": "#16a34a",
         "apple-mobile-web-app-capable": "yes",
         "apple-mobile-web-app-status-bar-style": "black-translucent",
     },
 } satisfies Partial<Metadata>;
 
-/**
- * Helper to build full page metadata, merging with base defaults.
- */
 export function buildMetadata({
     title,
     description,
@@ -54,7 +51,6 @@ export function buildMetadata({
     noIndex?: boolean;
 }): Metadata {
     const url = `${BASE_URL}${path}`;
-
     return {
         ...baseMeta,
         title,

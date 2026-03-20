@@ -111,7 +111,7 @@ export const BOTTOM_LINKS = [
     { label: 'Grievance Officer', href: 'mailto:care@kiranase.com' },
 ];
 
-export const COPYRIGHT = '© 2026 Kiranase : A BY PAMALSE COMPANY— All Rights Reserved.';
+export const COPYRIGHT = '© 2026 Kiranase : A  PAMALSE COMPANY — All Rights Reserved.';
 
 export const BRAND = {
     img: '/photo/Kiranase-logo.png',

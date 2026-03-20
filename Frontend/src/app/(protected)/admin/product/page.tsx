@@ -28,16 +28,18 @@ export default function ProductsPage() {
     const limit = 10
 
     const { data, isLoading } = useProducts({
-        page,
-        limit,
-        search: debouncedSearch,
-        ...filters
+    page,
+    limit,
+    search: debouncedSearch,
+    sort: '-createdAt',
+    ...filters
     })
 
     const { deleteProduct } = useProductActions()
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value)
+    setSearch(e.target.value)
+    setPage(1)
     }
 
     const handleFilterChange = (newFilters: any) => {

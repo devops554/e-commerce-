@@ -25,7 +25,7 @@ export const ProductCategoryRow = ({ category }: ProductCategoryRowProps) => {
     const router = useRouter()
     const { data, isLoading } = useProducts({
         category: category._id,
-        limit: 10,
+        limit: 50,
         isActive: true
     }, true)
 

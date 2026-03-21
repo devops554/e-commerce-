@@ -21,9 +21,9 @@ interface ProductType {
 }
 
 export const ProductTypeScroller = () => {
-    const { data, isLoading } = useProductTypes({ isActive: true })
+    const { data, isLoading } = useProductTypes({ isActive: true, limit: 20 })
     const productTypes = data?.productTypes || []
-
+,
     // Create a new array with "All" at the beginning
     const allProductTypes = [
         { _id: 'all', name: 'All', slug: 'all', image: '' },

@@ -199,9 +199,9 @@ export class ReturnService {
 
     const filter: any = {};
 
-    if (customerId) filter.customerId = customerId;
+    if (customerId) filter.customerId = typeof customerId === 'string' ? new Types.ObjectId(customerId) : customerId;
     if (status) filter.status = status;
-    if (assignedPartnerId) filter.assignedPartnerId = assignedPartnerId;
+    if (assignedPartnerId) filter.assignedPartnerId = typeof assignedPartnerId === 'string' ? new Types.ObjectId(assignedPartnerId) : assignedPartnerId;
 
     if (activeOnly) {
       filter.status = { $in: [ReturnRequestStatus.PICKUP_SCHEDULED, ReturnRequestStatus.PICKUP_OTP_PENDING] };
@@ -211,7 +211,9 @@ export class ReturnService {
     }
 
     if (managerId) {
-      const warehouse = await this.warehouseModel.findOne({ managerId });
+      const warehouse = await this.warehouseModel.findOne({ 
+        managerId: typeof managerId === 'string' ? new Types.ObjectId(managerId) : managerId 
+      });
       if (!warehouse) return { data: [], total: 0, page: Number(page), limit: Number(limit), totalPages: 0 };
       filter.warehouseId = warehouse._id;
     }

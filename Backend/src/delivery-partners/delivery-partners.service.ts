@@ -178,7 +178,7 @@ export class DeliveryPartnersService {
   }) {
     const { page = 1, limit = 10, warehouseId, search } = query;
     const filter: any = {};
-    if (warehouseId) filter.warehouseIds = warehouseId;
+    if (warehouseId) filter.warehouseIds = typeof warehouseId === 'string' ? new Types.ObjectId(warehouseId) : warehouseId;
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },

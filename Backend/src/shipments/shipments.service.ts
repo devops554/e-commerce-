@@ -962,9 +962,9 @@ export class ShipmentsService {
     let sort: any = querySort || { createdAt: -1 };
     if (warehouseId) {
       if (Array.isArray(warehouseId)) {
-        filter.warehouseId = { $in: warehouseId.map(id => new Types.ObjectId(id)) };
+        filter.warehouseId = { $in: warehouseId.map(id => typeof id === 'string' ? new Types.ObjectId(id) : id) };
       } else {
-        filter.warehouseId = warehouseId;
+        filter.warehouseId = typeof warehouseId === 'string' ? new Types.ObjectId(warehouseId) : warehouseId;
       }
     }
 
@@ -999,7 +999,7 @@ export class ShipmentsService {
       delete filter.warehouseId;
       delete filter.status;
     } else if (deliveryPartnerId) {
-      filter.deliveryPartnerId = new Types.ObjectId(deliveryPartnerId);
+      filter.deliveryPartnerId = typeof deliveryPartnerId === 'string' ? new Types.ObjectId(deliveryPartnerId) : deliveryPartnerId;
     }
     if (orderId) {
       filter.orderId = typeof orderId === 'string' ? new Types.ObjectId(orderId) : orderId;

@@ -13,6 +13,7 @@ import { InventoryService } from '../warehouses/inventory.service';
 import { PaymentsService } from '../payments/payments.service';
 import { RazorpayPayoutService } from '../payments/razorpay-payout.service';
 import { UserRole } from 'src/users/schemas/user.schema';
+import { decrypt } from '../utils/encryption.util';
 
 @Injectable()
 export class ReturnRequestsService {
@@ -29,6 +30,18 @@ export class ReturnRequestsService {
     private paymentsService: PaymentsService,
     private razorpayPayoutService: RazorpayPayoutService,
   ) { }
+
+  private decryptBankDetails(request: any) {
+    if (!request) return request;
+    const doc = request.toJSON ? request.toJSON() : request;
+    if (doc.bankDetails) {
+      doc.bankDetails.accountHolderName = decrypt(doc.bankDetails.accountHolderName);
+      doc.bankDetails.accountNumber = decrypt(doc.bankDetails.accountNumber);
+      doc.bankDetails.ifscCode = decrypt(doc.bankDetails.ifscCode);
+      doc.bankDetails.bankName = decrypt(doc.bankDetails.bankName);
+    }
+    return doc;
+  }
 
   async create(customerId: string, dto: any): Promise<ReturnRequestDocument> {
     const { orderId, orderItemId, productId, variantId, quantity, reason, reasonDescription, evidenceMedia, refundMethod, bankDetails } = dto;
@@ -203,7 +216,7 @@ export class ReturnRequestsService {
     ]);
 
     return {
-      data,
+      data: data.map(item => this.decryptBankDetails(item)),
       total,
       page: Number(page),
       totalPages: Math.ceil(total / limit),
@@ -220,7 +233,7 @@ export class ReturnRequestsService {
       .populate('customerId', 'name email phone')
       .exec();
     if (!request) throw new NotFoundException('Return request not found');
-    return request;
+    return this.decryptBankDetails(request);
   }
 
   async review(id: string, reviewerId: string, dto: { approved: boolean; rejectionReason?: string; adminNote?: string }) {

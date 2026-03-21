@@ -20,6 +20,8 @@ export class BankDetails {
   bankName: string;
 }
 export const BankDetailsSchema = SchemaFactory.createForClass(BankDetails);
+BankDetailsSchema.set('toJSON', { getters: true });
+BankDetailsSchema.set('toObject', { getters: true });
 
 @Schema({ timestamps: true, toJSON: { getters: true }, toObject: { getters: true } })
 export class ReturnRequest {
@@ -178,6 +180,8 @@ export class ReturnRequest {
 }
 
 export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);
+ReturnRequestSchema.set('toJSON', { getters: true });
+ReturnRequestSchema.set('toObject', { getters: true });
 
 ReturnRequestSchema.index({ assignedPartnerId: 1 });
 ReturnRequestSchema.index({ warehouseId: 1, status: 1 });

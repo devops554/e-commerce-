@@ -15,6 +15,7 @@ import { CreateReturnDto, ApproveReturnDto, RejectReturnDto, RefundDto, QcResult
 import { NotificationType } from '../notifications/schemas/notification.schema';
 import { PaymentsService } from '../payments/payments.service';
 import { RazorpayPayoutService } from '../payments/razorpay-payout.service';
+import { decrypt } from '../utils/encryption.util';
 
 @Injectable()
 export class ReturnService {
@@ -31,6 +32,18 @@ export class ReturnService {
     private readonly paymentsService: PaymentsService,
     private readonly razorpayPayoutService: RazorpayPayoutService,
   ) { }
+
+  private decryptBankDetails(request: any) {
+    if (!request) return request;
+    const doc = request.toJSON ? request.toJSON() : request;
+    if (doc.bankDetails) {
+      doc.bankDetails.accountHolderName = decrypt(doc.bankDetails.accountHolderName);
+      doc.bankDetails.accountNumber = decrypt(doc.bankDetails.accountNumber);
+      doc.bankDetails.ifscCode = decrypt(doc.bankDetails.ifscCode);
+      doc.bankDetails.bankName = decrypt(doc.bankDetails.bankName);
+    }
+    return doc;
+  }
 
   // ─── INTERNAL HELPERS (Phase 7) ─────────────────────────────────────────────
 
@@ -252,7 +265,7 @@ export class ReturnService {
     }
 
     return {
-      data: finalData,
+      data: finalData.map(item => this.decryptBankDetails(item)),
       total,
       page: Number(page),
       limit: Number(limit),
@@ -273,7 +286,7 @@ export class ReturnService {
       .populate('customerId', 'fullName email phone');
 
     if (!res) throw new NotFoundException('Return request not found');
-    return res;
+    return this.decryptBankDetails(res);
   }
 
   /**
@@ -311,7 +324,7 @@ export class ReturnService {
     if (shipment?.returnRequestId) {
       const res = await this.returnRequestModel.findById(shipment.returnRequestId)
         .populate(populateOpts as any);
-      if (res) return res;
+      if (res) return this.decryptBankDetails(res);
     }
 
     // Step 2: Fallback to the broad search conditions
@@ -319,17 +332,10 @@ export class ReturnService {
       .populate(populateOpts as any);
 
     if (!res) {
-      console.error(`[ReturnService] Return request not found for ID: "${cleanId}". Evaluated conditions:`, JSON.stringify(conditions));
-
-      // Additional debugging: check if shipment exists but is not linked
-      const shipment = await this.shipmentModel.findById(cleanId);
-      if (shipment) {
-        console.warn(`[ReturnService] Found shipment ${cleanId} but no ReturnRequest is linked to it via returnShipmentId.`);
-      }
-
+      // ...
       throw new NotFoundException(`Return request not found for ID: ${cleanId}`);
     }
-    return res;
+    return this.decryptBankDetails(res);
   }
 
   async cancelReturn(customerId: string, id: string) {

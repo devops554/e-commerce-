@@ -112,15 +112,16 @@ export class DeliveryController {
     const partnerId = req.deliveryPartner._id.toString();
     // Return all shipments that are currently "in progress" for this partner
     const shipments = await this.shipmentsService.findAll({
-      ...query,
+      page: query.page,
+      limit: query.limit,
       deliveryPartnerId: partnerId,
       status: [
         ShipmentStatus.ACCEPTED,
         ShipmentStatus.PICKED_UP,
         ShipmentStatus.OUT_FOR_DELIVERY,
-      ] as any,
+      ],
     });
-    return shipments; // Returning full paginated object
+    return shipments;
   }
 
   @Get('shipments/:id')
@@ -267,7 +268,6 @@ export class DeliveryController {
         ShipmentStatus.FAILED_DELIVERY,
         ShipmentStatus.RETURNED,
         ShipmentStatus.FAILED_PICKUP,
-        ShipmentStatus.ASSIGNED_TO_DELIVERY,
       ],
       startDate,
       limit: 100, // Show more for history

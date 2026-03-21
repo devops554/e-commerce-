@@ -40,19 +40,22 @@ export class ReturnAdminController {
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
   async findOne(@Param('id') id: string) {
-    return this.returnService.getReturnById(id);
+    const res = await this.returnService.getReturnById(id);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/approve')
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
   async approve(@Req() req: any, @Param('id') id: string, @Body() dto: ApproveReturnDto) {
-    return this.returnService.approveReturn(req.user._id, id, dto);
+    const res = await this.returnService.approveReturn(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/reject')
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
   async reject(@Req() req: any, @Param('id') id: string, @Body() dto: RejectReturnDto) {
-    return this.returnService.rejectReturn(req.user._id, id, dto);
+    const res = await this.returnService.rejectReturn(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Post(':id/assign-partner')
@@ -64,12 +67,14 @@ export class ReturnAdminController {
   @Patch(':id/refund')
   @Roles(UserRole.ADMIN)
   async refund(@Req() req: any, @Param('id') id: string, @Body() dto: RefundDto) {
-    return this.returnService.initiateRefund(req.user._id, id, dto);
+    const res = await this.returnService.initiateRefund(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/force-close')
   @Roles(UserRole.ADMIN)
   async forceClose(@Req() req: any, @Param('id') id: string, @Body() dto: { reason: string }) {
-    return this.returnService.forceCloseReturn(req.user._id, id, dto.reason);
+    const res = await this.returnService.forceCloseReturn(req.user._id, id, dto.reason);
+    return this.returnService.formatForApi(res);
   }
 }

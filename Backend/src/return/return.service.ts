@@ -33,11 +33,16 @@ export class ReturnService {
     private readonly razorpayPayoutService: RazorpayPayoutService,
   ) { }
 
-  private decryptBankDetails(request: any) {
+  public formatForApi(request: any) {
     if (!request) return request;
-    // Note: Manual decryption here is mostly redundant because the schema has getters.
-    // Crucially, we must NOT call request.toJSON() here if we want to keep it as a Mongoose document.
-    return request;
+    const doc = request.toJSON ? request.toJSON() : JSON.parse(JSON.stringify(request));
+    if (doc.bankDetails) {
+      doc.bankDetails.accountHolderName = decrypt(doc.bankDetails.accountHolderName);
+      doc.bankDetails.accountNumber = decrypt(doc.bankDetails.accountNumber);
+      doc.bankDetails.ifscCode = decrypt(doc.bankDetails.ifscCode);
+      doc.bankDetails.bankName = decrypt(doc.bankDetails.bankName);
+    }
+    return doc;
   }
 
   // ─── INTERNAL HELPERS (Phase 7) ─────────────────────────────────────────────
@@ -262,7 +267,7 @@ export class ReturnService {
     }
 
     return {
-      data: finalData,
+      data: finalData.map(item => this.formatForApi(item)),
       total,
       page: Number(page),
       limit: Number(limit),
@@ -283,7 +288,7 @@ export class ReturnService {
       .populate('customerId', 'fullName email phone');
 
     if (!res) throw new NotFoundException('Return request not found');
-    return this.decryptBankDetails(res);
+    return res;
   }
 
   /**
@@ -321,7 +326,7 @@ export class ReturnService {
     if (shipment?.returnRequestId) {
       const res = await this.returnRequestModel.findById(shipment.returnRequestId)
         .populate(populateOpts as any);
-      if (res) return this.decryptBankDetails(res);
+      if (res) return res;
     }
 
     // Step 2: Fallback to the broad search conditions
@@ -332,7 +337,7 @@ export class ReturnService {
       // ...
       throw new NotFoundException(`Return request not found for ID: ${cleanId}`);
     }
-    return this.decryptBankDetails(res);
+    return res;
   }
 
   async cancelReturn(customerId: string, id: string) {

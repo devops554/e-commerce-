@@ -31,7 +31,8 @@ export class ReturnRequestsController {
   @Post()
   @Roles(UserRole.CUSTOMER)
   async create(@Req() req: any, @Body() dto: any) {
-    return this.returnsService.create(req.user._id, dto);
+    const res = await this.returnsService.create(req.user._id, dto);
+    return this.returnsService.formatForApi(res);
   }
 
   @Get()
@@ -60,7 +61,8 @@ export class ReturnRequestsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.returnsService.findById(id);
+    const res = await this.returnsService.findById(id);
+    return this.returnsService.formatForApi(res);
   }
 
   @Patch(':id/review')
@@ -77,7 +79,8 @@ export class ReturnRequestsController {
         throw new BadRequestException('You can only review requests for your warehouse');
       }
     }
-    return this.returnsService.review(id, req.user._id, dto);
+    const res = await this.returnsService.review(id, req.user._id, dto);
+    return this.returnsService.formatForApi(res);
   }
 
   @Patch(':id/warehouse-qc')
@@ -86,7 +89,8 @@ export class ReturnRequestsController {
     @Param('id') id: string,
     @Body() dto: { warehouseQcGrade: QcGrade; warehouseQcNotes?: string },
   ) {
-    return this.returnsService.updateWarehouseQc(id, dto);
+    const res = await this.returnsService.updateWarehouseQc(id, dto);
+    return this.returnsService.formatForApi(res);
   }
 
   @Patch(':id/resolve-failed-pickup')
@@ -96,7 +100,8 @@ export class ReturnRequestsController {
     @Req() req: any,
     @Body() dto: { approved: boolean; rejectionReason?: string; adminNote?: string },
   ) {
-    return this.returnsService.resolveFailedPickup(id, req.user._id, dto);
+    const res = await this.returnsService.resolveFailedPickup(id, req.user._id, dto);
+    return this.returnsService.formatForApi(res);
   }
 
   @Patch(':id/refund')
@@ -105,6 +110,7 @@ export class ReturnRequestsController {
     @Param('id') id: string,
     @Body() dto: { refundMethod: RefundMethod; refundAmount: number },
   ) {
-    return this.returnsService.initiateRefund(id, dto);
+    const res = await this.returnsService.initiateRefund(id, dto);
+    return this.returnsService.formatForApi(res);
   }
 }

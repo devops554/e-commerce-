@@ -31,9 +31,9 @@ export class ReturnRequestsService {
     private razorpayPayoutService: RazorpayPayoutService,
   ) { }
 
-  private decryptBankDetails(request: any) {
+  public formatForApi(request: any) {
     if (!request) return request;
-    const doc = request.toJSON ? request.toJSON() : request;
+    const doc = request.toJSON ? request.toJSON() : JSON.parse(JSON.stringify(request));
     if (doc.bankDetails) {
       doc.bankDetails.accountHolderName = decrypt(doc.bankDetails.accountHolderName);
       doc.bankDetails.accountNumber = decrypt(doc.bankDetails.accountNumber);
@@ -216,7 +216,7 @@ export class ReturnRequestsService {
     ]);
 
     return {
-      data: data.map(item => this.decryptBankDetails(item)),
+      data: data.map(item => this.formatForApi(item)),
       total,
       page: Number(page),
       totalPages: Math.ceil(total / limit),
@@ -233,7 +233,7 @@ export class ReturnRequestsService {
       .populate('customerId', 'name email phone')
       .exec();
     if (!request) throw new NotFoundException('Return request not found');
-    return this.decryptBankDetails(request);
+    return request;
   }
 
   async review(id: string, reviewerId: string, dto: { approved: boolean; rejectionReason?: string; adminNote?: string }) {

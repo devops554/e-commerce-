@@ -10,7 +10,8 @@ export class ReturnController {
 
   @Post()
   async create(@Req() req: any, @Body() dto: CreateReturnDto) {
-    return this.returnService.createReturn(req.user._id, dto);
+    const res = await this.returnService.createReturn(req.user._id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Get()
@@ -27,11 +28,13 @@ export class ReturnController {
   @Get(':id')
   async findOne(@Req() req: any, @Param('id') id: string) {
     const customerId = req.user.role === 'user' ? req.user._id : undefined;
-    return this.returnService.getReturnById(id, customerId);
+    const res = await this.returnService.getReturnById(id, customerId);
+    return this.returnService.formatForApi(res);
   }
 
   @Delete(':id/cancel')
   async cancel(@Req() req: any, @Param('id') id: string) {
-    return this.returnService.cancelReturn(req.user._id, id);
+    const res = await this.returnService.cancelReturn(req.user._id, id);
+    return this.returnService.formatForApi(res);
   }
 }

@@ -43,7 +43,8 @@ export class ReturnWarehouseController {
     if (returnRequest.status !== ReturnRequestStatus.PENDING) {
       throw new BadRequestException('Only PENDING returns can be approved by managers');
     }
-    return this.returnService.approveReturn(req.user._id, id, dto);
+    const res = await this.returnService.approveReturn(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/reject')
@@ -52,7 +53,8 @@ export class ReturnWarehouseController {
     if (returnRequest.status !== ReturnRequestStatus.PENDING) {
       throw new BadRequestException('Only PENDING returns can be rejected by managers');
     }
-    return this.returnService.rejectReturn(req.user._id, id, dto);
+    const res = await this.returnService.rejectReturn(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/assign-partner')
@@ -64,12 +66,14 @@ export class ReturnWarehouseController {
   @Patch(':id/resolve-failed-pickup')
   async resolveFailedPickup(@Req() req: any, @Param('id') id: string, @Body() dto: ApproveReturnDto & { approved: boolean, rejectionReason?: string }) {
     await this.returnService.verifyManagerAccess(req.user._id, id);
-    return this.returnService.resolveFailedPickup(id, dto);
+    const res = await this.returnService.resolveFailedPickup(id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/qc')
   async updateQc(@Req() req: any, @Param('id') id: string, @Body() dto: QcResultDto) {
     await this.returnService.verifyManagerAccess(req.user._id, id);
-    return this.returnService.updateQc(req.user._id, id, dto);
+    const res = await this.returnService.updateQc(req.user._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 }

@@ -15,22 +15,26 @@ export class ReturnDeliveryController {
 
   @Patch(':id/accept')
   async accept(@Req() req: any, @Param('id') id: string) {
-    return this.returnService.acceptPickup(req.deliveryPartner._id, id);
+    const res = await this.returnService.acceptPickup(req.deliveryPartner._id, id);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/reject')
   async reject(@Req() req: any, @Param('id') id: string, @Body() dto: { rejectionReason: string }) {
-    return this.returnService.rejectPickup(req.deliveryPartner._id, id, dto);
+    const res = await this.returnService.rejectPickup(req.deliveryPartner._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Patch(':id/verify-items')
   async verifyItems(@Req() req: any, @Param('id') id: string, @Body() dto: VerifyPickupDto) {
-    return this.returnService.verifyPickupItems(req.deliveryPartner._id, id, dto);
+    const res = await this.returnService.verifyPickupItems(req.deliveryPartner._id, id, dto);
+    return this.returnService.formatForApi(res);
   }
 
   @Post(':id/verify-customer-otp')
   async verifyCustomerOtp(@Req() req: any, @Param('id') id: string, @Body('otp') otp: string) {
-    return this.returnService.verifyCustomerOtp(req.deliveryPartner._id, id, otp);
+    const res = await this.returnService.verifyCustomerOtp(req.deliveryPartner._id, id, otp);
+    return this.returnService.formatForApi(res);
   }
 
   /**
@@ -45,7 +49,8 @@ export class ReturnDeliveryController {
 
   @Post(':id/verify-manager-otp')
   async verifyManagerOtp(@Req() req: any, @Param('id') id: string, @Body('otp') otp: string) {
-    return this.returnService.verifyManagerOtp(req.deliveryPartner._id, id, otp);
+    const res = await this.returnService.verifyManagerOtp(req.deliveryPartner._id, id, otp);
+    return this.returnService.formatForApi(res);
   }
 
   @Get('history')

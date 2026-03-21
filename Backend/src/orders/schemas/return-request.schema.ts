@@ -5,6 +5,22 @@ import { encrypt, decrypt } from '../../utils/encryption.util';
 
 export type ReturnRequestDocument = ReturnRequest & Document;
 
+@Schema({ _id: false, toJSON: { getters: true }, toObject: { getters: true } })
+export class BankDetails {
+  @Prop({ type: String, get: decrypt, set: encrypt })
+  accountHolderName: string;
+
+  @Prop({ type: String, get: decrypt, set: encrypt })
+  accountNumber: string;
+
+  @Prop({ type: String, get: decrypt, set: encrypt })
+  ifscCode: string;
+
+  @Prop({ type: String, get: decrypt, set: encrypt })
+  bankName: string;
+}
+export const BankDetailsSchema = SchemaFactory.createForClass(BankDetails);
+
 @Schema({ timestamps: true, toJSON: { getters: true }, toObject: { getters: true } })
 export class ReturnRequest {
   @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
@@ -157,20 +173,8 @@ export class ReturnRequest {
   })
   dimensionsCm?: { length: number; width: number; height: number };
 
-  @Prop({
-    type: {
-      accountHolderName: { type: String, get: decrypt, set: encrypt },
-      accountNumber: { type: String, get: decrypt, set: encrypt },
-      ifscCode: { type: String, get: decrypt, set: encrypt },
-      bankName: { type: String, get: decrypt, set: encrypt },
-    },
-  })
-  bankDetails?: {
-    accountHolderName: string;
-    accountNumber: string;
-    ifscCode: string;
-    bankName: string;
-  };
+  @Prop({ type: BankDetailsSchema })
+  bankDetails?: BankDetails;
 }
 
 export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);

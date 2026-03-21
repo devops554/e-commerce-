@@ -35,14 +35,9 @@ export class ReturnService {
 
   private decryptBankDetails(request: any) {
     if (!request) return request;
-    const doc = request.toJSON ? request.toJSON() : request;
-    if (doc.bankDetails) {
-      doc.bankDetails.accountHolderName = decrypt(doc.bankDetails.accountHolderName);
-      doc.bankDetails.accountNumber = decrypt(doc.bankDetails.accountNumber);
-      doc.bankDetails.ifscCode = decrypt(doc.bankDetails.ifscCode);
-      doc.bankDetails.bankName = decrypt(doc.bankDetails.bankName);
-    }
-    return doc;
+    // Note: Manual decryption here is mostly redundant because the schema has getters.
+    // Crucially, we must NOT call request.toJSON() here if we want to keep it as a Mongoose document.
+    return request;
   }
 
   // ─── INTERNAL HELPERS (Phase 7) ─────────────────────────────────────────────
@@ -267,7 +262,7 @@ export class ReturnService {
     }
 
     return {
-      data: finalData.map(item => this.decryptBankDetails(item)),
+      data: finalData,
       total,
       page: Number(page),
       limit: Number(limit),

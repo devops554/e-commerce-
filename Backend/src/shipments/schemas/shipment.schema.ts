@@ -52,19 +52,19 @@ export class Shipment {
   status: ShipmentStatus;
 
   @Prop({ type: Date })
-  assignedAt: Date;
+  assignedAt?: Date;
 
   @Prop({ type: Date })
-  acceptedAt: Date;
+  acceptedAt?: Date;
 
   @Prop({ type: Date })
-  pickedAt: Date;
+  pickedAt?: Date;
 
   @Prop({ type: Date })
-  outForDeliveryAt: Date;
+  outForDeliveryAt?: Date;
 
   @Prop({ type: Date })
-  deliveredAt: Date;
+  deliveredAt?: Date;
   @Prop()
   pickupOtp?: string;
 

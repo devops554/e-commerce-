@@ -39,6 +39,19 @@ export function useAssignShipment() {
     });
 }
 
+export function useReassignShipment() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: AssignShipmentDto }) =>
+            shipmentService.reassignPartner(id, data),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['shipments'] });
+            queryClient.invalidateQueries({ queryKey: ['shipment', data._id] });
+            queryClient.invalidateQueries({ queryKey: ['delivery-partner'] });
+        },
+    });
+}
+
 export function useUpdateShipmentStatus() {
     const queryClient = useQueryClient();
     return useMutation({

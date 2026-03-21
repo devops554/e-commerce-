@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
 import { useDeliveryPartners } from '@/hooks/useDeliveryPartners'
-import { useShipments, useCreateShipment } from '@/hooks/useShipments'
+import { useShipments, useCreateShipment, useReassignShipment } from '@/hooks/useShipments'
 import { useOrderById } from '@/hooks/useOrders'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -164,6 +164,7 @@ export default function AssignPartnerPage() {
         limit: 200,
     })
     const createShipment = useCreateShipment()
+    const reassignShipment = useReassignShipment()
 
     const warehouseLat = warehouse?.location?.latitude
     const warehouseLng = warehouse?.location?.longitude
@@ -209,13 +210,21 @@ export default function AssignPartnerPage() {
     const handleAssign = async () => {
         if (!selectedPartnerId || !warehouse) return
         try {
-            await createShipment.mutateAsync({
-                orderId,
-                warehouseId: warehouse._id,
-                deliveryPartnerId: selectedPartnerId,
-                type,
-            })
-            toast.success('Delivery partner assigned successfully!')
+            if (existingShipment) {
+                await reassignShipment.mutateAsync({
+                    id: existingShipment._id,
+                    data: { deliveryPartnerId: selectedPartnerId }
+                })
+                toast.success('Delivery partner reassigned successfully!')
+            } else {
+                await createShipment.mutateAsync({
+                    orderId,
+                    warehouseId: warehouse._id,
+                    deliveryPartnerId: selectedPartnerId,
+                    type,
+                })
+                toast.success('Delivery partner assigned successfully!')
+            }
             router.back()
         } catch (err: any) {
             toast.error(err?.response?.data?.message || 'Failed to assign delivery partner')

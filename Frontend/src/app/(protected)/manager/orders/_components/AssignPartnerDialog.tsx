@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { UserCheck, Search, Loader2, Bike, Navigation, Package, Star, ExternalLink } from 'lucide-react'
 import { useDeliveryPartners } from '@/hooks/useDeliveryPartners'
-import { useCreateShipment } from '@/hooks/useShipments'
+import { useCreateShipment, useShipments, useReassignShipment } from '@/hooks/useShipments'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -40,6 +40,9 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId, type 
     const [search, setSearch] = useState('')
     const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null)
     const createShipment = useCreateShipment()
+    const reassignShipment = useReassignShipment()
+    const { data: shipmentsData } = useShipments({ orderId })
+    const existingShipment = shipmentsData?.data?.[0]
     const { data: warehouse } = useManagerWarehouse()
 
     const { data: partnersData, isLoading } = useDeliveryPartners({ warehouseId, limit: 100 })
@@ -76,13 +79,21 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId, type 
         }
 
         try {
-            await createShipment.mutateAsync({
-                orderId,
-                warehouseId: effectiveWarehouseId,
-                deliveryPartnerId: selectedPartnerId,
-                type
-            })
-            toast.success('Delivery partner assigned successfully')
+            if (existingShipment) {
+                await reassignShipment.mutateAsync({
+                    id: existingShipment._id,
+                    data: { deliveryPartnerId: selectedPartnerId }
+                })
+                toast.success('Delivery partner reassigned successfully')
+            } else {
+                await createShipment.mutateAsync({
+                    orderId,
+                    warehouseId: effectiveWarehouseId,
+                    deliveryPartnerId: selectedPartnerId,
+                    type
+                })
+                toast.success('Delivery partner assigned successfully')
+            }
             setSelectedPartnerId(null)
             setSearch('')
             onClose()
@@ -94,7 +105,7 @@ export function AssignPartnerDialog({ open, onClose, orderId, warehouseId, type 
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-md rounded-3xl p-0 gap-0 overflow-hidden">
-                <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-slate-100">
+                <DialogHeader className="px-6 pt-6 pb-4 bg-linear-to-r from-indigo-50 to-blue-50 border-b border-slate-100">
                     <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
                         <UserCheck className="h-5 w-5 text-indigo-600" />
                         Assign Delivery Partner

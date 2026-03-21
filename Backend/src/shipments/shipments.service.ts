@@ -164,7 +164,7 @@ export class ShipmentsService {
       throw new NotFoundException('Shipment not found');
     }
 
-    // Only allow assignment if status is ORDER_PLACED or CANCELLED
+    // Only allow assignment if status is ORDER_PLACED or CANCELLED or ASSIGNED_TO_DELIVERY
     if (
       shipment.status !== ShipmentStatus.ORDER_PLACED &&
       shipment.status !== ShipmentStatus.CANCELLED &&
@@ -196,6 +196,72 @@ export class ShipmentsService {
         orderId: updatedShipment.orderId,
       },
     });
+
+    return updatedShipment;
+  }
+
+  async reassignPartner(
+    shipmentId: string,
+    dto: AssignShipmentDto,
+  ): Promise<ShipmentDocument> {
+    const shipment = await this.shipmentModel.findById(shipmentId);
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    // Prevent reassigning if already delivered, cancelled or returned
+    if ([ShipmentStatus.DELIVERED, ShipmentStatus.RETURNED, ShipmentStatus.CANCELLED].includes(shipment.status)) {
+      throw new BadRequestException(`Cannot reassign a shipment with status ${shipment.status}`);
+    }
+
+    // Prevent reassigning if already in possession of the current partner (picked up or out for delivery)
+    if ([ShipmentStatus.PICKED_UP, ShipmentStatus.OUT_FOR_DELIVERY].includes(shipment.status)) {
+      throw new BadRequestException('Cannot reassign a shipment that has already been picked up. Please contact admin for manual intervention.');
+    }
+
+    const previousPartnerId = shipment.deliveryPartnerId;
+
+    // Reset status and assignment info
+    shipment.deliveryPartnerId = new Types.ObjectId(dto.deliveryPartnerId);
+    shipment.status = ShipmentStatus.ASSIGNED_TO_DELIVERY;
+    shipment.assignedAt = new Date();
+    shipment.acceptedAt = undefined;
+    shipment.pickedAt = undefined;
+    shipment.pickupOtp = undefined;
+    shipment.deliveryOtp = undefined;
+    shipment.assignmentType = 'MANUAL';
+
+    const updatedShipment = await shipment.save();
+    await this.syncWithOrder(updatedShipment);
+
+    // 1. Notify NEW delivery partner
+    await this.notificationsService.create({
+      title: 'New Delivery Assignment (Reassigned)',
+      message: `You have been assigned to a delivery (Tracking: ${updatedShipment.trackingNumber}).`,
+      type: NotificationType.SHIPMENT,
+      recipientRole: 'delivery_partner',
+      recipientId: dto.deliveryPartnerId,
+      link: `/delivery/shipments/${updatedShipment._id}`,
+      metadata: {
+        shipmentId: updatedShipment._id,
+        orderId: updatedShipment.orderId,
+      },
+    });
+
+    // 2. Notify PREVIOUS delivery partner if they were assigned
+    if (previousPartnerId) {
+      await this.notificationsService.create({
+        title: 'Assignment Revoked',
+        message: `Your assignment for shipment ${updatedShipment.trackingNumber} has been revoked by the manager.`,
+        type: NotificationType.SHIPMENT,
+        recipientRole: 'delivery_partner',
+        recipientId: previousPartnerId.toString(),
+        link: `/delivery/shipments`,
+        metadata: {
+          shipmentId: updatedShipment._id,
+        },
+      });
+    }
 
     return updatedShipment;
   }

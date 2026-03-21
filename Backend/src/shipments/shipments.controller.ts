@@ -63,6 +63,13 @@ export class ShipmentsController {
     return this.shipmentsService.assignPartner(id, dto);
   }
 
+  @Patch(':id/reassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  async reassignPartner(@Param('id') id: string, @Body() dto: AssignShipmentDto) {
+    return this.shipmentsService.reassignPartner(id, dto);
+  }
+
   @Patch(':id/status/admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)

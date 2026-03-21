@@ -67,6 +67,11 @@ export const shipmentService = {
         return response.data;
     },
 
+    reassignPartner: async (id: string, data: AssignShipmentDto): Promise<Shipment> => {
+        const response = await axiosClient.patch<Shipment>(`/shipments/${id}/reassign`, data);
+        return response.data;
+    },
+
     updateStatus: async (id: string, data: UpdateShipmentStatusDto): Promise<Shipment> => {
         const response = await axiosClient.patch<Shipment>(`/shipments/${id}/status/admin`, data);
         return response.data;

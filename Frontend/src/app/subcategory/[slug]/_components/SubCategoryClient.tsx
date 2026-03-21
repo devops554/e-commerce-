@@ -33,7 +33,7 @@ export default function SubCategoryClient() {
 
     // 2. Fetch products for this subcategory
     const { data: productsData, isLoading: loadingProducts } = useProducts({
-        category: category?._id,
+        subCategory: category?._id,
         isActive: true,
         limit: 50,
         search: debouncedSearch || undefined,

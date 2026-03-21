@@ -44,6 +44,7 @@ export default function ProductTable({
 }: ProductTableProps) {
     const router = useRouter()
     const totalPages = Math.ceil(total / limit)
+    console.log('total:', total, 'limit:', limit, 'totalPages:', totalPages)
 
     return (
         <div className="space-y-4">

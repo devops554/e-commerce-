@@ -20,6 +20,11 @@ const publicRoutes = [
     '/robots.txt',
     '/sitemap.xml',
     '/grocery-delivery(.*)',
+    '/privacy-policy',
+    '/about-us',
+    '/terms-of-use',
+    '/faq',
+    '/blog(.*)',
 ];
 
 export function middleware(request: NextRequest) {

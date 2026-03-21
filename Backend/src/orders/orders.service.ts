@@ -994,6 +994,18 @@ export class OrdersService {
       });
 
       const savedOrder = await order.save();
+
+      // Step 3: Trigger Shipment creation (if not already exists)
+      try {
+        await this.shipmentsService.create({
+          orderId: savedOrder._id.toString(),
+          warehouseId: warehouseId,
+        });
+      } catch (shipmentError) {
+        // Ignore "An active shipment already exists" errors
+        this.logger.debug(`Shipment already exists or failed to create: ${shipmentError.message}`);
+      }
+
       this.eventsGateway.emitEvent('order.updated', savedOrder);
 
       return savedOrder;
@@ -1082,6 +1094,18 @@ export class OrdersService {
       });
 
       const savedOrder = await order.save();
+
+      // Step 3: Trigger Shipment creation (if not already exists)
+      try {
+        await this.shipmentsService.create({
+          orderId: savedOrder._id.toString(),
+          warehouseId: warehouseId,
+        });
+      } catch (shipmentError) {
+        // Ignore "An active shipment already exists" errors
+        this.logger.debug(`Shipment already exists or failed to create: ${shipmentError.message}`);
+      }
+
       this.eventsGateway.emitEvent('order.updated', savedOrder);
 
       return savedOrder;

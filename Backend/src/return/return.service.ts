@@ -702,49 +702,70 @@ export class ReturnService {
       if (availablePartner) {
         targetPartnerId = availablePartner._id.toString();
       } else {
-        await this.sendNotification({
-          recipientRole: 'admin',
-          recipientId: undefined,
-          title: 'No delivery partner available',
-          message: `No partner available for return pickup ${returnRequest._id}`,
-          metadata: { returnRequestId }
-        });
-        return null;
+        // If no partner available, just notify admin but STILL CREATE the shipment below
+        if (returnRequest.status === ReturnRequestStatus.PENDING || returnRequest.status === ReturnRequestStatus.APPROVED) {
+           await this.sendNotification({
+            recipientRole: 'admin',
+            recipientId: undefined,
+            title: 'No delivery partner available',
+            message: `No partner available for return pickup ${returnRequest._id}. A shipment has been created and awaits manual assignment.`,
+            metadata: { returnRequestId }
+          });
+        }
       }
     }
 
-    const partner = await this.partnerModel.findById(targetPartnerId);
-    if (!partner) throw new NotFoundException('Partner not found');
+    const partner = targetPartnerId ? await this.partnerModel.findById(targetPartnerId) : null;
 
-    // Create Shipment
-    const shipment = new this.shipmentModel({
-      orderId: returnRequest.orderId,
-      warehouseId: returnRequest.warehouseId,
-      deliveryPartnerId: partner._id,
-      type: 'REVERSE',
-      returnRequestId: returnRequest._id.toString(),
-      status: 'ASSIGNED_TO_DELIVERY' as any,
-      trackingNumber: 'RTN-' + Date.now(),
-      assignedAt: new Date(),
-    });
+    // Create or Update Shipment
+    let shipment = await this.shipmentModel.findOne({ returnRequestId: returnRequest._id });
+    
+    if (!shipment) {
+      shipment = new this.shipmentModel({
+        orderId: returnRequest.orderId,
+        warehouseId: returnRequest.warehouseId,
+        type: 'REVERSE',
+        returnRequestId: returnRequest._id.toString(),
+        trackingNumber: 'RTN-' + Date.now(),
+      });
+    }
+
+    if (partner) {
+      shipment.deliveryPartnerId = partner._id;
+      shipment.status = 'ASSIGNED_TO_DELIVERY' as any;
+      shipment.assignedAt = new Date();
+    } else {
+      shipment.status = 'ORDER_PLACED' as any; // Initial status for manager to see
+    }
+
     const savedShipment = await shipment.save();
 
     // Update ReturnRequest
-    returnRequest.assignedPartnerId = partner._id;
-    returnRequest.assignedAt = new Date();
+    if (partner) {
+      returnRequest.assignedPartnerId = partner._id;
+      returnRequest.assignedAt = new Date();
+      returnRequest.status = ReturnRequestStatus.PICKUP_SCHEDULED;
+      returnRequest.assignmentAttempts += 1;
+    } else {
+      // Even without a partner, move to APPROVED status so it shows up for management
+      if (returnRequest.status === ReturnRequestStatus.PENDING) {
+        returnRequest.status = ReturnRequestStatus.APPROVED;
+      }
+    }
+    
     returnRequest.returnShipmentId = savedShipment._id;
-    returnRequest.status = ReturnRequestStatus.PICKUP_SCHEDULED;
-    returnRequest.assignmentAttempts += 1;
     await returnRequest.save();
 
-    // Notify Partner
-    await this.sendNotification({
-      recipientId: partner._id.toString(),
-      recipientRole: 'delivery',
-      title: 'New return pickup assigned',
-      message: 'You have a new return pickup request.',
-      metadata: { returnRequestId, shipmentId: savedShipment._id }
-    });
+    // Notify Partner if assigned
+    if (partner) {
+      await this.sendNotification({
+        recipientId: partner._id.toString(),
+        recipientRole: 'delivery',
+        title: 'New return pickup assigned',
+        message: 'You have a new return pickup request.',
+        metadata: { returnRequestId, shipmentId: savedShipment._id }
+      });
+    }
 
     return returnRequest;
   }

@@ -108,19 +108,19 @@ export class DeliveryController {
   }
 
   @Get('orders/active')
-  async getActiveOrder(@Req() req: any) {
+  async getActiveOrder(@Req() req: any, @Query() query: any) {
     const partnerId = req.deliveryPartner._id.toString();
     // Return all shipments that are currently "in progress" for this partner
     const shipments = await this.shipmentsService.findAll({
+      ...query,
       deliveryPartnerId: partnerId,
       status: [
         ShipmentStatus.ACCEPTED,
-        ShipmentStatus.PACKED,
         ShipmentStatus.PICKED_UP,
         ShipmentStatus.OUT_FOR_DELIVERY,
       ] as any,
     });
-    return shipments.data; // Now returning Array of Shipments
+    return shipments; // Returning full paginated object
   }
 
   @Get('shipments/:id')

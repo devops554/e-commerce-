@@ -1001,7 +1001,9 @@ export class ShipmentsService {
     } else if (deliveryPartnerId) {
       filter.deliveryPartnerId = new Types.ObjectId(deliveryPartnerId);
     }
-    if (orderId) filter.orderId = orderId;
+    if (orderId) {
+      filter.orderId = typeof orderId === 'string' ? new Types.ObjectId(orderId) : orderId;
+    }
     if (status) {
       if (Array.isArray(status)) {
         filter.status = { $in: status };

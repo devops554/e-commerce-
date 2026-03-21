@@ -48,6 +48,14 @@ export interface UpdateShipmentStatusDto {
     status: ShipmentStatus;
 }
 
+export interface ShipmentsResponse {
+    data: Shipment[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export const shipmentService = {
     create: async (data: CreateShipmentDto): Promise<Shipment> => {
         const response = await axiosClient.post<Shipment>('/shipments', data);
@@ -64,8 +72,8 @@ export const shipmentService = {
         return response.data;
     },
 
-    getAll: async (params: { page?: number; limit?: number; warehouseId?: string, deliveryPartnerId?: string; status?: string }) => {
-        const response = await axiosClient.get('/shipments', { params });
+    getAll: async (params: { page?: number; limit?: number; warehouseId?: string, deliveryPartnerId?: string; status?: string }): Promise<ShipmentsResponse> => {
+        const response = await axiosClient.get<ShipmentsResponse>('/shipments', { params });
         return response.data;
     },
 
@@ -74,28 +82,28 @@ export const shipmentService = {
         return response.data;
     },
 
-    getTrackingHistory: async (id: string) => {
+    getTrackingHistory: async (id: string): Promise<any> => {
         const response = await axiosClient.get(`/shipments/${id}/tracking`);
         return response.data;
     },
 
-    requestPickupOtp: async (id: string) => {
+    requestPickupOtp: async (id: string): Promise<any> => {
         const response = await axiosClient.post(`/shipments/${id}/pickup-otp`);
         return response.data;
     },
 
-    verifyPickupOtp: async (id: string, otp: string) => {
-        const response = await axiosClient.patch(`/shipments/${id}/verify-pickup`, { otp });
+    verifyPickupOtp: async (id: string, otp: string): Promise<Shipment> => {
+        const response = await axiosClient.patch<Shipment>(`/shipments/${id}/verify-pickup`, { otp });
         return response.data;
     },
 
-    requestDeliveryOtp: async (id: string) => {
+    requestDeliveryOtp: async (id: string): Promise<any> => {
         const response = await axiosClient.post(`/shipments/${id}/delivery-otp`);
         return response.data;
     },
 
-    verifyDeliveryOtp: async (id: string, otp: string) => {
-        const response = await axiosClient.patch(`/shipments/${id}/verify-delivery`, { otp });
+    verifyDeliveryOtp: async (id: string, otp: string): Promise<Shipment> => {
+        const response = await axiosClient.patch<Shipment>(`/shipments/${id}/verify-delivery`, { otp });
         return response.data;
     }
 };

@@ -125,6 +125,37 @@ export class DeliveryPartner {
     country: string;
     pincode?: string;
   };
+
+  @Prop({
+    type: {
+      method: { type: String, enum: ['BANK', 'UPI'], default: 'UPI' },
+      accountNumber: String,
+      ifsc: String,
+      upiId: String,
+      razorpayContactId: String,
+      razorpayFundAccountId: String,
+    },
+  })
+  payoutMethod?: {
+    method: 'BANK' | 'UPI';
+    accountNumber?: string;
+    ifsc?: string;
+    upiId?: string;
+    razorpayContactId?: string;
+    razorpayFundAccountId?: string;
+  };
+
+  @Prop({
+    type: {
+      push: { type: Boolean, default: true },
+      sms: { type: Boolean, default: true },
+    },
+    default: { push: true, sms: true },
+  })
+  notificationSettings: {
+    push: boolean;
+    sms: boolean;
+  };
 }
 
 export const DeliveryPartnerSchema =

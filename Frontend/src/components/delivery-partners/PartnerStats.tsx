@@ -47,7 +47,7 @@ export const ShipmentRow = ({ shipment, status }: ShipmentRowProps) => (
                 </Badge>
             </div>
             <div className="flex items-center gap-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Order {shipment.orderId.slice(-6)}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase">Order {typeof shipment.orderId === 'string' ? shipment.orderId.slice(-6) : shipment.orderId?._id ? shipment.orderId._id.slice(-6) : 'N/A'}</p>
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
                     <Calendar size={10} className="text-slate-300" />
                     {shipment.assignedAt ? format(new Date(shipment.assignedAt), 'MMM dd') : 'No date'}

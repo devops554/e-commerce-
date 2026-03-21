@@ -11,22 +11,26 @@ export class ReviewsService {
     @InjectModel(Review.name) private reviewModel: Model<Review>,
     @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(Order.name) private orderModel: Model<Order>,
-  ) {}
+  ) { }
 
   async create(customerId: string, dto: any) {
     const { orderId, productId, rating, comment, images, deliveryRating, deliveryComment } = dto;
 
-    // 1. Validate order ownership and status
     const order = await this.orderModel.findById(orderId);
     if (!order) throw new NotFoundException('Order not found');
-    if (order.user.toString() !== customerId) {
+
+    // Safely extract the user id whether it is a raw ObjectId or a populated doc
+    const rawUser = order.user as any;
+    const orderUserId = rawUser?._id ? rawUser._id.toString() : rawUser?.toString();
+
+    if (orderUserId !== customerId.toString()) {
       throw new BadRequestException('You can only review your own orders');
     }
     // Optional: check if order is DELIVERED
     // if (order.status !== 'DELIVERED') throw new BadRequestException('Order must be delivered');
 
     // 2. Check for duplicate review per product in this order
-    const existing = await this.reviewModel.findOne({ 
+    const existing = await this.reviewModel.findOne({
       orderId: new Types.ObjectId(orderId),
       productId: new Types.ObjectId(productId)
     });
@@ -98,7 +102,7 @@ export class ReviewsService {
     if (dto.rejectionReason) review.rejectionReason = dto.rejectionReason;
 
     const savedReview = await review.save();
-    
+
     // If approved, update product rating
     if (dto.status === ReviewStatus.APPROVED) {
       await this.updateProductRating(review.productId.toString());
@@ -138,7 +142,7 @@ export class ReviewsService {
 
     const productId = review.productId.toString();
     const result = await this.reviewModel.findByIdAndDelete(id);
-    
+
     // Recalculate rating after deletion
     await this.updateProductRating(productId);
 

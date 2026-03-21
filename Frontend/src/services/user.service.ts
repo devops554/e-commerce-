@@ -53,6 +53,19 @@ export type UpdateUserAddressDto = Partial<CreateUserAddressDto> & {
     _id: string;
 };
 
+export interface BankAccount {
+    _id: string;
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+    isDefault: boolean;
+}
+
+export type CreateBankAccountDto = Omit<BankAccount, '_id' | 'isDefault'> & {
+    isDefault?: boolean;
+};
+
 export interface UserProfile {
     _id: string;
     name: string;
@@ -61,6 +74,7 @@ export interface UserProfile {
     profilePic?: string;
     status: UserStatus;
     addresses: UserAddress[];
+    bankAccounts?: BankAccount[];
     createdAt: string;
     updatedAt: string;
 }
@@ -68,6 +82,16 @@ export interface UserProfile {
 export const userService = {
     getProfile: async (): Promise<UserProfile> => {
         const response = await axiosClient.get<UserProfile>('/users/profile');
+        return response.data;
+    },
+
+    updateProfile: async (data: { name?: string; phone?: string; profilePic?: string }): Promise<UserProfile> => {
+        const response = await axiosClient.patch<UserProfile>('/users/profile', data);
+        return response.data;
+    },
+
+    changePassword: async (data: any): Promise<any> => {
+        const response = await axiosClient.post('/users/change-password', data);
         return response.data;
     },
 
@@ -83,6 +107,16 @@ export const userService = {
 
     removeAddress: async (addressId: string): Promise<any> => {
         const response = await axiosClient.delete(`/users/address/${addressId}`);
+        return response.data;
+    },
+
+    addBankAccount: async (bankAccountData: CreateBankAccountDto): Promise<any> => {
+        const response = await axiosClient.post('/users/bank-account', bankAccountData);
+        return response.data;
+    },
+
+    removeBankAccount: async (accountId: string): Promise<any> => {
+        const response = await axiosClient.delete(`/users/bank-account/${accountId}`);
         return response.data;
     },
 

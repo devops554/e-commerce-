@@ -146,6 +146,16 @@ export const InventoryTable = ({
                                                             </>
                                                         ) : null;
                                                     })()}
+                                                    {(item.variant?.weightKg || item.variant?.dimensionsCm) && (
+                                                        <>
+                                                            <span className="text-slate-200">/</span>
+                                                            <span className="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded leading-none border border-amber-100/50">
+                                                                {item.variant.weightKg ? `${item.variant.weightKg}kg` : ''}
+                                                                {item.variant.weightKg && item.variant.dimensionsCm ? ' · ' : ''}
+                                                                {item.variant.dimensionsCm ? `${item.variant.dimensionsCm.length}x${item.variant.dimensionsCm.width}x${item.variant.dimensionsCm.height}cm` : ''}
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>

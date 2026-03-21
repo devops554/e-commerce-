@@ -13,16 +13,20 @@ import { DeliveryPartnerJwtGuard } from './delivery-partner.guard';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Shipment, ShipmentSchema } from '../shipments/schemas/shipment.schema';
+import { PaymentsModule } from '../payments/payments.module';
+import { PartnerEarnings, PartnerEarningsSchema } from '../delivery-commission/schemas/partner-earnings.schema';
 
 @Module({
   imports: [
-    UsersModule, // Required for RolesGuard to inject UsersService
-    forwardRef(() => NotificationsModule), // ✅ Required for NotificationsService injection
+    UsersModule,
+    forwardRef(() => NotificationsModule),
     PassportModule,
-    ConfigModule, // Added to make ConfigService available
+    ConfigModule,
+    PaymentsModule,
     MongooseModule.forFeature([
       { name: DeliveryPartner.name, schema: DeliveryPartnerSchema },
       { name: Shipment.name, schema: ShipmentSchema },
+      { name: PartnerEarnings.name, schema: PartnerEarningsSchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -45,4 +49,4 @@ import { Shipment, ShipmentSchema } from '../shipments/schemas/shipment.schema';
     ConfigModule,
   ],
 })
-export class DeliveryPartnersModule {}
+export class DeliveryPartnersModule { }

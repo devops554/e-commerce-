@@ -57,7 +57,7 @@ export default function AdminReturnsDashboard() {
         page,
         status: status === "all" ? undefined : status,
         search: search || undefined,
-    })
+    }, 'admin')
 
     const getStatusBadge = (s: string) => {
         switch (s) {

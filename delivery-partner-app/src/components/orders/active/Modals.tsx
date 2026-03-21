@@ -1,5 +1,16 @@
 import React from 'react';
-import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors, FontSize, BorderRadius, Spacing } from '../../../utils/theme';
@@ -28,23 +39,35 @@ export const OtpModal = ({
   icon = 'shield-checkmark',
 }: OtpModalProps) => {
   return (
-    <Modal visible={visible} animationType="fade" transparent>
-      <View style={styles.otpModalOverlay}>
+    <Modal visible={visible} animationType="fade" transparent statusBarTranslucent>
+      <KeyboardAvoidingView
+        style={styles.otpModalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.otpModalCard}>
+          {/* Icon */}
           <View style={styles.otpModalIconWrap}>
             <Ionicons name={icon} size={32} color={Colors.primary} />
           </View>
+
+          {/* Title & Subtitle */}
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.otpModalSubtitle}>{subtitle}</Text>
-          <TextInput
-            style={styles.otpInput}
-            placeholder="• • • • • •"
-            keyboardType="number-pad"
-            maxLength={6}
-            value={value}
-            onChangeText={onChange}
-            placeholderTextColor={Colors.textMuted}
-          />
+
+          {/* OTP Input */}
+          <View style={styles.otpInputWrapper}>
+            <TextInput
+              style={styles.otpInput}
+              placeholder="• • • • • •"
+              keyboardType="number-pad"
+              maxLength={6}
+              value={value}
+              onChangeText={onChange}
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
+
+          {/* Verify Button */}
           <TouchableOpacity
             onPress={onVerify}
             disabled={isPending || value.trim().length !== 6}
@@ -67,11 +90,13 @@ export const OtpModal = ({
               )}
             </LinearGradient>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} style={styles.otpCloseBtn}>
+
+          {/* Close */}
+          <TouchableOpacity onPress={onClose} style={styles.otpCloseBtn} activeOpacity={0.7}>
             <Text style={styles.otpCloseText}>Close</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -98,14 +123,22 @@ export const IssueModal = ({
   isFailPending,
 }: IssueModalProps) => {
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.modalCard}>
+          {/* Handle bar */}
           <View style={styles.modalHandle} />
+
+          {/* Title Row */}
           <View style={styles.modalTitleRow}>
             <Ionicons name="warning-outline" size={22} color={Colors.danger} />
             <Text style={styles.modalTitle}>Report Issue</Text>
           </View>
+
+          {/* Text Input */}
           <TextInput
             style={styles.modalInput}
             placeholder="Describe the issue..."
@@ -113,75 +146,105 @@ export const IssueModal = ({
             value={value}
             onChangeText={onChange}
             multiline
+            textAlignVertical="top"
           />
+
+          {/* Actions — stacked vertically to prevent cut-off */}
           <View style={styles.modalActions}>
-            <TouchableOpacity onPress={onClose} style={styles.modalCancelBtn}>
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                onPress={onCancelAssignment}
+                disabled={isRejectPending}
+                style={[styles.modalActionBtn, { backgroundColor: '#F59E0B' }]}
+                activeOpacity={0.85}
+              >
+                {isRejectPending ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="close-circle-outline" size={15} color={Colors.white} />
+                    <Text style={styles.modalActionBtnText}>Cancel Assignment</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={onFailDelivery}
+                disabled={isFailPending}
+                style={[styles.modalActionBtn, { backgroundColor: Colors.danger }]}
+                activeOpacity={0.85}
+              >
+                {isFailPending ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="alert-circle-outline" size={15} color={Colors.white} />
+                    <Text style={styles.modalActionBtnText}>Report Failure</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.modalCancelBtn}
+              activeOpacity={0.7}
+            >
               <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onCancelAssignment}
-              disabled={isRejectPending}
-              style={[styles.modalActionBtn, { backgroundColor: '#F59E0B' }]}
-            >
-              {isRejectPending ? (
-                <ActivityIndicator color={Colors.white} size="small" />
-              ) : (
-                <>
-                  <Ionicons name="close-circle-outline" size={15} color={Colors.white} />
-                  <Text style={styles.modalActionBtnText}>Cancel Assignment</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onFailDelivery}
-              disabled={isFailPending}
-              style={[styles.modalActionBtn, { backgroundColor: Colors.danger }]}
-            >
-              {isFailPending ? (
-                <ActivityIndicator color={Colors.white} size="small" />
-              ) : (
-                <>
-                  <Ionicons name="alert-circle-outline" size={15} color={Colors.white} />
-                  <Text style={styles.modalActionBtnText}>Report Failure</Text>
-                </>
-              )}
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  // ─── OTP Modal ────────────────────────────────────────────────
   otpModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
-    padding: 24,
+    alignItems: 'center',
+    paddingHorizontal: 24,
   },
   otpModalCard: {
     backgroundColor: Colors.white,
     borderRadius: 24,
     padding: 28,
     alignItems: 'center',
-    gap: 8,
+    width: '100%',
+    // No gap — use marginBottom on individual elements for predictable spacing
   },
   otpModalIconWrap: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: Colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  modalTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
   otpModalSubtitle: {
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
+    lineHeight: 20,
+    paddingHorizontal: 8,
+  },
+
+  // Wrapper ensures input never clips on small screens
+  otpInputWrapper: {
+    width: '100%',
+    marginBottom: 16,
   },
   otpInput: {
     width: '100%',
@@ -189,14 +252,19 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     fontSize: 28,
     textAlign: 'center',
     letterSpacing: 10,
     fontWeight: '900',
     color: Colors.textPrimary,
   },
-  otpVerifyBtn: { width: '100%', marginTop: 6 },
+
+  otpVerifyBtn: {
+    width: '100%',
+    marginBottom: 12,
+  },
   otpVerifyGradient: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,16 +273,33 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: BorderRadius.md,
   },
-  otpVerifyText: { color: Colors.white, fontWeight: '800', fontSize: FontSize.md },
-  otpCloseBtn: { marginTop: 8 },
-  otpCloseText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  otpVerifyText: {
+    color: Colors.white,
+    fontWeight: '800',
+    fontSize: FontSize.md,
+  },
+  otpCloseBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+  },
+  otpCloseText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+
+  // ─── Issue Modal ──────────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
   modalCard: {
     backgroundColor: Colors.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: Spacing.xl,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 28,
   },
   modalHandle: {
     width: 40,
@@ -224,7 +309,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 20,
   },
-  modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
   modalInput: {
     backgroundColor: Colors.background,
     borderWidth: 1,
@@ -237,24 +327,42 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     textAlignVertical: 'top',
   },
-  modalActions: { flexDirection: 'row', gap: 10 },
-  modalCancelBtn: {
+  modalActions: {
+    gap: 10,
+  },
+  // Two action buttons side by side
+  modalActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalActionBtn: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 13,
+    borderRadius: BorderRadius.md,
+    minHeight: 46,
+  },
+  modalActionBtnText: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: 12,
+    flexShrink: 1,
+  },
+  // Cancel full width at bottom
+  modalCancelBtn: {
+    width: '100%',
     paddingVertical: 13,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
   },
-  modalCancelText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
-  modalActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 13,
-    borderRadius: BorderRadius.md,
+  modalCancelText: {
+    fontSize: FontSize.sm,
+    fontWeight: '700',
+    color: Colors.textSecondary,
   },
-  modalActionBtnText: { color: Colors.white, fontWeight: '700', fontSize: 11 },
 });

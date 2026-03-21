@@ -46,7 +46,8 @@ import {
   UserCircle,
   Key,
   Globe,
-  Store
+  Store,
+  Calculator
 } from "lucide-react";
 
 export const getAdminNavigation = (user: any): NavItemType[] => [
@@ -127,6 +128,9 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     items: [
       { title: "Revenue Analytics", href: "/admin/analytics", icon: BarChart3 },
       { title: "Transactions", href: "/admin/transactions", icon: History },
+      { title: "Partner Earnings", href: "/admin/commission/earnings", icon: IndianRupee },
+      { title: "Commission Config", href: "/admin/commission", icon: Calculator },
+      { title: "Payout Settings", href: "/admin/commission/settings", icon: Settings },
     ],
   },
 
@@ -140,12 +144,7 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     ],
   },
 
-  // ⭐ Reviews
-  {
-    title: "Reviews",
-    href: "/admin/reviews",
-    icon: Star,
-  },
+
 
   // 📊 Analytics
   {
@@ -180,8 +179,8 @@ export const getAdminNavigation = (user: any): NavItemType[] => [
     icon: Settings,
     items: [
       { title: "Profile", href: "/admin/profile", icon: UserCircle },
-      { title: "Security & Roles", href: "/admin/roles", icon: Key },
-      { title: "Global Settings", href: "/admin/settings", icon: Globe },
+      { title: "Shop configuration", href: "/admin/settings", icon: Globe },
+
     ],
   },
 ];

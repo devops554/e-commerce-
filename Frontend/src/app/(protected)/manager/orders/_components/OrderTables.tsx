@@ -476,7 +476,9 @@ export function OrderTrackerView({ orders, isMyItem }: OrderTableProps) {
             </TableHeader>
             <TableBody>
                 {orders.map((order: any) => {
-                    const trackingItems = order.items.filter(isMyItem).filter((i: any) => i.status?.toLowerCase() === 'shipped')
+                    const trackingItems = order.items.filter(isMyItem).filter((i: any) =>
+                        ['shipped', 'out_for_delivery'].includes(i.status?.toLowerCase() || '')
+                    )
                     return (
                         <TableRow key={order._id} className="hover:bg-slate-50/50 transition-colors">
                             <TableCell>
@@ -506,7 +508,7 @@ export function OrderTrackerView({ orders, isMyItem }: OrderTableProps) {
                             <TableCell>
                                 {/* Need shipment data populated by backend for the real partner details */}
                                 <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-600 font-medium">Delivery Partner Active</span>
+                                    <span className="text-xs text-slate-600 font-medium">Delivery Partner Active</span>
                                 </div>
                             </TableCell>
                             <TableCell className="text-right pr-6">
@@ -545,7 +547,9 @@ export function CompletedOrdersView({ orders, isMyItem }: OrderTableProps) {
             </TableHeader>
             <TableBody>
                 {orders.map((order: any) => {
-                    const deliveredItems = order.items.filter(isMyItem).filter((i: any) => i.status?.toLowerCase() === 'delivered')
+                    const deliveredItems = order.items.filter(isMyItem).filter((i: any) =>
+                        ['delivered', 'out_for_delivery'].includes(i.status?.toLowerCase() || '') && i.status?.toLowerCase() === 'delivered'
+                    )
                     return (
                         <TableRow key={order._id} className="hover:bg-slate-50/50 transition-colors">
                             <TableCell>

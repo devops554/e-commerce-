@@ -22,6 +22,7 @@ import {
   useAvailableOrders,
   useUpdateAvailability,
 } from '../../hooks/useQueries';
+import { useActiveOffers } from '../../hooks/useEarningsQueries';
 import { useAuthStore } from '../../store/authStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { socketService } from '../../services/socketService';
@@ -141,6 +142,7 @@ export default function HomeScreen() {
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats();
   const { data: activeOrder, isLoading: activeLoading, refetch: refetchActive } = useActiveOrder();
   const { data: availableOrders } = useAvailableOrders();
+  const { data: offers, isLoading: offersLoading } = useActiveOffers();
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const updateAvailability = useUpdateAvailability();
 
@@ -349,6 +351,69 @@ export default function HomeScreen() {
             loading={statsLoading}
           />
         </Animated.View>
+
+        {/* ── Active Offers Preview ── */}
+        {offers && offers.length > 0 && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Active Offers</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Earnings', { initialTab: 'Offers' })}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            {offers.slice(0, 1).map((offer: any) => {
+              const tiers: Array<{ targetCount: number; bonusAmount: number; label?: string }> =
+                offer.tiers ?? [];
+              const currentCount = offer.currentCount ?? 0;
+              const activeTier = tiers.find(t => currentCount < t.targetCount) ?? tiers[tiers.length - 1];
+
+              const progress = activeTier
+                ? Math.min(currentCount / activeTier.targetCount, 1)
+                : 1;
+              const remaining = activeTier ? Math.max(activeTier.targetCount - currentCount, 0) : 0;
+
+              return (
+                <TouchableOpacity
+                  key={offer._id}
+                  style={styles.offerPreviewCard}
+                  onPress={() => navigation.navigate('Earnings')}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient colors={['#FFF', '#F8FAFC']} style={styles.offerPreviewInner}>
+                    <View style={styles.offerPreviewHeader}>
+                      <View style={styles.offerIconBg}>
+                        <Ionicons name="trophy" size={20} color="#F59E0B" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.offerPreviewTitle}>{offer.title}</Text>
+                        <Text style={styles.offerPreviewSub}>
+                          {!activeTier
+                            ? 'All bonuses achieved! 🎉'
+                            : remaining > 0
+                              ? `${remaining} more to go for ₹${activeTier.bonusAmount} bonus!`
+                              : 'Bonus achieved! 🎉'}
+                        </Text>
+                      </View>
+                      <Text style={styles.offerDescription}>{offer.description}</Text>
+                      <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                    </View>
+
+                    <View style={styles.offerProgressBar}>
+                      <View style={[styles.offerProgressFill, { width: `${progress * 100}%` as any }]} />
+                    </View>
+                    <View style={styles.offerProgressFooter}>
+                      <Text style={styles.offerProgressText}>
+                        {currentCount} / {activeTier?.targetCount ?? '—'} Complete
+                        {activeTier?.label ? ` · ${activeTier.label}` : ''}
+                      </Text>
+                      <Text style={styles.offerPercentText}>{Math.round(progress * 100)}%</Text>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </Animated.View>
+        )}
 
         {/* ── Quick Actions ── */}
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -569,4 +634,49 @@ const styles = StyleSheet.create({
   },
   qaBadgeText: { color: Colors.white, fontSize: 8, fontWeight: '900' },
   qaLabel: { fontSize: 11, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
+
+  // Offer Preview
+  viewAllText: { fontSize: 13, fontWeight: '700', color: Colors.primary },
+  offerPreviewCard: {
+    marginHorizontal: 0,
+    marginBottom: Spacing.lg,
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...Shadow.sm,
+  },
+  offerPreviewInner: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+  },
+  offerPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  offerIconBg: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: '#F59E0B15',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  offerDescription: { fontSize: FontSize.xs, color: Colors.textSecondary, marginBottom: 8 },
+  offerPreviewTitle: { fontSize: 15, fontWeight: '800', color: Colors.textPrimary },
+  offerPreviewSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 1 },
+  offerProgressBar: {
+    height: 8, backgroundColor: '#F1F5F9',
+    borderRadius: 4, overflow: 'hidden',
+  },
+  offerProgressFill: {
+    height: '100%', backgroundColor: '#F59E0B',
+    borderRadius: 4,
+  },
+  offerProgressFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  offerProgressText: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
+  offerPercentText: { fontSize: 11, fontWeight: '800', color: '#F59E0B' },
 });

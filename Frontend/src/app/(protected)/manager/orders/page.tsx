@@ -7,6 +7,8 @@ import { useWarehouseOrders, useDispatchItem, useBulkDispatchItem } from '@/hook
 import { Search, ChevronLeft, ChevronRight, Loader2, CheckCircle2, UserCheck, Send, MapPin } from 'lucide-react'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { ConfirmOrdersTable, AssignDeliveryTable, DispatchedOrdersTable, OrderTrackerView, CompletedOrdersView } from './_components/OrderTables'
+import { ReturnsTable } from './_components/ReturnsTable'
+import { useReturns } from '@/hooks/useReturns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -19,15 +21,17 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
+import { RotateCcw } from 'lucide-react'
 
 
-type Tab = 'confirm' | 'assign' | 'dispatch' | 'tracker' | 'completed'
+type Tab = 'confirm' | 'assign' | 'dispatch' | 'tracker' | 'returns' | 'completed'
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
     { key: 'confirm', label: 'Confirm Orders', icon: <CheckCircle2 className="h-4 w-4" />, desc: 'New orders awaiting manager confirmation' },
     { key: 'assign', label: 'Assign Delivery', icon: <UserCheck className="h-4 w-4" />, desc: 'Confirmed orders awaiting delivery partner assignment' },
     { key: 'dispatch', label: 'Dispatched', icon: <Send className="h-4 w-4" />, desc: 'Orders handed to delivery partner' },
     { key: 'tracker', label: 'Order Tracker', icon: <MapPin className="h-4 w-4" />, desc: 'Live tracking of active deliveries' },
+    { key: 'returns', label: 'Returns', icon: <RotateCcw className="h-4 w-4" />, desc: 'Returned items arriving at warehouse' },
     { key: 'completed', label: 'Completed Orders', icon: <CheckCircle2 className="h-4 w-4" />, desc: 'History of delivered orders' },
 ]
 
@@ -47,6 +51,12 @@ const FulfilmentPage = () => {
         limit,
         search: debouncedSearch
     })
+
+    const { data: returnsResponse, isLoading: returnsLoading } = useReturns({
+        page: 1,
+        limit: 10,
+        search: debouncedSearch
+    }, 'manager')
 
     const [activeTab, setActiveTab] = useState<Tab>('confirm')
 
@@ -75,8 +85,9 @@ const FulfilmentPage = () => {
         await bulkDispatchMutation.mutateAsync({ orderId, warehouseId: warehouse._id })
     }
 
-    const isLoading = warehouseLoading || ordersLoading
+    const isLoading = warehouseLoading || ordersLoading || returnsLoading
     const orders = response?.orders || []
+    const returnsList = returnsResponse?.data || []
 
     const isMyItem = (item: any) =>
         item.warehouse === warehouse?._id ||
@@ -98,18 +109,20 @@ const FulfilmentPage = () => {
     const dispatchedOrders = orders.filter(order =>
         order.items.filter(isMyItem).length > 0 &&
         order.items.filter(isMyItem).every((item: any) =>
-            ['shipped', 'delivered', 'cancelled', 'pending_reassignment'].includes(item.status?.toLowerCase() || '')
+            ['shipped', 'out_for_delivery', 'delivered', 'cancelled', 'pending_reassignment'].includes(item.status?.toLowerCase() || '')
         ) &&
-        order.items.some((item: any) => isMyItem(item) && item.status?.toLowerCase() === 'shipped')
+        order.items.some((item: any) => isMyItem(item) && (item.status?.toLowerCase() === 'shipped' || item.status?.toLowerCase() === 'out_for_delivery'))
     )
 
     // For the UI logic, we define the arrays for new tabs simply based on tracking status.
     const activeTrackingOrders = orders.filter(order =>
-        order.items.some((item: any) => isMyItem(item) && item.status?.toLowerCase() === 'shipped')
+        order.items.some((item: any) => isMyItem(item) && (item.status?.toLowerCase() === 'shipped' || item.status?.toLowerCase() === 'out_for_delivery')) &&
+        !order.items.every((item: any) => !isMyItem(item) || item.status?.toLowerCase() === 'delivered' || item.status?.toLowerCase() === 'cancelled')
     )
 
     const completedHistoryOrders = orders.filter(order =>
-        order.items.some((item: any) => isMyItem(item) && item.status?.toLowerCase() === 'delivered')
+        order.items.every((item: any) => !isMyItem(item) || item.status?.toLowerCase() === 'delivered' || item.status?.toLowerCase() === 'cancelled') &&
+        order.items.some((item: any) => isMyItem(item) && (item.status?.toLowerCase() === 'delivered' || item.status?.toLowerCase() === 'cancelled'))
     )
 
     const tabCounts: Record<Tab, number> = {
@@ -117,6 +130,7 @@ const FulfilmentPage = () => {
         assign: assignOrders.length,
         dispatch: dispatchedOrders.length,
         tracker: activeTrackingOrders.length,
+        returns: returnsResponse?.total || 0,
         completed: completedHistoryOrders.length,
     }
 
@@ -262,6 +276,11 @@ const FulfilmentPage = () => {
                         warehouseId={warehouse?._id}
                         isMyItem={isMyItem}
                     />
+                ) : activeTab === 'returns' ? (
+                    <ReturnsTable
+                        returns={returnsList}
+                        isLoading={returnsLoading}
+                    />
                 ) : (
                     <CompletedOrdersView
                         orders={completedHistoryOrders}
@@ -282,3 +301,5 @@ const FulfilmentPage = () => {
 }
 
 export default FulfilmentPage
+
+

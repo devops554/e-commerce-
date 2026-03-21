@@ -172,6 +172,9 @@ const DeliveryPartnerTable = ({ basePath = "/admin/delivery-partners", warehouse
                                     <span className="flex items-center gap-1 justify-center"><CheckCircle2 className="w-3 h-3 text-green-500" />Completed</span>
                                 </TableHead>
                                 <TableHead className="font-black text-slate-900 uppercase tracking-widest text-[10px] h-14 text-center">
+                                    <span className="flex items-center gap-1 justify-center">Earnings</span>
+                                </TableHead>
+                                <TableHead className="font-black text-slate-900 uppercase tracking-widest text-[10px] h-14 text-center">
                                     <span className="flex items-center gap-1 justify-center"><Star className="w-3 h-3 text-amber-400" />Rating</span>
                                 </TableHead>
                                 <TableHead className="font-black text-slate-900 uppercase tracking-widest text-[10px] h-14">Status</TableHead>
@@ -181,7 +184,7 @@ const DeliveryPartnerTable = ({ basePath = "/admin/delivery-partners", warehouse
                         <TableBody>
                             {!data || data.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center py-20 text-slate-400 font-bold">
+                                    <TableCell colSpan={10} className="text-center py-20 text-slate-400 font-bold">
                                         No delivery partners found.
                                     </TableCell>
                                 </TableRow>
@@ -230,32 +233,35 @@ const DeliveryPartnerTable = ({ basePath = "/admin/delivery-partners", warehouse
                                         </TableCell>
                                         {/* Active Orders */}
                                         <TableCell className="text-center">
-                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${
-                                                (partner.activeOrders || 0) > 0
+                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${(partner.activeOrders || 0) > 0
                                                     ? 'bg-amber-100 text-amber-700'
                                                     : 'bg-slate-100 text-slate-400'
-                                            }`}>
+                                                }`}>
                                                 {partner.activeOrders ?? 0}
                                             </span>
                                         </TableCell>
                                         {/* Available Orders */}
                                         <TableCell className="text-center">
-                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${
-                                                (partner.availableOrders || 0) > 0
+                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${(partner.availableOrders || 0) > 0
                                                     ? 'bg-blue-100 text-blue-700'
                                                     : 'bg-slate-100 text-slate-400'
-                                            }`}>
+                                                }`}>
                                                 {partner.availableOrders ?? 0}
                                             </span>
                                         </TableCell>
                                         {/* Completed Orders */}
                                         <TableCell className="text-center">
-                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${
-                                                (partner.completedOrders || 0) > 0
+                                            <span className={`inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-lg text-xs font-black ${(partner.completedOrders || 0) > 0
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-slate-100 text-slate-400'
-                                            }`}>
+                                                }`}>
                                                 {partner.completedOrders ?? partner.totalDeliveries ?? 0}
+                                            </span>
+                                        </TableCell>
+                                        {/* Total Earnings */}
+                                        <TableCell className="text-center">
+                                            <span className="font-black text-violet-700 bg-violet-50 px-2 py-1 rounded-lg text-xs">
+                                                ₹{(partner.totalEarned || 0).toLocaleString()}
                                             </span>
                                         </TableCell>
                                         {/* Rating */}

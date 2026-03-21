@@ -5,11 +5,13 @@
 
 import { useOrderById } from '@/hooks/useOrders'
 import { useShipments } from '@/hooks/useShipments'
-import { useReturns } from '@/hooks/useReturns'
+import { useReturns, useReviewReturn, useUpdateReturnQc, useInitiateRefund, useResolveFailedPickup } from '@/hooks/useReturns'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { ReturnRequestStatus } from '@/services/return.service'
+import { useAuth } from '@/providers/AuthContext'
 import {
     ArrowLeft,
     Loader2,
@@ -59,6 +61,9 @@ const ALL_STATUSES: OrderStatus[] = ["created", "pending", "confirmed", "shipped
 
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import React from 'react'
+import { ActionCards } from '@/app/(protected)/manager/returns/[id]/components/ActionCards';
+import { ShipmentTrackingCard } from '@/app/(protected)/manager/returns/[id]/components/ShipmentTrackingCard';
+
 
 export default function AdminOrderDetailsPage() {
     const params = useParams()
@@ -69,7 +74,45 @@ export default function AdminOrderDetailsPage() {
 
     const { data: order, isLoading: isOrderLoading, error } = useOrderById(orderId)
     const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({ orderId: order?._id })
-    const { data: returnsData } = useReturns({ orderId: order?._id })
+    const { data: returnsData } = useReturns({ orderId: order?._id }, 'admin')
+    const { user } = useAuth()
+
+    const { mutateAsync: reviewReturn, isPending: isReviewing } = useReviewReturn()
+    const { mutateAsync: updateQc, isPending: isUpdatingQc } = useUpdateReturnQc()
+    const { mutateAsync: initiateRefund, isPending: isRefunding } = useInitiateRefund()
+    const { mutateAsync: resolveFailedPickup, isPending: isResolvingFailed } = useResolveFailedPickup()
+
+    const handleReview = async (returnId: string, status: ReturnRequestStatus, reason?: string, adminNote?: string) => {
+        try {
+            await reviewReturn({ id: returnId, data: { approved: status === ReturnRequestStatus.APPROVED, rejectionReason: reason, adminNote } })
+        } catch (err: any) {
+            console.error('Failed to review return', err)
+        }
+    }
+
+    const handleQcUpdate = async (returnId: string, grade: string, notes: string) => {
+        try {
+            await updateQc({ id: returnId, data: { warehouseQcGrade: grade, warehouseQcNotes: notes } })
+        } catch (err: any) {
+            console.error('Failed to update QC', err)
+        }
+    }
+
+    const handleRefund = async (returnId: string, method: string, amount: number, transactionId?: string) => {
+        try {
+            await initiateRefund({ id: returnId, data: { refundMethod: method as any, refundAmount: amount, refundTransactionId: transactionId } })
+        } catch (err: any) {
+            console.error('Failed to process refund', err)
+        }
+    }
+
+    const handleResolveFailedPickup = async (returnId: string, status: ReturnRequestStatus, reason?: string, note?: string) => {
+        try {
+            await resolveFailedPickup({ id: returnId, data: { approved: status === ReturnRequestStatus.APPROVED, rejectionReason: reason, adminNote: note } })
+        } catch (err: any) {
+            console.error('Failed to resolve pickup', err)
+        }
+    }
 
     React.useEffect(() => {
         setBreadcrumbs([
@@ -251,28 +294,10 @@ export default function AdminOrderDetailsPage() {
                                     <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between">
                                         <CardTitle className="text-base font-black flex items-center gap-2 text-slate-900">
                                             <Truck className="w-5 h-5 text-indigo-500" />
-                                            Shipment: {shipment.trackingNumber}
+                                            {shipment.type === 'REVERSE' ? 'Return Pickup:' : 'Product Delivery To Customer:'} {shipment.trackingNumber}
                                         </CardTitle>
                                         <div className="flex items-center gap-3">
-                                            <Select
-                                                value={shipment.status}
-                                                onValueChange={(status) => updateShipmentStatusMutation.mutate({
-                                                    id: shipment._id,
-                                                    data: { status: status as ShipmentStatus }
-                                                })}
-                                                disabled={updateShipmentStatusMutation.isPending}
-                                            >
-                                                <SelectTrigger className="h-8 w-[140px] rounded-lg text-[10px] font-black uppercase border-slate-200 bg-white">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {Object.values(ShipmentStatus).map(s => (
-                                                        <SelectItem key={s} value={s} className="text-xs font-bold uppercase">
-                                                            {s.replace(/_/g, ' ')}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+
                                             <Badge className={`font-bold capitalize ${shipment.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
                                                 shipment.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700' :
                                                     'bg-indigo-100 text-indigo-700'
@@ -339,7 +364,9 @@ export default function AdminOrderDetailsPage() {
                                                 </div>
 
                                                 <div className="flex flex-col gap-1.5">
-                                                    <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Origin Warehouse</span>
+                                                    <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest">
+                                                        {shipment.type === 'REVERSE' ? 'Destination Warehouse' : 'Origin Warehouse'}
+                                                    </span>
                                                     <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-fit">
                                                         <MapPin className="w-3.5 h-3.5 text-slate-400" />
                                                         {shipment.warehouseId?.name || 'Unknown Warehouse'}
@@ -370,11 +397,11 @@ export default function AdminOrderDetailsPage() {
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
                                                         <Check className={`w-4 h-4 ${shipment.deliveredAt ? 'text-green-600' : 'text-slate-300'}`} />
                                                         {shipment.deliveredAt
-                                                            ? `Delivered on ${format(new Date(shipment.deliveredAt), 'MMM dd, yyyy HH:mm')}`
-                                                            : shipment.status === 'OUT_FOR_DELIVERY' ? 'Order is out for delivery' :
+                                                            ? (shipment.type === 'REVERSE' ? `Received at warehouse on ${format(new Date(shipment.deliveredAt), 'MMM dd, yyyy HH:mm')}` : `Delivered on ${format(new Date(shipment.deliveredAt), 'MMM dd, yyyy HH:mm')}`)
+                                                            : shipment.status === 'OUT_FOR_DELIVERY' ? (shipment.type === 'REVERSE' ? 'Agent is out for pickup' : 'Order is out for delivery') :
                                                                 shipment.status === 'ACCEPTED' ? 'Partner accepted, awaiting pickup' :
                                                                     shipment.status === 'ASSIGNED_TO_DELIVERY' ? 'Awaiting partner acceptance' :
-                                                                        'Shipment in progress...'}
+                                                                        shipment.type === 'REVERSE' ? 'Pickup in progress...' : 'Shipment in progress...'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -384,6 +411,7 @@ export default function AdminOrderDetailsPage() {
                             ))
                         )}
                     </div>
+
 
                     <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
                         <CardHeader className="pb-3 px-6 pt-6 bg-slate-50/50 border-b border-slate-100">
@@ -418,26 +446,26 @@ export default function AdminOrderDetailsPage() {
                                                 ) : null
                                             }
                                         />
-                                    {item.status !== 'cancelled' && order.orderStatus !== 'delivered' && order.orderStatus !== 'cancelled' && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl h-8 px-3 font-bold text-[10px] uppercase tracking-wider"
-                                            onClick={() => setCancelItemData({ variantId: item.variant._id, title: item.title })}
-                                        >
-                                            Cancel Item
-                                        </Button>
-                                    )}
+                                        {item.status !== 'cancelled' && order.orderStatus !== 'delivered' && order.orderStatus !== 'cancelled' && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl h-8 px-3 font-bold text-[10px] uppercase tracking-wider"
+                                                onClick={() => setCancelItemData({ variantId: item.variant._id, title: item.title })}
+                                            >
+                                                Cancel Item
+                                            </Button>
+                                        )}
 
-                                    {(itemReturn?.status === 'FAILED_PICKUP' || (itemReturn?.returnShipmentId as any)?.status === 'FAILED_PICKUP') && (
-                                        <div className="mt-4 px-2">
-                                            <ReturnFailureDetails 
-                                                pickupNotes={(itemReturn?.returnShipmentId as any)?.pickupNotes || itemReturn?.pickupNotes} 
-                                                verificationMedia={(itemReturn?.returnShipmentId as any)?.verificationMedia || itemReturn?.verificationMedia} 
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                        {(itemReturn?.status === 'FAILED_PICKUP' || (itemReturn?.returnShipmentId as any)?.status === 'FAILED_PICKUP') && (
+                                            <div className="mt-4 px-2">
+                                                <ReturnFailureDetails
+                                                    pickupNotes={(itemReturn?.returnShipmentId as any)?.pickupNotes || itemReturn?.pickupNotes}
+                                                    verificationMedia={(itemReturn?.returnShipmentId as any)?.verificationMedia || itemReturn?.verificationMedia}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
 
@@ -459,8 +487,24 @@ export default function AdminOrderDetailsPage() {
                         </CardContent>
                     </Card>
 
+                    {returnsData?.data?.map((request: any) => (
+                        <ActionCards
+                            key={request._id}
+                            request={request}
+                            role={user?.role}
+                            onReview={(status, reason, note) => handleReview(request._id, status, reason, note)}
+                            onQC={(grade, notes) => handleQcUpdate(request._id, grade, notes)}
+                            onRefund={(method, amount, txId) => handleRefund(request._id, method, amount, txId)}
+                            onResolveFailedPickup={(status, reason, note) => handleResolveFailedPickup(request._id, status, reason, note)}
+                            isPending={isReviewing || isUpdatingQc || isRefunding || isResolvingFailed}
+                        />
+                    ))}
+
                     {/* GST Summary */}
                     <AdminOrderGstCard order={{ ...order, _id: order._id } as any} />
+                    {returnsData?.data?.map((request: any) => (
+                        <ShipmentTrackingCard key={`track-${request._id}`} request={request} />
+                    ))}
                 </div>
 
                 {/* Right Column: Customer & Payment info */}

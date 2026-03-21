@@ -18,6 +18,7 @@ import { DeliveryPartnerJwtGuard } from '../delivery-partners/delivery-partner.g
 import { ShipmentsService } from '../shipments/shipments.service';
 import { DeliveryPartnersService } from '../delivery-partners/delivery-partners.service';
 import { ShipmentStatus } from '../shipments/schemas/shipment.schema';
+import { ChangePasswordDto } from '../delivery-partners/dto/delivery-partner.dto';
 
 @Controller('delivery')
 @UseGuards(DeliveryPartnerJwtGuard)
@@ -26,7 +27,7 @@ export class DeliveryController {
     private readonly shipmentsService: ShipmentsService,
     private readonly partnersService: DeliveryPartnersService,
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   // ─── PROFILE & AVAILABILITY ───
 
@@ -52,14 +53,14 @@ export class DeliveryController {
     return this.partnersService.updateLocation(req.deliveryPartner._id, dto);
   }
 
+  @Patch('password')
+  async changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    return this.partnersService.changePassword(req.deliveryPartner._id, dto);
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: any) {
-    console.log('Received file upload request:', {
-      originalname: file?.originalname,
-      mimetype: file?.mimetype,
-      size: file?.size,
-    });
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -83,11 +84,26 @@ export class DeliveryController {
 
   @Get('orders/available')
   async getAvailableOrders(@Req() req: any) {
-    const partnerId = req.deliveryPartner._id.toString();
+    const partner = req.deliveryPartner;
+    const partnerId = partner._id.toString();
+
+    // Convert warehouse IDs to strings if they are objects
+    const warehouseIds = (partner.warehouseIds || []).map((w: any) =>
+      w._id?.toString() || w.toString()
+    );
+
     const shipments = await this.shipmentsService.findAll({
-      deliveryPartnerId: partnerId,
-      status: ShipmentStatus.ASSIGNED_TO_DELIVERY,
-    });
+      includePartnerId: partnerId,
+      warehouseId: warehouseIds.length > 0 ? warehouseIds : undefined,
+      status: [
+        ShipmentStatus.ASSIGNED_TO_DELIVERY,
+        ShipmentStatus.ORDER_PLACED,
+        ShipmentStatus.CONFIRMED,
+        ShipmentStatus.PACKED,
+      ],
+      limit: 50,
+    } as any);
+
     return shipments.data;
   }
 
@@ -97,13 +113,12 @@ export class DeliveryController {
     // Return all shipments that are currently "in progress" for this partner
     const shipments = await this.shipmentsService.findAll({
       deliveryPartnerId: partnerId,
-      status: {
-        $in: [
-          ShipmentStatus.ACCEPTED,
-          ShipmentStatus.PICKED_UP,
-          ShipmentStatus.OUT_FOR_DELIVERY,
-        ],
-      } as any,
+      status: [
+        ShipmentStatus.ACCEPTED,
+        ShipmentStatus.PACKED,
+        ShipmentStatus.PICKED_UP,
+        ShipmentStatus.OUT_FOR_DELIVERY,
+      ] as any,
     });
     return shipments.data; // Now returning Array of Shipments
   }
@@ -130,11 +145,10 @@ export class DeliveryController {
     @Req() req: any,
     @Body('orderId') orderId?: string,
     @Body('shipmentId') shipmentId?: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
   ) {
     const partnerId = req.deliveryPartner._id.toString();
-    console.log(
-      `[DELIVERY] Accept Order attempt - Partner: ${partnerId}, Order: ${orderId}, Shipment: ${shipmentId}`,
-    );
 
     let shipment;
 
@@ -155,10 +169,7 @@ export class DeliveryController {
       throw new BadRequestException('Order ID or Shipment ID is required');
     }
 
-    // Move status to OUT_FOR_DELIVERY upon acceptance so it shows in Active screen
-    return this.shipmentsService.updateStatus(shipment._id.toString(), {
-      status: ShipmentStatus.OUT_FOR_DELIVERY,
-    });
+    return this.shipmentsService.acceptShipment(shipment._id.toString(), partnerId, latitude, longitude);
   }
 
   @Post('orders/reject')
@@ -168,9 +179,6 @@ export class DeliveryController {
     @Body('shipmentId') shipmentId?: string,
   ) {
     const partnerId = req.deliveryPartner._id.toString();
-    console.log(
-      `[DELIVERY] Reject Order attempt - Partner: ${partnerId}, Order: ${orderId}, Shipment: ${shipmentId}`,
-    );
 
     let shipment;
 
@@ -195,21 +203,27 @@ export class DeliveryController {
   }
 
   @Post('orders/start')
-  async startDelivery(@Req() req: any, @Body('orderId') orderId: string) {
+  async startDelivery(
+    @Req() req: any,
+    @Body('orderId') orderId: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
     const partnerId = req.deliveryPartner._id.toString();
     const shipment = await this.findShipmentByOrder(orderId, partnerId);
-    return this.shipmentsService.updateStatus(shipment._id.toString(), {
-      status: ShipmentStatus.OUT_FOR_DELIVERY,
-    });
+    return this.shipmentsService.startDelivery(shipment._id.toString(), latitude, longitude);
   }
 
   @Post('orders/complete')
-  async completeDelivery(@Req() req: any, @Body('orderId') orderId: string) {
+  async completeDelivery(
+    @Req() req: any,
+    @Body('orderId') orderId: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
     const partnerId = req.deliveryPartner._id.toString();
     const shipment = await this.findShipmentByOrder(orderId, partnerId);
-    return this.shipmentsService.updateStatus(shipment._id.toString(), {
-      status: ShipmentStatus.DELIVERED,
-    });
+    return this.shipmentsService.completeDelivery(shipment._id.toString(), latitude, longitude);
   }
 
   @Post('orders/fail')
@@ -217,22 +231,48 @@ export class DeliveryController {
     @Req() req: any,
     @Body('orderId') orderId: string,
     @Body('reason') reason: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
   ) {
     const partnerId = req.deliveryPartner._id.toString();
     const shipment = await this.findShipmentByOrder(orderId, partnerId);
     return this.shipmentsService.updateStatus(shipment._id.toString(), {
       status: ShipmentStatus.FAILED_DELIVERY,
+      reason,
+      latitude,
+      longitude
     });
   }
 
   @Get('orders/history')
   async getOrderHistory(@Req() req: any, @Query('filter') filter: string) {
     const partnerId = req.deliveryPartner._id.toString();
+
+    let startDate: Date | undefined;
+    const now = new Date();
+
+    if (filter === 'today') {
+      startDate = new Date(now.setHours(0, 0, 0, 0));
+    } else if (filter === 'week') {
+      startDate = new Date(now.setDate(now.getDate() - 7));
+    } else if (filter === 'month') {
+      startDate = new Date(now.setMonth(now.getMonth() - 1));
+    }
+
     const shipments = await this.shipmentsService.findAll({
       deliveryPartnerId: partnerId,
-      status: ShipmentStatus.DELIVERED, // Simplified
+      status: [
+        ShipmentStatus.DELIVERED,
+        ShipmentStatus.CANCELLED,
+        ShipmentStatus.FAILED_DELIVERY,
+        ShipmentStatus.RETURNED,
+        ShipmentStatus.FAILED_PICKUP,
+        ShipmentStatus.ASSIGNED_TO_DELIVERY,
+      ],
+      startDate,
+      limit: 100, // Show more for history
     });
-    return shipments.data; // Return full shipment so type is preserved
+    return shipments.data;
   }
 
   @Get('orders/:id')

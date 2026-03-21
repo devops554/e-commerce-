@@ -13,7 +13,7 @@ export class ReviewsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Req() req, @Body() dto: any) {
-    return this.reviewsService.create(req.user.userId, dto);
+    return this.reviewsService.create(req.user._id.toString(), dto);
   }
 
   @Get()
@@ -30,7 +30,7 @@ export class ReviewsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   moderate(@Req() req, @Param('id') id: string, @Body() dto: { status: ReviewStatus; rejectionReason?: string }) {
-    return this.reviewsService.moderate(id, req.user.userId, dto);
+    return this.reviewsService.moderate(id, req.user._id.toString(), dto);
   }
 
   @Delete(':id')

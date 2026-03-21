@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 export type WarehouseDocument = Warehouse & Document;
 
 @Schema({ timestamps: true })
-export class Warehouse {
+export class Warehouse extends Document {
   @Prop({ required: true, unique: true })
   code: string; // WH-PATNA-01
 

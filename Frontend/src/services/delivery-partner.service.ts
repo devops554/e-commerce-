@@ -37,6 +37,7 @@ export interface DeliveryPartner {
     activeOrders?: number;
     availableOrders?: number;
     completedOrders?: number;
+    totalEarned?: number;
     documents?: {
         aadhaarNumber?: string;
         aadhaarImage?: string;

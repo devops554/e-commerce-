@@ -36,16 +36,25 @@ const FILTERS: { label: string; value: FilterType; icon: IoniconsName }[] = [
   { label: 'This Month', value: 'month', icon: 'stats-chart-outline' },
 ];
 
+interface ShipmentGroup {
+  id: string;
+  shipments: Shipment[];
+  totalEarning: number;
+  mainShipment: Shipment;
+  count: number;
+}
+
 // ── History Card ──────────────────────────────────────────────────────────────
 const HistoryCard = ({
-  shipment,
+  group,
   index,
   onPress,
 }: {
-  shipment: Shipment;
+  group: ShipmentGroup;
   index: number;
   onPress: () => void;
 }) => {
+  const { mainShipment: shipment, totalEarning, count } = group;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(18)).current;
 
@@ -61,13 +70,13 @@ const HistoryCard = ({
 
   const isReverse = shipment.type === 'REVERSE';
   const isFailedPickup = isReverse && shipment.status === 'FAILED_PICKUP';
-  
+
   const statusColor = isFailedPickup ? Colors.danger : getOrderStatusColor(order.orderStatus);
-  const statusLabel = isFailedPickup 
-    ? 'Pickup Failed' 
-    : (isReverse ? 'Returned' : getOrderStatusLabel(order.orderStatus));
+  const statusLabel = isFailedPickup
+    ? 'Pickup Failed'
+    : (shipment.status === 'ASSIGNED_TO_DELIVERY' ? 'Assigned' : (isReverse ? 'Returned' : getOrderStatusLabel(order.orderStatus)));
   const cod = isCOD(order.paymentMethod);
-  const earning = order.shippingCharge ?? order.deliveryFee ?? 0;
+  const earning = totalEarning;
   const orderId = typeof order.orderId === 'string' ? order.orderId.slice(-8) : String(order.orderId).slice(-8);
 
   return (
@@ -80,7 +89,14 @@ const HistoryCard = ({
         <View style={styles.cardBody}>
           {/* Top row */}
           <View style={styles.cardTopRow}>
-            <Text style={styles.orderId}>#{orderId}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.orderId}>#{orderId}</Text>
+              {count > 1 && (
+                <View style={styles.groupBadge}>
+                  <Text style={styles.groupBadgeText}>{count} Items</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.dateRow}>
               <Ionicons name="time-outline" size={11} color={Colors.textMuted} />
               <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
@@ -91,7 +107,7 @@ const HistoryCard = ({
           <View style={styles.addrRow}>
             <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
             <Text style={styles.orderAddr} numberOfLines={1}>
-              {isReverse 
+              {isReverse
                 ? (typeof shipment.warehouseId === 'object' && shipment.warehouseId !== null && 'address' in shipment.warehouseId ? shipment.warehouseId.address?.city : 'Warehouse')
                 : (order.shippingAddress?.city ? `${order.shippingAddress.city}, ${order.shippingAddress.state}` : 'N/A')}
             </Text>
@@ -140,7 +156,49 @@ const HistoryCard = ({
 export default function HistoryScreen() {
   const navigation = useNavigation<any>();
   const [filter, setFilter] = useState<FilterType>('today');
-  const { data: shipments, isLoading } = useOrderHistory(filter);
+  const [activeMode, setActiveMode] = useState<'DELIVERY' | 'RETURN'>('DELIVERY');
+  const { data: allShipments, isLoading } = useOrderHistory(filter);
+
+  const shipments = (allShipments || []).filter(s =>
+    activeMode === 'RETURN' ? s.type === 'REVERSE' : s.type !== 'REVERSE'
+  );
+
+  // Grouping logic
+  const groupedData: ShipmentGroup[] = shipments.reduce((acc: ShipmentGroup[], s) => {
+    const o = s.orderId as Order;
+    if (!o) return acc;
+
+    // Group by customer and payment method
+    const customerId = (o.user as any)?._id || o.user;
+    const paymentMethod = o.paymentMethod;
+    const dateStr = formatDate(o.createdAt);
+
+    const existingGroup = acc.find(g => {
+      const go = g.mainShipment.orderId as Order;
+      const gCustomerId = (go.user as any)?._id || go.user;
+      return gCustomerId === customerId &&
+        go.paymentMethod === paymentMethod &&
+        formatDate(go.createdAt) === dateStr;
+    });
+
+    // Use actual earning from shipment metadata
+    const earning = s.actualEarning || s.commissionEarned || 0;
+
+    if (existingGroup) {
+      existingGroup.shipments.push(s);
+      existingGroup.totalEarning += earning;
+      existingGroup.count += 1;
+    } else {
+      acc.push({
+        id: s._id,
+        shipments: [s],
+        totalEarning: earning,
+        mainShipment: s,
+        count: 1
+      });
+    }
+    return acc;
+  }, []);
 
   const headerFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -148,15 +206,45 @@ export default function HistoryScreen() {
   }, []);
 
   const totalEarnings = shipments?.reduce((sum, s) => {
-    const o = s.orderId as Order;
-    if (!o) return sum;
-    return sum + (o.shippingCharge ?? o.deliveryFee ?? 0);
+    return sum + (s.actualEarning || s.commissionEarned || 0);
   }, 0) ?? 0;
   const filterLabel = filter === 'today' ? 'today' : filter === 'week' ? 'this week' : 'this month';
 
   const ListHeader = () => (
     <>
-      {/* Filter tabs */}
+      {/* Mode Tabs (Delivery vs Returns) */}
+      <View style={styles.modeTabContainer}>
+        <TouchableOpacity
+          onPress={() => setActiveMode('DELIVERY')}
+          style={[styles.modeTab, activeMode === 'DELIVERY' && styles.modeTabActive]}
+        >
+          <Ionicons
+            name="cube"
+            size={16}
+            color={activeMode === 'DELIVERY' ? Colors.primary : Colors.textMuted}
+          />
+          <Text style={[styles.modeTabText, activeMode === 'DELIVERY' && styles.modeTabTextActive]}>
+            Deliveries
+          </Text>
+          {activeMode === 'DELIVERY' && <View style={styles.modeIndicator} />}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveMode('RETURN')}
+          style={[styles.modeTab, activeMode === 'RETURN' && styles.modeTabActive]}
+        >
+          <Ionicons
+            name="refresh-circle"
+            size={18}
+            color={activeMode === 'RETURN' ? Colors.primary : Colors.textMuted}
+          />
+          <Text style={[styles.modeTabText, activeMode === 'RETURN' && styles.modeTabTextActive]}>
+            Returns
+          </Text>
+          {activeMode === 'RETURN' && <View style={styles.modeIndicator} />}
+        </TouchableOpacity>
+      </View>
+
+      {/* Time Filter tabs */}
       <View style={styles.filterRow}>
         {FILTERS.map((f) => {
           const active = filter === f.value;
@@ -184,10 +272,10 @@ export default function HistoryScreen() {
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
           <View style={[styles.summaryIconWrap, { backgroundColor: Colors.primary + '15' }]}>
-            <Ionicons name="bicycle" size={18} color={Colors.primary} />
+            <Ionicons name={activeMode === 'DELIVERY' ? "bicycle" : "arrow-undo"} size={18} color={Colors.primary} />
           </View>
           <Text style={styles.summaryValue}>{shipments?.length ?? 0}</Text>
-          <Text style={styles.summaryLabel}>Deliveries</Text>
+          <Text style={styles.summaryLabel}>{activeMode === 'DELIVERY' ? 'Deliveries' : 'Returns'}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
@@ -214,7 +302,7 @@ export default function HistoryScreen() {
       {/* Section label */}
       <View style={styles.sectionHeader}>
         <Ionicons name="receipt-outline" size={15} color={Colors.primary} />
-        <Text style={styles.sectionTitle}>Orders — {filterLabel}</Text>
+        <Text style={styles.sectionTitle}>{activeMode === 'DELIVERY' ? 'Orders' : 'Return Shipments'} — {filterLabel}</Text>
         {shipments && shipments.length > 0 && (
           <View style={styles.countChip}>
             <Text style={styles.countChipText}>{shipments.length}</Text>
@@ -258,34 +346,41 @@ export default function HistoryScreen() {
         </View>
       ) : (
         <FlatList
-          data={shipments}
-          keyExtractor={(item) => item._id}
+          data={groupedData}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={<ListHeader />}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <View style={styles.emptyIconWrap}>
-                <Ionicons name="receipt-outline" size={44} color={Colors.primary} />
+                <Ionicons
+                  name={activeMode === 'DELIVERY' ? "receipt-outline" : "refresh-circle-outline"}
+                  size={44}
+                  color={Colors.primary}
+                />
               </View>
-              <Text style={styles.emptyTitle}>No deliveries yet</Text>
+              <Text style={styles.emptyTitle}>
+                {activeMode === 'DELIVERY' ? 'No deliveries yet' : 'No returns yet'}
+              </Text>
               <Text style={styles.emptySubtitle}>
-                No orders completed {filterLabel}
+                No {activeMode === 'DELIVERY' ? 'orders' : 'returns'} completed {filterLabel}
               </Text>
             </View>
           }
           renderItem={({ item, index }) => (
             <HistoryCard
-              shipment={item}
+              group={item}
               index={index}
               onPress={() => {
-                 let oId = '';
-                 if (typeof item.orderId === 'object' && item.orderId !== null && '_id' in item.orderId) {
-                     oId = (item.orderId as Order)._id as string;
-                 } else if (typeof item.orderId === 'string') {
-                     oId = item.orderId;
-                 }
-                 navigation.navigate('OrderDetail', { orderId: oId });
+                const shipment = item.mainShipment;
+                let oId = '';
+                if (typeof shipment.orderId === 'object' && shipment.orderId !== null && '_id' in shipment.orderId) {
+                  oId = (shipment.orderId as Order)._id as string;
+                } else if (typeof shipment.orderId === 'string') {
+                  oId = shipment.orderId;
+                }
+                navigation.navigate('OrderDetail', { orderId: oId });
               }}
             />
           )}
@@ -298,6 +393,59 @@ export default function HistoryScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
+
+  // Mode Tabs
+  modeTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    paddingTop: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border + '50',
+  },
+  modeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    position: 'relative',
+  },
+  modeTabActive: {
+    // backgroundColor: Colors.primary + '08',
+  },
+  modeTabText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textMuted,
+  },
+  modeTabTextActive: {
+    color: Colors.primary,
+  },
+  modeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+    height: 3,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+  },
+
+  groupBadge: {
+    backgroundColor: Colors.primary + '12',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.primary + '20',
+  },
+  groupBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
 
   // Header
   header: {

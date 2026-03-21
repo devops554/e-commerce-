@@ -47,7 +47,11 @@ export default function OrderHistoryDetailPage() {
     const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({ orderId: id })
 
     const shipmentId = shipmentData?.data?.[0]?._id
-    const { data: trackingHistory } = useTrackingHistory(shipmentId)
+    let trackingHistory: any = null
+    if (shipmentId) {
+        trackingHistory = useTrackingHistory(shipmentId)
+    }
+
 
     useEffect(() => {
         setBreadcrumbs([

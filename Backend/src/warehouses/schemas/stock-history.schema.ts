@@ -8,6 +8,7 @@ export enum StockActionType {
   DISPATCH = 'DISPATCH',
   RESERVATION = 'RESERVATION',
   RELEASE = 'RELEASE',
+  RETURN_RESTOCK = 'RETURN_RESTOCK',
 }
 
 export type StockHistoryDocument = StockHistory & Document;

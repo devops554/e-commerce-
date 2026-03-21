@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthContext'
-import { useManagerWarehouse } from '@/hooks/useWarehouses'
+import { useManagerWarehouse, useWarehouseActions } from '@/hooks/useWarehouses'
+import { toast } from 'sonner'
 import {
     Settings,
     Warehouse as WarehouseIcon,
@@ -12,7 +13,9 @@ import {
     User,
     Shield,
     Bell,
-    ExternalLink
+    ExternalLink,
+    Navigation,
+    Loader2
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
@@ -24,6 +27,40 @@ const ManagerSettingsPage = () => {
     const { user } = useAuth()
     const { setBreadcrumbs } = useBreadcrumb()
     const { data: warehouse, isLoading } = useManagerWarehouse()
+    const { updateWarehouse, isUpdating } = useWarehouseActions()
+    const [isGettingLocation, setIsGettingLocation] = useState(false)
+
+    const handleUpdateLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser')
+            return
+        }
+
+        setIsGettingLocation(true)
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords
+                try {
+                    if (warehouse?._id) {
+                        await updateWarehouse({
+                            id: warehouse._id,
+                            data: { location: { latitude, longitude } }
+                        })
+                    }
+                } catch (error) {
+                    console.error('Failed to update location', error)
+                } finally {
+                    setIsGettingLocation(false)
+                }
+            },
+            (error) => {
+                setIsGettingLocation(false)
+                toast.error('Failed to get location. Please allow location access.')
+                console.error('Geolocation error:', error)
+            },
+            { enableHighAccuracy: true }
+        )
+    }
 
     useEffect(() => {
         setBreadcrumbs([
@@ -78,14 +115,47 @@ const ManagerSettingsPage = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Full Address</label>
-                            <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-start gap-4">
-                                <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
-                                <div className="font-bold text-slate-700 leading-relaxed">
-                                    {warehouse?.address.addressLine1}, {warehouse?.address.addressLine2 && warehouse?.address.addressLine2 + ','}<br />
-                                    {warehouse?.address.city}, {warehouse?.address.state} - {warehouse?.address.pincode}<br />
-                                    {warehouse?.address.country}
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Full Address</label>
+                                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-start gap-4">
+                                    <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
+                                    <div className="font-bold text-slate-700 leading-relaxed">
+                                        {warehouse?.address.addressLine1}, {warehouse?.address.addressLine2 && warehouse?.address.addressLine2 + ','}<br />
+                                        {warehouse?.address.city}, {warehouse?.address.state} - {warehouse?.address.pincode}<br />
+                                        {warehouse?.address.country}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Facility Coordinates</label>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleUpdateLocation}
+                                        disabled={isGettingLocation || isUpdating}
+                                        className="h-10 rounded-2xl font-bold text-xs"
+                                    >
+                                        {isGettingLocation || isUpdating ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin text-slate-400" />
+                                        ) : (
+                                            <Navigation className="h-4 w-4 mr-2 text-rose-500" />
+                                        )}
+                                        {isGettingLocation || isUpdating ? 'Updating GPS...' : 'Update Location via GPS'}
+                                    </Button>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between font-bold text-slate-900">
+                                    {warehouse?.location?.latitude && warehouse?.location?.longitude ? (
+                                        <div className="flex items-center gap-4 text-sm font-mono">
+                                            <span>Lat: {warehouse.location.latitude.toFixed(6)}</span>
+                                            <span className="text-slate-300">|</span>
+                                            <span>Lng: {warehouse.location.longitude.toFixed(6)}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-slate-400 text-sm">Location coordinates not set</span>
+                                    )}
                                 </div>
                             </div>
                         </div>

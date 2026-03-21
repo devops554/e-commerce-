@@ -19,7 +19,9 @@ import {
 } from '../delivery-partners/schemas/delivery-partner.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
-import { ReturnRequest, ReturnRequestSchema } from '../products/schemas/product.schema';
+import { ReturnRequest, ReturnRequestSchema } from '../orders/schemas/return-request.schema';
+import { DeliveryCommissionModule } from '../delivery-commission/delivery-commission.module';
+
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { ReturnRequest, ReturnRequestSchema } from '../products/schemas/product.
     forwardRef(() => DeliveryPartnersModule),
     forwardRef(() => NotificationsModule),
     forwardRef(() => WarehousesModule),
+    forwardRef(() => DeliveryCommissionModule),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'fallback_secret',
       signOptions: { expiresIn: '1d' },

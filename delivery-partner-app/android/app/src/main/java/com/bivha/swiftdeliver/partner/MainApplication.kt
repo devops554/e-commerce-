@@ -1,4 +1,4 @@
-package com.bivha.swiftdeliver.partner
+package com.bivha.kiranase.partner
 
 import android.app.Application
 import android.content.res.Configuration

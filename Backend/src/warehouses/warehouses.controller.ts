@@ -66,7 +66,7 @@ export class WarehousesController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateWarehouseDto: any) {
     return this.warehousesService.update(id, updateWarehouseDto);
@@ -80,7 +80,7 @@ export class WarehousesController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   @Patch(':id/default')
   async setDefault(@Param('id') id: string) {
     return this.warehousesService.setDefault(id);

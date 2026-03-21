@@ -7,6 +7,7 @@ export enum NotificationType {
   SELLER = 'seller',
   SYSTEM = 'system',
   SHIPMENT = 'shipment',
+  RETURN = 'return',
 }
 
 @Schema({ timestamps: true })

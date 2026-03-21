@@ -7,6 +7,7 @@ import {
   IsString,
   MinLength,
   IsObject,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
@@ -114,6 +115,44 @@ export class LoginDeliveryPartnerDto {
   password: string;
 }
 
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  currentPassword: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  newPassword: string;
+}
+
+export class PayoutMethodDto {
+  @IsEnum(['BANK', 'UPI'])
+  @IsOptional()
+  method?: 'BANK' | 'UPI';
+
+  @IsString()
+  @IsOptional()
+  accountNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  ifsc?: string;
+
+  @IsString()
+  @IsOptional()
+  upiId?: string;
+
+  @IsString()
+  @IsOptional()
+  razorpayContactId?: string;
+
+  @IsString()
+  @IsOptional()
+  razorpayFundAccountId?: string;
+}
+
 export class UpdateDeliveryPartnerDto {
   @IsOptional()
   @IsString()
@@ -140,6 +179,9 @@ export class UpdateDeliveryPartnerDto {
   licenseNumber?: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
   warehouseIds?: string[];
 
   @IsOptional()
@@ -163,6 +205,11 @@ export class UpdateDeliveryPartnerDto {
   @IsObject()
   @Type(() => AddressDto)
   currentAddress?: AddressDto;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => PayoutMethodDto)
+  payoutMethod?: PayoutMethodDto;
 
   @IsOptional()
   @IsEnum(['ACTIVE', 'INACTIVE', 'BLOCKED'])

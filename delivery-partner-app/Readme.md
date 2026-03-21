@@ -1,4 +1,4 @@
-# 🛵 SwiftDeliver — Delivery Partner App
+# 🛵 kiranase — Delivery Partner App
 
 A production-ready React Native (Expo) app for delivery partners. Built with TypeScript, TanStack Query, Zustand, Socket.io, and Google Maps.
 

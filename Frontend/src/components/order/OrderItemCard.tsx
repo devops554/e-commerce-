@@ -23,6 +23,8 @@ interface OrderItem {
         price?: number
         discount?: number
         discountPrice?: number
+        weightKg?: number
+        dimensionsCm?: { length: number; width: number; height: number }
         attributes?: Attribute[]
         images?: { url: string }[]
     }
@@ -136,11 +138,20 @@ export function OrderItemCard({ item, isLast, action, returnStatus, returnReject
                         </div>
                     )}
                     {/* Net Volume badge */}
-                    {netVolume && (
-                        <div className="mt-2">
-                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-semibold">
-                                {netVolume}
-                            </Badge>
+                    {(netVolume || item.variant?.weightKg || item.variant?.dimensionsCm) && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {netVolume && (
+                                <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-semibold">
+                                    {netVolume}
+                                </Badge>
+                            )}
+                            {(item.variant?.weightKg || item.variant?.dimensionsCm) && (
+                                <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-bold border-slate-200 text-slate-500 bg-slate-50/50">
+                                    {item.variant?.weightKg ? `${item.variant.weightKg}kg` : ''}
+                                    {item.variant?.weightKg && item.variant?.dimensionsCm ? ' · ' : ''}
+                                    {item.variant?.dimensionsCm ? `${item.variant.dimensionsCm.length}x${item.variant.dimensionsCm.width}x${item.variant.dimensionsCm.height}cm` : ''}
+                                </Badge>
+                            )}
                         </div>
                     )}
 

@@ -9,12 +9,20 @@ import { ConfigService } from '@nestjs/config';
 import Razorpay from 'razorpay';
 import * as crypto from 'crypto';
 
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { PaymentHistory } from './schemas/payment-history.schema';
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private razorpay: any;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectModel(PaymentHistory.name)
+    private paymentHistoryModel: Model<PaymentHistory>,
+  ) {
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
 
@@ -136,6 +144,14 @@ export class PaymentsService {
 
       const refund = await this.razorpay.payments.refund(paymentId, options);
       this.logger.log(`Razorpay refund created: ${refund.id} for payment: ${paymentId}`);
+
+      // Record refund in history
+      await this.recordPaymentHistory({
+        ...refund,
+        type: 'refund',
+        paymentId: paymentId,
+      });
+
       return refund;
     } catch (error) {
       this.logger.error(
@@ -143,6 +159,34 @@ export class PaymentsService {
         error.stack,
       );
       throw new BadRequestException('Refund failed at payment gateway');
+    }
+  }
+
+  async recordPaymentHistory(data: any) {
+    try {
+      const history = new this.paymentHistoryModel({
+        orderId: data.order_id || data.orderId || data.reference_id,
+        razorpayOrderId: data.order_id || data.orderId,
+        razorpayPaymentId: data.id || data.paymentId,
+        razorpayPayoutId: data.payoutId || data.razorpayPayoutId,
+        amount: data.amount ? data.amount / 100 : 0, // Convert paise to INR
+        currency: data.currency || 'INR',
+        status: data.status,
+        method: data.method,
+        email: data.email,
+        contact: data.contact,
+        type: data.type || 'payment',
+        rawResponse: data,
+        error_code: data.error_code,
+        error_description: data.error_description,
+        event: data.event,
+      });
+
+      await history.save();
+      this.logger.log(`Payment history recorded for order: ${history.orderId}`);
+      return history;
+    } catch (error) {
+      this.logger.error(`Failed to record payment history: ${error.message}`);
     }
   }
 }

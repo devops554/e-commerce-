@@ -90,11 +90,18 @@ export class ShipmentsController {
     return this.shipmentsService.cancelShipment(id, reason);
   }
 
-  // Pickup OTP — admin requests it, delivery partner scans/enters at warehouse
+  // Pickup OTP — admin/manager version
   @Post(':id/pickup-otp')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   async requestPickupOtp(@Param('id') id: string) {
+    return this.shipmentsService.requestPickupOtp(id);
+  }
+
+  // Pickup OTP — delivery partner version (REVERSE pickup: partner requests OTP from customer)
+  @Post(':id/pickup-otp/partner')
+  @UseGuards(DeliveryPartnerJwtGuard)
+  async requestPickupOtpPartner(@Param('id') id: string) {
     return this.shipmentsService.requestPickupOtp(id);
   }
 
@@ -103,27 +110,27 @@ export class ShipmentsController {
   @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
   async verifyPickupOtp(
     @Param('id') id: string,
-    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string },
+    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string; weightKg?: number; dimensionsCm?: { length: number; width: number; height: number }; latitude?: number; longitude?: number },
   ) {
-    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes);
+    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes, dto.weightKg, dto.dimensionsCm, dto.latitude, dto.longitude);
   }
 
   @Patch(':id/verify-pickup/partner')
   @UseGuards(DeliveryPartnerJwtGuard)
   async verifyPickupOtpPartner(
     @Param('id') id: string,
-    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string },
+    @Body() dto: { otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string; weightKg?: number; dimensionsCm?: { length: number; width: number; height: number }; latitude?: number; longitude?: number },
   ) {
-    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes);
+    return this.shipmentsService.verifyPickupOtp(id, dto.otp, dto.verificationMedia, dto.notes, dto.weightKg, dto.dimensionsCm, dto.latitude, dto.longitude);
   }
 
   @Patch(':id/fail-pickup/partner')
   @UseGuards(DeliveryPartnerJwtGuard)
   async failPickupPartner(
     @Param('id') id: string,
-    @Body() dto: { verificationMedia: { url: string; publicId: string }[]; notes: string },
+    @Body() dto: { verificationMedia: { url: string; publicId: string }[]; notes: string; latitude?: number; longitude?: number },
   ) {
-    return this.shipmentsService.failPickup(id, dto.verificationMedia, dto.notes);
+    return this.shipmentsService.failPickup(id, dto.verificationMedia, dto.notes, dto.latitude, dto.longitude);
   }
 
   // ─── DELIVERY OTP — called by DELIVERY PARTNER at customer doorstep ───────
@@ -141,9 +148,9 @@ export class ShipmentsController {
   @UseGuards(DeliveryPartnerJwtGuard)
   async verifyDeliveryOtp(
     @Param('id') id: string,
-    @Body() dto: { otp: string },
+    @Body() dto: { otp: string; latitude?: number; longitude?: number },
   ) {
-    return this.shipmentsService.verifyDeliveryOtp(id, dto.otp);
+    return this.shipmentsService.verifyDeliveryOtp(id, dto.otp, dto.latitude, dto.longitude);
   }
 
   // ─── DELIVERY PARTNER ROUTES ──────────────────────────────────────────────
@@ -185,10 +192,17 @@ export class ShipmentsController {
 
   @UseGuards(DeliveryPartnerJwtGuard)
   @Patch(':id/accept')
-  async acceptShipment(@Req() req: any, @Param('id') id: string) {
+  async acceptShipment(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
     return this.shipmentsService.acceptShipment(
       id,
       req.deliveryPartner._id.toString(),
+      latitude,
+      longitude,
     );
   }
 
@@ -208,20 +222,32 @@ export class ShipmentsController {
 
   @UseGuards(DeliveryPartnerJwtGuard)
   @Patch(':id/pickup')
-  async pickupShipment(@Param('id') id: string) {
-    return this.shipmentsService.pickupShipment(id);
+  async pickupShipment(
+    @Param('id') id: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
+    return this.shipmentsService.pickupShipment(id, latitude, longitude);
   }
 
   @UseGuards(DeliveryPartnerJwtGuard)
   @Patch(':id/start-delivery')
-  async startDelivery(@Param('id') id: string) {
-    return this.shipmentsService.startDelivery(id);
+  async startDelivery(
+    @Param('id') id: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
+    return this.shipmentsService.startDelivery(id, latitude, longitude);
   }
 
   @UseGuards(DeliveryPartnerJwtGuard)
   @Patch(':id/complete-delivery')
-  async completeDelivery(@Param('id') id: string) {
-    return this.shipmentsService.completeDelivery(id);
+  async completeDelivery(
+    @Param('id') id: string,
+    @Body('latitude') latitude?: number,
+    @Body('longitude') longitude?: number,
+  ) {
+    return this.shipmentsService.completeDelivery(id, latitude, longitude);
   }
 
   @UseGuards(DeliveryPartnerJwtGuard)

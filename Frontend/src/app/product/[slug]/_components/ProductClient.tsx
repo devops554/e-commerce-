@@ -229,6 +229,8 @@ export default function ProductPage() {
                         <ProductSpecifications
                             specifications={product.specifications}
                             attributes={product.attributes}
+                            weightKg={selectedVariant?.weightKg}
+                            dimensionsCm={selectedVariant?.dimensionsCm}
                         />
                         <ProductDescription
                             shortDescription={product.shortDescription}

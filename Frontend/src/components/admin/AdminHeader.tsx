@@ -271,7 +271,7 @@ export default function AdminHeader({ user: propUser }: AdminHeaderProps) {
                             <div className="grid gap-1 py-1">
                                 <DropdownMenuItem
                                     onClick={() => isManager ? router.push('/manager/profile') : router.push('/admin/profile')}
-                                    className="px-3 py-2.5 rounded-xl cursor-not-allowed opacity-50 focus:bg-rose-50"
+                                    className="px-3 py-2.5 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors"
                                 >
                                     <User className="mr-3 h-4 w-4 text-rose-400" />
                                     <span className="text-sm font-medium">My Profile</span>

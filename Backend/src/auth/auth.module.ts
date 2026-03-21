@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,12 +7,14 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './auth.guard';
+import { RolesGuard } from './roles.guard';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Otp, OtpSchema } from './schemas/otp.schema';
 
 import { GoogleOAuthService } from './google-oauth.service';
 import { EmailService } from './email.service';
 
+@Global()
 @Module({
   imports: [
     UsersModule,
@@ -35,9 +37,10 @@ import { EmailService } from './email.service';
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
+    RolesGuard,
     EmailService,
     GoogleOAuthService,
   ],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, JwtModule],
 })
 export class AuthModule {}

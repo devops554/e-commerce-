@@ -1,10 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ReturnReason, ReturnRequestStatus, QcGrade } from './return-enums'; // I'll create this file next
+import { encrypt, decrypt } from '../../utils/encryption.util';
 
 export type ReturnRequestDocument = ReturnRequest & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { getters: true }, toObject: { getters: true } })
 export class ReturnRequest {
   @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
   orderId: Types.ObjectId;
@@ -40,7 +41,7 @@ export class ReturnRequest {
   @Prop({
     type: [{ url: String, publicId: String }],
   })
-  evidenceMedia: { url: string; publicId: string }[];
+  evidenceMedia: { url: string; publicId?: string }[];
 
   @Prop({
     type: String,
@@ -99,6 +100,80 @@ export class ReturnRequest {
 
   @Prop()
   adminNote?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'DeliveryPartner' })
+  assignedPartnerId?: Types.ObjectId;
+
+  @Prop({ type: Date })
+  assignedAt?: Date;
+
+  @Prop({ type: Number, default: 0 })
+  assignmentAttempts: number;
+
+  @Prop({ type: Date })
+  partnerAcceptedAt?: Date;
+
+  @Prop({ type: Date })
+  partnerRejectedAt?: Date;
+
+  @Prop({ type: String })
+  partnerRejectionReason?: string;
+
+  @Prop({ type: String })
+  customerOtp?: string;
+
+  @Prop({ type: Date })
+  customerOtpVerifiedAt?: Date;
+
+  @Prop({ type: String })
+  managerOtp?: string;
+
+  @Prop({ type: Date })
+  managerOtpSentAt?: Date;
+
+  @Prop({ type: Date })
+  managerOtpVerifiedAt?: Date;
+
+  @Prop({ type: Date })
+  qcCompletedAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  qcDoneBy?: Types.ObjectId;
+
+  @Prop({
+    type: [{ url: String, publicId: String }],
+  })
+  verificationMedia: { url: string; publicId?: string }[];
+
+  @Prop({ type: String })
+  pickupNotes?: string;
+
+  @Prop({ type: Number })
+  weightKg?: number;
+
+  @Prop({
+    type: { length: Number, width: Number, height: Number },
+    _id: false
+  })
+  dimensionsCm?: { length: number; width: number; height: number };
+
+  @Prop({
+    type: {
+      accountHolderName: { type: String, get: decrypt, set: encrypt },
+      accountNumber: { type: String, get: decrypt, set: encrypt },
+      ifscCode: { type: String, get: decrypt, set: encrypt },
+      bankName: { type: String, get: decrypt, set: encrypt },
+    },
+  })
+  bankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+  };
 }
 
 export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);
+
+ReturnRequestSchema.index({ assignedPartnerId: 1 });
+ReturnRequestSchema.index({ warehouseId: 1, status: 1 });

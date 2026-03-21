@@ -8,6 +8,8 @@ export enum ShipmentType {
 
 export enum ShipmentStatus {
   ORDER_PLACED = 'ORDER_PLACED',
+  CONFIRMED = 'CONFIRMED',
+  PACKED = 'PACKED',
   ASSIGNED_TO_DELIVERY = 'ASSIGNED_TO_DELIVERY',
   ACCEPTED = 'ACCEPTED',
   PICKED_UP = 'PICKED_UP',
@@ -83,6 +85,54 @@ export class Shipment {
 
   @Prop({ default: 0 })
   commissionEarned?: number;
+
+  @Prop({ type: Number, default: 0 })
+  estimatedEarning: number;
+
+  @Prop({ type: Number, default: 0 })
+  actualEarning: number;
+
+  @Prop([{
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    timestamp: { type: Date, default: Date.now }
+  }])
+  locationHistory: { latitude: number; longitude: number; timestamp: Date }[];
+
+  // ── Commission / Logistics Metadata ──
+  @Prop({ type: Number, default: 0 })
+  distanceKm: number;
+
+  @Prop({ type: String, enum: ['small', 'medium', 'large', 'xl'], default: 'small' })
+  packageSize: string;
+
+  @Prop({ type: Number, default: 0 })
+  weightKg: number;
+
+  @Prop({
+    type: {
+      length: Number,
+      width: Number,
+      height: Number,
+    },
+  })
+  dimensionsCm?: { length: number; width: number; height: number };
+
+  @Prop({ type: Boolean, default: false })
+  codCollected: boolean;
+
+  @Prop({
+    type: String,
+    enum: ['AUTO', 'MANUAL'],
+    default: 'AUTO',
+  })
+  assignmentType: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'PartnerEarnings' })
+  earningsId?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'ReturnRequest' })
+  returnRequestId?: Types.ObjectId;
 }
 
 export const ShipmentSchema = SchemaFactory.createForClass(Shipment);

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SwiftDeliver",
+    "name": "kiranase",
     "slug": "delivery-partner-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,10 +10,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bivha.swift-deliver-partner"
+      "bundleIdentifier": "com.bivha.kiranase-deliver-partner"
     },
     "android": {
-      "package": "com.bivha.swiftdeliver.partner",
+      "package": "com.bivha.kiranase.partner",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
@@ -27,6 +27,6 @@
       "expo-video"
     ],
     "newArchEnabled": true,
-    "scheme": "swift-deliver-partner"
+    "scheme": "kiranase-deliver-partner"
   }
 }

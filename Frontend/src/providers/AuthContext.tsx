@@ -20,6 +20,7 @@ interface AuthContextType {
     login: (accessToken: string, refreshToken: string, user: User, redirectTo?: string) => void;
     logout: () => void;
     isLoaded: boolean;
+    mutate: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,8 +107,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/auth/login');
     };
 
+    const mutate = async () => {
+        try {
+            const { userService } = await import('@/services/user.service');
+            const profile = await userService.getProfile();
+            const updatedUser: User = {
+                id: profile._id,
+                email: profile.email,
+                name: profile.name,
+                role: profile.role,
+                avatar: profile.profilePic,
+            };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+        } catch (error) {
+            console.error('Failed to mutate user:', error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, accessToken, login, logout, isLoaded }}>
+        <AuthContext.Provider value={{ user, accessToken, login, logout, isLoaded, mutate }}>
             {children}
         </AuthContext.Provider>
     );

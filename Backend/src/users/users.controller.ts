@@ -22,12 +22,26 @@ import { UserRole, UserStatus } from '../users/schemas/user.schema';
 export class UsersController {
   private readonly logger = new Logger(UsersController.name);
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   getProfile(@Req() req: any) {
     return this.usersService.findById(req.user._id);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@Req() req: any, @Body() updateData: { name?: string; phone?: string; profilePic?: string }) {
+    return this.usersService.updateProfile(req.user._id, updateData);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Req() req: any, @Body() body: any) {
+    const { currentPassword, newPassword } = body;
+    await this.usersService.changePassword(req.user._id, currentPassword, newPassword);
+    return { message: 'Password updated successfully' };
   }
 
   @Post('address')
@@ -40,6 +54,18 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   removeAddress(@Req() req: any, @Param('addressId') addressId: string) {
     return this.usersService.removeAddress(req.user._id, addressId);
+  }
+
+  @Post('bank-account')
+  @UseGuards(JwtAuthGuard)
+  addBankAccount(@Req() req: any, @Body() bankAccountData: any) {
+    return this.usersService.addBankAccount(req.user._id, bankAccountData);
+  }
+
+  @Delete('bank-account/:accountId')
+  @UseGuards(JwtAuthGuard)
+  removeBankAccount(@Req() req: any, @Param('accountId') accountId: string) {
+    return this.usersService.removeBankAccount(req.user._id, accountId);
   }
 
   @Get('all')

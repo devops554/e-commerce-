@@ -9,6 +9,7 @@ import {
     ClipboardList,
     BarChart3,
     Tag,
+    UserCircle,
 } from 'lucide-react'
 
 export const managerNavigation = [
@@ -69,6 +70,11 @@ export const managerNavigation = [
         title: "Notifications",
         href: "/manager/notifications",
         icon: Bell,
+    },
+    {
+        title: 'Profile',
+        href: '/manager/profile',
+        icon: UserCircle,
     },
     {
         title: 'Settings',

@@ -196,34 +196,52 @@ export default function VariantDialog({ isOpen, onClose, onSave, initialData, is
                         </div>
                     </div>
 
-                    <div className="space-y-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                        <div className="space-y-1">
-                            <Label className="font-bold text-slate-900">Featured In</Label>
-                            <p className="text-[10px] text-slate-500 italic">Add locations where this variant should be highlighted (e.g., 'Home Page', 'Flash Sale').</p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            {(formData.isFeatured || []).map((feat: string, i: number) => (
-                                <div key={i} className="flex items-center gap-1.5 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">
-                                    {feat}
-                                    <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => removeFeature(feat)} />
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="flex gap-2">
+                    {/* Weight and Dimensions */}
+                    <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px] uppercase text-slate-500">Weight (kg)</Label>
                             <Input
-                                placeholder="e.g. Home Page"
-                                value={newFeature}
-                                onChange={(e) => setNewFeature(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                                className="rounded-xl bg-white h-10 text-sm"
+                                type="number"
+                                step="0.01"
+                                placeholder="0.0"
+                                value={formData.weightKg || ''}
+                                onChange={(e) => handleChange('weightKg', +e.target.value)}
+                                className="h-9 rounded-xl text-xs"
                             />
-                            <Button type="button" onClick={addFeature} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 px-3">
-                                <Plus size={18} />
-                            </Button>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px] uppercase text-slate-500">Length (cm)</Label>
+                            <Input
+                                type="number"
+                                placeholder="L"
+                                value={formData.dimensionsCm?.length || ''}
+                                onChange={(e) => handleChange('dimensionsCm', { ...formData.dimensionsCm, length: +e.target.value })}
+                                className="h-9 rounded-xl text-xs"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px] uppercase text-slate-500">Width (cm)</Label>
+                            <Input
+                                type="number"
+                                placeholder="W"
+                                value={formData.dimensionsCm?.width || ''}
+                                onChange={(e) => handleChange('dimensionsCm', { ...formData.dimensionsCm, width: +e.target.value })}
+                                className="h-9 rounded-xl text-xs"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px] uppercase text-slate-500">Height (cm)</Label>
+                            <Input
+                                type="number"
+                                placeholder="H"
+                                value={formData.dimensionsCm?.height || ''}
+                                onChange={(e) => handleChange('dimensionsCm', { ...formData.dimensionsCm, height: +e.target.value })}
+                                className="h-9 rounded-xl text-xs"
+                            />
                         </div>
                     </div>
+
+
 
 
                     <div className="space-y-4">

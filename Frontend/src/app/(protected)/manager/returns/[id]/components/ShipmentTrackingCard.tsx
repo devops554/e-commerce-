@@ -5,7 +5,7 @@ import { ReturnRequest } from '@/services/return.service'
 import dynamic from 'next/dynamic'
 
 // Dynamically import LiveTrackingMap to avoid SSR issues with Leaflet
-const LiveTrackingMap = dynamic(() => import('@/components/manager/LiveTrackingMap'), { 
+const LiveTrackingMap = dynamic(() => import('@/components/manager/LiveTrackingMap'), {
     ssr: false,
     loading: () => <div className="h-64 w-full bg-slate-100 animate-pulse rounded-2xl flex items-center justify-center text-slate-400 font-bold">Loading Map...</div>
 })
@@ -17,7 +17,7 @@ interface ShipmentTrackingCardProps {
 export function ShipmentTrackingCard({ request }: ShipmentTrackingCardProps) {
     // Only show if shipment exists or status is relevant for tracking
     const showTracking = ['PICKUP_SCHEDULED', 'PICKED_UP', 'RECEIVED_AT_WAREHOUSE'].includes(request.status)
-    
+
     if (!showTracking) return null
 
     // Mock/Derived coordinates for now since ReturnRequest might not have real-time partner loc yet
@@ -35,7 +35,7 @@ export function ShipmentTrackingCard({ request }: ShipmentTrackingCardProps) {
             </CardHeader>
             <CardContent className="p-0">
                 <div className="h-80 w-full relative">
-                    <LiveTrackingMap 
+                    <LiveTrackingMap
                         warehouseLoc={warehouseLoc}
                         customerLoc={customerLoc}
                         orderStatus={request.status.toLowerCase()}

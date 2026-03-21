@@ -28,9 +28,16 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import UploadDocumentsScreen from '../screens/profile/UploadDocumentsScreen';
 import ViewDocumentScreen from '../screens/profile/ViewDocumentScreen';
+import PayoutSettingsScreen from '../screens/profile/PayoutSettingsScreen';
+import SupportScreen from '../screens/profile/SupportScreen';
+import NotificationSettingsScreen from '../screens/profile/NotificationSettingsScreen';
+import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
+import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import { Colors, FontSize } from '../utils/theme';
 import ActiveOrdersListScreen from '../screens/orders/Activeorderslistscreen';
 import ReturnItemReviewScreen from '../screens/orders/ReturnItemReviewScreen';
+import EarningsScreen from '../screens/earnings/EarningsScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -143,7 +150,21 @@ function MainTabs() {
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
+        name="Earnings"
+        component={EarningsScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name="cash-outline"
+              nameFocused="cash"
+              label="Earnings"
+              focused={focused}
+            />
+          ),
+        }}
+      /> */}
+      {/* <Tab.Screen
         name="Wallet"
         component={WalletScreen}
         options={{
@@ -156,7 +177,7 @@ function MainTabs() {
             />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -211,7 +232,7 @@ function RootNavigator() {
     return (
       <View style={styles.splash}>
         <Text style={styles.splashLogo}>🛵</Text>
-        <Text style={styles.splashName}>SwiftDeliver</Text>
+        <Text style={styles.splashName}>kiranase</Text>
         <ActivityIndicator color={Colors.white} style={{ marginTop: 40 }} />
       </View>
     );
@@ -268,6 +289,36 @@ function RootNavigator() {
             name="ReturnItemReview"
             component={ReturnItemReviewScreen}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Earnings"
+            component={EarningsScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="PayoutSettings"
+            component={PayoutSettingsScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="OrderDetail"
+            component={OrderDetailScreen}
+            options={{ animation: 'slide_from_right', headerShown: false }}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={{ animation: 'slide_from_right', headerShown: false }}
+          />
+          <Stack.Screen
+            name="NotificationSettings"
+            component={NotificationSettingsScreen}
+            options={{ animation: 'slide_from_right', headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{ animation: 'slide_from_right', headerShown: false }}
           />
         </>
       )}

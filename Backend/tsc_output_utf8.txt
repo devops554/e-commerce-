@@ -1,0 +1,577 @@
+﻿src/delivery-partners/schemas/delivery-partner.schema.ts(8,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "name"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(11,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "phone"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "email"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(17,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "password"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(20,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "vehicleType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(26,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "vehicleNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(29,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "licenseNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(32,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, ObjectId[]> & { name: "warehouseIds"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(38,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "availabilityStatus"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(44,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "accountStatus"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(50,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "blockReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(53,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { latitude: number; longitude: number; lastUpdated: Date; }> & { name: "currentLocation"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(66,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, number> & { name: "totalDeliveries"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(69,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, number> & { name: "rating"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(72,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { aadhaarNumber: string; aadhaarImage: string; panNumber: string; panImage: string; drivingLicenseImage: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(89,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "profileImage"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(92,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, string> & { name: "bloodGroup"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(95,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { addressLine?: string; city?: string; state?: string; country: string; pincode?: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(112,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { addressLine?: string; city?: string; state?: string; country: string; pincode?: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(129,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { method: "BANK" | "UPI"; accountNumber?: string; ifsc?: string; upiId?: string; razorpayContactId?: string; razorpayFundAccountId?: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/delivery-partners/schemas/delivery-partner.schema.ts(148,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<DeliveryPartner, { push: boolean; sms: boolean; }> & { name: "notificationSettings"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "title"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "message"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(21,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "type"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(28,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, boolean> & { name: "isRead"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "recipientRole"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(34,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "recipientId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(37,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, string> & { name: "link"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/notifications/schemas/notification.schema.ts(40,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Notification, any> & { name: "metadata"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(34,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "orderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(37,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, ObjectId> & { name: "user"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(40,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, { _id: ObjectId; product: ObjectId; variant: ObjectId; warehouse: ObjectId; quantity: number; price: number; title: string; image?: string; ... 18 more ...; sellerStateCode: string; }[]> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(119,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "subTotal"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(122,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "totalCgst"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(125,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "totalSgst"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(128,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "totalIgst"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(131,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "totalGstAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(134,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "shippingCharge"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(137,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, number> & { name: "totalAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(141,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, boolean> & { name: "isInterState"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(144,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "invoiceNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(147,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, Date> & { name: "invoiceDate"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(150,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "estimatedTime"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(154,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, PaymentMethod> & { name: "paymentMethod"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(157,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, PaymentStatus> & { name: "paymentStatus"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(160,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, OrderStatus> & { name: "orderStatus"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(163,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, { fullName: string; phone: string; street: string; landmark?: string; city: string; state: string; postalCode: string; country: string; location?: { latitude: number; longitude: number; }; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(189,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "razorpayOrderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(192,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "razorpayPaymentId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(195,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "razorpaySignature"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(198,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, boolean> & { name: "isStockDeducted"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(201,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, boolean> & { name: "isDeleted"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(204,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "cancelReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(207,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, string> & { name: "cancelBy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(210,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, Date> & { name: "cancelAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(213,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, Date> & { name: "deliveredAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/order.schema.ts(216,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Order, { actor: ObjectId; actorRole: string; action: string; status: OrderStatus; note?: string; timestamp: Date; }[]> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(10,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "orderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(13,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "orderItemId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(16,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "productId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(19,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "variantId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(22,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(25,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "sellerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(28,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "warehouseId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ReturnReason> & { name: "reason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(38,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "reasonDescription"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(41,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, { url: string; publicId?: string; }[]> & { name: "evidenceMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(46,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ReturnRequestStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(53,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "approvedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(56,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "rejectedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(59,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "rejectionReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(62,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "returnShipmentId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(65,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, QcGrade> & { name: "warehouseQcGrade"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(71,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "warehouseQcNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(74,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "warehouseReceivedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(77,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "refundMethod"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(80,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, number> & { name: "refundAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(83,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, number> & { name: "gstReversalAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(86,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "refundTransactionId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(89,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "refundInitiatedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(92,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "refundCompletedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(95,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, number> & { name: "quantity"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(98,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "reviewedBy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(101,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "adminNote"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(104,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "assignedPartnerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(107,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "assignedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(110,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, number> & { name: "assignmentAttempts"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(113,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "partnerAcceptedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(116,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "partnerRejectedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(119,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "partnerRejectionReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(122,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "customerOtp"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(125,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "customerOtpVerifiedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(128,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "managerOtp"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(131,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "managerOtpSentAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(134,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "managerOtpVerifiedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(137,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, Date> & { name: "qcCompletedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(140,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, ObjectId> & { name: "qcDoneBy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(143,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, { url: string; publicId?: string; }[]> & { name: "verificationMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(148,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, string> & { name: "pickupNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(151,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, number> & { name: "weightKg"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(154,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, { length: number; width: number; height: number; }> & { name: "dimensionsCm"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/orders/schemas/return-request.schema.ts(160,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnRequest, { accountHolderName: string; accountNumber: string; ifscCode: string; bankName: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/payments.service.ts(23,5): error TS1206: Decorators are not valid here.
+src/payments/razorpay-payout.service.ts(16,5): error TS1206: Decorators are not valid here.
+src/payments/schemas/payment-history.schema.ts(6,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "orderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(9,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "razorpayOrderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(12,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "razorpayPaymentId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(15,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, number> & { name: "amount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(18,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "currency"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(21,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(24,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "method"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(27,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "email"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(30,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "contact"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(33,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, any> & { name: "rawResponse"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(36,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "type"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(39,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "razorpayPayoutId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(42,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "error_code"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(45,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "error_description"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/payments/schemas/payment-history.schema.ts(48,6): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<PaymentHistory, string> & { name: "event"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(38,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, boolean> & { name: "isReturnable"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(41,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, number> & { name: "windowValue"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(44,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, ReturnWindowUnit> & { name: "windowUnit"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(51,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, ReturnCondition[]> & { name: "conditions"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(58,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, boolean> & { name: "requiresQcPhoto"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(61,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, boolean> & { name: "doorstepQcRequired"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(64,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, RefundMethod[]> & { name: "refundMethods"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(71,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, ExchangeAllowed> & { name: "exchangeAllowed"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(78,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, string[]> & { name: "nonReturnableReasons"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(81,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, string[]> & { name: "excludedSkuPatterns"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(84,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ReturnPolicy, string> & { name: "internalNote"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(92,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Faq, string> & { name: "question"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(95,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Faq, string> & { name: "answer"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(98,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Faq, boolean> & { name: "isActive"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(111,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "title"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(114,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "slug"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(117,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, Faq[]> & { name: "faqs"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(120,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "description"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(123,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "shortDescription"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(126,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "productType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(129,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "category"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(132,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "subCategory"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(135,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "brand"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(138,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "baseSku"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(142,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { url: string; publicId: string; }> & { name: "thumbnail"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(153,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { url: string; publicId: string; }[]> & { name: "images"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(157,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "availableSizes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(160,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "availableColors"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(163,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "availableStorage"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(166,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "availableModels"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(170,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, number> & { name: "ratingsAverage"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(173,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, number> & { name: "ratingsCount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(176,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "keywords"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(180,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { name?: string; address?: string; countryOfOrigin?: string; selfLife?: string; }> & { name: "manufacturerInfo"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(196,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { materialtype?: string; ingredients?: string; nutritionalInfo?: string; usage?: string; dietryPreference?: string; storage?: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(216,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { name: string; value: string; }[]> & { name: "attributes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(222,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "disclaimer"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(225,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "warranty"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(228,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { name?: string; address?: string; email?: string; phone?: string; profilePic?: string; }> & { name: "customerCareDetails"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(247,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { metaTitle?: string; metaDescription?: string; keywords?: string[]; }> & { name: "seo"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(262,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, { hsnCode: string; gstRate: number; includedInPrice: boolean; }> & { name: "gst"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(277,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ReturnPolicy> & { name: "returnPolicy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(281,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "createdBy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(284,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "updatedBy"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(287,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, boolean> & { name: "isNewArrival"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(290,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, boolean> & { name: "isActive"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(293,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, boolean> & { name: "isDeleted"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(296,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string[]> & { name: "tags"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(299,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, Record<string, any>> & { name: "specifications"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(302,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, number> & { name: "order"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(305,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, ObjectId> & { name: "seller"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(308,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Product, string> & { name: "sellerStateCode"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(325,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, ObjectId> & { name: "product"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(328,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, string> & { name: "sku"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(331,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, number> & { name: "price"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(334,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, number> & { name: "discount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(337,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, number> & { name: "discountPrice"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(340,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, { name?: string; value?: string; }> & { name: "unit"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(346,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, { name: string; value: string; }[]> & { name: "attributes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(352,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, string[]> & { name: "isFeatured"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(355,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, { url: string; publicId: string; }[]> & { name: "images"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(358,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, boolean> & { name: "isActive"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(362,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, number> & { name: "weightKg"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/products/schemas/product.schema.ts(365,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ProductVariant, { length: number; width: number; height: number; }> & { name: "dimensionsCm"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/approve-return.dto.ts(4,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ApproveReturnDto, string> & { name: "adminNote"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/approve-return.dto.ts(4,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<ApproveReturnDto, string> & { name: "adminNote"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/assign-partner.dto.ts(4,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<AssignPartnerDto, string> & { name: "deliveryPartnerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/assign-partner.dto.ts(5,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<AssignPartnerDto, string> & { name: "deliveryPartnerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(7,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<MediaDto, string> & { name: "url"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(8,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<MediaDto, string> & { name: "publicId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(8,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<MediaDto, string> & { name: "publicId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(12,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<BankDetailsDto, string> & { name: "accountHolderName"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(13,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<BankDetailsDto, string> & { name: "accountNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<BankDetailsDto, string> & { name: "ifscCode"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<BankDetailsDto, string> & { name: "bankName"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(19,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, string> & { name: "orderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(20,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, string> & { name: "orderItemId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(21,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, ReturnReason> & { name: "reason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(22,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, string> & { name: "reasonDescription"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(22,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, string> & { name: "reasonDescription"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(23,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, MediaDto[]> & { name: "evidenceMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(23,15): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, MediaDto[]> & { name: "evidenceMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(23,47): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, MediaDto[]> & { name: "evidenceMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(25,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, number> & { name: "quantity"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(25,16): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, number> & { name: "quantity"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(26,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, RefundMethod> & { name: "refundMethod"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(27,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, BankDetailsDto> & { name: "bankDetails"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(27,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, BankDetailsDto> & { name: "bankDetails"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/create-return.dto.ts(27,36): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateReturnDto, BankDetailsDto> & { name: "bankDetails"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/qc-result.dto.ts(5,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<QcResultDto, QcGrade> & { name: "qcGrade"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/qc-result.dto.ts(6,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<QcResultDto, string> & { name: "qcNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/qc-result.dto.ts(6,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<QcResultDto, string> & { name: "qcNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(5,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, number> & { name: "refundAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(5,16): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, number> & { name: "refundAmount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(6,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, RefundMethod> & { name: "refundMethod"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(7,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, string> & { name: "refundTransactionId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(7,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, string> & { name: "refundTransactionId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(8,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, string> & { name: "note"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/refund.dto.ts(8,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RefundDto, string> & { name: "note"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/reject-return.dto.ts(4,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RejectReturnDto, string> & { name: "rejectionReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/reject-return.dto.ts(5,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<RejectReturnDto, string> & { name: "rejectionReason"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(6,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, boolean> & { name: "itemsCorrect"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(7,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, MediaDto[]> & { name: "verificationMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(7,15): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, MediaDto[]> & { name: "verificationMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(7,47): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, MediaDto[]> & { name: "verificationMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(9,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, string> & { name: "pickupNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(9,18): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, string> & { name: "pickupNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(10,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, number> & { name: "weightKg"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/dto/verify-pickup.dto.ts(11,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<VerifyPickupDto, { length: number; width: number; height: number; }> & { name: "dimensionsCm"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/return/return.service.ts(22,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(23,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(24,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(25,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(26,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(27,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(28,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(29,5): error TS1206: Decorators are not valid here.
+src/return/return.service.ts(30,5): error TS1206: Decorators are not valid here.
+src/shipments/schemas/shipment.schema.ts(28,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ObjectId> & { name: "orderId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ObjectId> & { name: "warehouseId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(34,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ObjectId> & { name: "deliveryPartnerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(37,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "trackingNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(40,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ShipmentType> & { name: "type"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(47,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ShipmentStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(54,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "assignedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(57,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "acceptedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(60,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "pickedAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(63,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "outForDeliveryAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(66,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "deliveredAt"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(68,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "pickupOtp"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(71,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "pickupOtpExpires"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(74,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "deliveryOtp"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(77,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, Date> & { name: "deliveryOtpExpires"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(80,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, { url: string; publicId: string; }[]> & { name: "verificationMedia"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(83,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "pickupNotes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(86,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, number> & { name: "commissionEarned"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(89,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, number> & { name: "estimatedEarning"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(92,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, number> & { name: "actualEarning"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(95,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, { latitude: number; longitude: number; timestamp: Date; }[]> & { name: "locationHistory"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(103,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, number> & { name: "distanceKm"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(106,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "packageSize"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(109,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, number> & { name: "weightKg"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(112,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, { length: number; width: number; height: number; }> & { name: "dimensionsCm"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(121,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, boolean> & { name: "codCollected"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(124,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, string> & { name: "assignmentType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/shipments/schemas/shipment.schema.ts(131,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Shipment, ObjectId> & { name: "earningsId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(8,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, ObjectId> & { name: "product"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(11,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, ObjectId> & { name: "variant"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, ObjectId> & { name: "warehouse"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(17,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, number> & { name: "quantity"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(20,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, number> & { name: "totalReceived"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(23,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, number> & { name: "totalDispatched"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(26,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, number> & { name: "reserved"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/inventory.schema.ts(29,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Inventory, ObjectId> & { name: "seller"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, ObjectId> & { name: "product"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(21,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, ObjectId> & { name: "variant"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(24,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, ObjectId> & { name: "warehouse"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(27,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, StockActionType> & { name: "type"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(30,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, number> & { name: "amount"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(33,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, ObjectId> & { name: "actor"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(36,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, string> & { name: "referenceId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(39,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, string> & { name: "source"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/stock-history.schema.ts(42,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<StockHistory, string> & { name: "notes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(9,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, string> & { name: "code"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(12,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, string> & { name: "name"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, ObjectId> & { name: "managerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, { contactPerson: string; phone: string; email: string; }> & { name: "contact"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, { addressLine1: string; addressLine2?: string; city: string; state: string; country: string; pincode: string; }> & { ...; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(50,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, { latitude: number; longitude: number; }> & { name: "location"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(61,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, { totalCapacity: number; usedCapacity: number; }> & { name: "capacity"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(72,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, string> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(78,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, boolean> & { name: "isPickupAvailable"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(81,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, boolean> & { name: "isDeliveryAvailable"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(84,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, boolean> & { name: "isDefaultWarehouse"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/warehouses/schemas/warehouse.schema.ts(87,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<Warehouse, string> & { name: "notes"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.

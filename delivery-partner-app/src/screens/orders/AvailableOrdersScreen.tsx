@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useAvailableOrders, useAcceptOrder, useRejectOrder } from '../../hooks/useQueries';
+import { useAvailableOrders, useAcceptOrder, useRejectOrder, useAcceptReturn, useRejectReturnRequest } from '../../hooks/useQueries';
 import { socketService } from '../../services/socketService';
 import { Shipment } from '../../types';
 import { EmptyState } from '../../components/ui';
@@ -103,24 +104,24 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
   // If REVERSE: Pickup is from Customer, Delivery is to Warehouse
   const pickupLabel = isReverse ? 'RETURN PICKUP' : 'PICKUP FROM';
   const dropoffLabel = isReverse ? 'WAREHOUSE DESTINATION' : 'DELIVERY ADDRESS';
-  
+
   const pickupName = isReverse ? order.user?.name || 'Customer' : warehouseName;
-  const pickupAddress = isReverse 
+  const pickupAddress = isReverse
     ? [order.shippingAddress.street, order.shippingAddress.city].filter(Boolean).join(', ')
     : warehouseAddress;
 
-  const dropoffAddress = isReverse 
+  const dropoffAddress = isReverse
     ? {
-        fullName: warehouseName,
-        phone: '', // Warehouse phone usually not needed for dropoff display here
-        street: warehouse?.address?.addressLine1 || '',
-        landmark: warehouse?.address?.addressLine2 || '',
-        city: warehouse?.address?.city || '',
-        state: warehouse?.address?.state || '',
-        postalCode: warehouse?.address?.pincode || '',
-        country: warehouse?.address?.country || 'India',
-        location: warehouse?.location
-      } 
+      fullName: warehouseName,
+      phone: '', // Warehouse phone usually not needed for dropoff display here
+      street: warehouse?.address?.addressLine1 || '',
+      landmark: warehouse?.address?.addressLine2 || '',
+      city: warehouse?.address?.city || '',
+      state: warehouse?.address?.state || '',
+      postalCode: warehouse?.address?.pincode || '',
+      country: warehouse?.address?.country || 'India',
+      location: warehouse?.location
+    }
     : order.shippingAddress;
 
   return (
@@ -131,8 +132,8 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
       {/* ── Card Header ── */}
       <LinearGradient
-        colors={isReverse 
-          ? [Colors.secondary || '#8B5CF6', '#A78BFA'] 
+        colors={isReverse
+          ? [Colors.secondary || '#8B5CF6', '#A78BFA']
           : [Colors.primary + 'F0', Colors.primaryLight || '#818CF8']
         }
         style={styles.cardHeader}
@@ -144,7 +145,9 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
         <View style={styles.cardHeaderContent}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.cardHeaderLabel}>{isReverse ? 'RETURN REQUEST' : 'ORDER REQUEST'}</Text>
+            <Text style={styles.cardHeaderLabel}>
+              {shipment.deliveryPartnerId ? (isReverse ? 'RETURN REQUEST' : 'ORDER REQUEST') : 'POOL ORDER'}
+            </Text>
             <Text style={styles.cardOrderId} numberOfLines={1}>#{order.orderId}</Text>
             <View style={styles.cardHeaderMeta}>
               <Ionicons name={isReverse ? "return-up-back" : "cube-outline"} size={12} color="rgba(255,255,255,0.75)" />
@@ -159,18 +162,34 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
                 </>
               )}
             </View>
+            {/* Explicit Order Type Badge */}
+            <View style={styles.typeBadgeRow}>
+              <View style={[styles.typeBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Text style={styles.typeBadgeText}>
+                  {isReverse ? 'REVERSE RETURN' : 'FORWARD DELIVERY'}
+                </Text>
+              </View>
+            </View>
           </View>
 
           {/* Payment badge */}
-          <View style={[styles.paymentBadge, { backgroundColor: cod ? '#FEF3C7' : '#D1FAE5' }]}>
-            <Ionicons
-              name={cod ? 'cash' : 'checkmark-circle'}
-              size={14}
-              color={cod ? '#D97706' : '#059669'}
-            />
-            <Text style={[styles.paymentBadgeText, { color: cod ? '#D97706' : '#059669' }]}>
-              {cod ? 'COD' : 'PAID'}
-            </Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {!shipment.deliveryPartnerId && (
+              <View style={[styles.paymentBadge, { backgroundColor: '#E0E7FF' }]}>
+                <Ionicons name="people" size={12} color="#4338CA" />
+                <Text style={[styles.paymentBadgeText, { color: '#4338CA' }]}>POOL</Text>
+              </View>
+            )}
+            <View style={[styles.paymentBadge, { backgroundColor: cod ? '#FEF3C7' : '#D1FAE5' }]}>
+              <Ionicons
+                name={cod ? 'cash' : 'checkmark-circle'}
+                size={14}
+                color={cod ? '#D97706' : '#059669'}
+              />
+              <Text style={[styles.paymentBadgeText, { color: cod ? '#D97706' : '#059669' }]}>
+                {cod ? 'COD' : 'PAID'}
+              </Text>
+            </View>
           </View>
         </View>
       </LinearGradient>
@@ -189,8 +208,8 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
               highlight
             />
           )}
-          {shipment.distance !== undefined && (
-            <InfoItem icon="navigate-outline" label="Distance" value={`${shipment.distance} km`} />
+          {shipment.distanceKm !== undefined && (
+            <InfoItem icon="navigate-outline" label="Distance" value={`${shipment.distanceKm} km`} />
           )}
           <InfoItem icon="barcode-outline" label="Tracking" value={shipment.trackingNumber} />
         </View>
@@ -220,13 +239,12 @@ const OrderRequestCard: React.FC<OrderCardProps> = ({
 
         <View style={styles.divider} />
 
-        {/* Delivery Address / Warehouse Destination */}
         <DeliveryAddressCard
           address={dropoffAddress as any}
           label={dropoffLabel}
           partnerLocation={partnerLocation}
           warehouseLocation={isReverse ? null : warehouseLocation}
-          backendDistanceKm={shipment.distance}
+          backendDistanceKm={shipment.distanceKm}
         />
 
         {/* ── Actions ── */}
@@ -277,6 +295,8 @@ export default function AvailableOrdersScreen() {
   const { data: shipments, isLoading, refetch } = useAvailableOrders();
   const acceptOrder = useAcceptOrder();
   const rejectOrder = useRejectOrder();
+  const acceptReturn = useAcceptReturn();
+  const rejectReturn = useRejectReturnRequest();
 
   const headerFade = useRef(new Animated.Value(0)).current;
 
@@ -288,7 +308,23 @@ export default function AvailableOrdersScreen() {
 
   const handleAccept = async (shipmentId: string) => {
     try {
-      await acceptOrder.mutateAsync({ shipmentId });
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      let latitude, longitude;
+
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        latitude = loc.coords.latitude;
+        longitude = loc.coords.longitude;
+      }
+
+      if (shipmentId && shipments) {
+        const shipment = shipments.find(s => s._id === shipmentId);
+        if (shipment?.type === 'REVERSE') {
+          await acceptReturn.mutateAsync(shipmentId);
+        } else {
+          await acceptOrder.mutateAsync({ shipmentId, latitude, longitude });
+        }
+      }
       navigation.navigate('ActiveDelivery', { shipmentId });
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not accept order');
@@ -301,7 +337,14 @@ export default function AvailableOrdersScreen() {
       {
         text: 'Reject',
         style: 'destructive',
-        onPress: async () => { await rejectOrder.mutateAsync({ shipmentId }); },
+        onPress: async () => {
+          const shipment = shipments?.find(s => s._id === shipmentId);
+          if (shipment?.type === 'REVERSE') {
+            await rejectReturn.mutateAsync({ shipmentId, reason: 'Rejected by partner' });
+          } else {
+            await rejectOrder.mutateAsync({ shipmentId });
+          }
+        },
       },
     ]);
   };
@@ -520,6 +563,20 @@ const styles = StyleSheet.create({
   cardOrderId: {
     fontSize: FontSize.lg, fontWeight: '900',
     color: Colors.white, letterSpacing: -0.3,
+  },
+  typeBadgeRow: { flexDirection: 'row', marginTop: 6 },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: Colors.white,
+    letterSpacing: 0.5,
   },
   cardHeaderMeta: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4,

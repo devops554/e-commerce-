@@ -3,19 +3,21 @@
 import React, { useState, useEffect } from 'react'
 import { useManagerWarehouse } from '@/hooks/useWarehouses'
 import { useOrderAnalytics } from '@/hooks/useOrders'
+import { useWarehouseReturnAnalytics } from '@/hooks/useReturns'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OrderChart } from '@/components/manager/OrderChart'
-import { 
-    TrendingUp, 
-    ShoppingCart, 
-    CheckCircle, 
-    Clock, 
-    Package, 
+import {
+    TrendingUp,
+    ShoppingCart,
+    CheckCircle,
+    Clock,
+    Package,
     Truck,
     IndianRupee,
     ArrowUpRight,
-    Calendar
+    Calendar,
+    RotateCcw
 } from 'lucide-react'
 import {
     Select,
@@ -55,6 +57,7 @@ export default function OrderAnalysisPage() {
     const { data: warehouse, isLoading: isWhLoading } = useManagerWarehouse()
     const [range, setRange] = useState('7d')
     const { data: stats, isLoading: isStatsLoading } = useOrderAnalytics(warehouse?._id || '', range)
+    const { data: returnStats, isLoading: isReturnsLoading } = useWarehouseReturnAnalytics(range)
 
     useEffect(() => {
         setBreadcrumbs([
@@ -64,7 +67,7 @@ export default function OrderAnalysisPage() {
         ])
     }, [setBreadcrumbs])
 
-    if (isWhLoading || (isStatsLoading && !stats)) {
+    if (isWhLoading || (isStatsLoading && !stats) || (isReturnsLoading && !returnStats)) {
         return (
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -163,8 +166,8 @@ export default function OrderAnalysisPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <OrderChart 
-                        title="Revenue Overview" 
+                    <OrderChart
+                        title="Revenue Overview"
                         description="Daily earnings from delivered orders"
                         type="area"
                         data={stats?.chartData || []}
@@ -175,8 +178,8 @@ export default function OrderAnalysisPage() {
                     />
                 </div>
                 <div className="lg:col-span-1">
-                    <OrderChart 
-                        title="Order Status distribution" 
+                    <OrderChart
+                        title="Order Status distribution"
                         description="Breakdown of current order pipeline"
                         type="pie"
                         data={statusDistribution}
@@ -188,8 +191,8 @@ export default function OrderAnalysisPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OrderChart 
-                    title="Order Volume" 
+                <OrderChart
+                    title="Order Volume"
                     description="Daily count of incoming orders"
                     type="bar"
                     data={stats?.chartData || []}
@@ -197,8 +200,8 @@ export default function OrderAnalysisPage() {
                     dataKey="orders"
                     color="#3B82F6"
                 />
-                <OrderChart 
-                    title="Performance Radar" 
+                <OrderChart
+                    title="Performance Radar"
                     description="Operational efficiency metrics"
                     type="radar"
                     data={radarData}
@@ -207,10 +210,10 @@ export default function OrderAnalysisPage() {
                     color="#F59E0B"
                 />
             </div>
-            
+
             <div className="grid grid-cols-1 gap-6">
-                <OrderChart 
-                    title="Growth Trend" 
+                <OrderChart
+                    title="Growth Trend"
                     description="Cumulative order growth trajectory"
                     type="line"
                     data={stats?.chartData || []}
@@ -218,6 +221,65 @@ export default function OrderAnalysisPage() {
                     dataKey="orders"
                     color="#10B981"
                 />
+            </div>
+
+            {/* Return Analytics Section */}
+            <div className="pt-10 mt-10 border-t border-slate-100">
+                <div className="mb-6">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <RotateCcw className="h-6 w-6 text-rose-500" />
+                        Warehouse Return Operations
+                    </h2>
+                    <p className="text-slate-500 font-bold mt-1">Returns processed through this warehouse</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <StatCard
+                        title="Total Returns"
+                        value={returnStats?.totalReturns || 0}
+                        icon={RotateCcw}
+                        color="bg-rose-50 text-rose-600"
+                    />
+                    <StatCard
+                        title="Pending Returns"
+                        value={returnStats?.pendingReturns || 0}
+                        icon={Clock}
+                        color="bg-amber-50 text-amber-600"
+                    />
+                    <StatCard
+                        title="Completed Returns"
+                        value={returnStats?.completedReturns || 0}
+                        icon={CheckCircle}
+                        color="bg-emerald-50 text-emerald-600"
+                    />
+                    <StatCard
+                        title="Total Refunded"
+                        value={`₹${(returnStats?.totalRefundedAmount || 0).toLocaleString()}`}
+                        icon={IndianRupee}
+                        color="bg-violet-50 text-violet-600"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <OrderChart
+                        title="Return Volume"
+                        description="Daily warehouse return requests"
+                        type="bar"
+                        data={returnStats?.chartData || []}
+                        categoryKey="date"
+                        dataKey="returns"
+                        color="#F43F5E"
+                    />
+                    <OrderChart
+                        title="Refunded Trajectory"
+                        description="Daily value of processed refunds"
+                        type="area"
+                        data={returnStats?.chartData || []}
+                        categoryKey="date"
+                        dataKey="refunded"
+                        color="#8B5CF6"
+                    />
+                </div>
             </div>
         </div>
     )

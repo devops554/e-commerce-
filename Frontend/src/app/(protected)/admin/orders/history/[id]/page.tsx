@@ -38,6 +38,7 @@ export default function AdminOrderHistoryDetailPage() {
     const { data: shipmentData, isLoading: isShipmentLoading } = useShipments({ orderId: id })
 
     const shipmentId = shipmentData?.data?.[0]?._id
+    if (!shipmentId) return <NotFound onBack={() => router.back()} />
     const { data: trackingHistory } = useTrackingHistory(shipmentId)
 
     useEffect(() => {

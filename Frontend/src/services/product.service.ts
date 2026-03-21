@@ -154,6 +154,12 @@ export interface ProductVariant {
     }[];
     isFeatured?: string[];
     images: ImageAsset[];
+    weightKg?: number;
+    dimensionsCm?: {
+        length: number;
+        width: number;
+        height: number;
+    };
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

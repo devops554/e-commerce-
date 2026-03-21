@@ -77,6 +77,7 @@ export class Order extends Document {
     },
   ])
   items: {
+    _id: Types.ObjectId;
     product: Types.ObjectId;
     variant: Types.ObjectId;
     warehouse: Types.ObjectId;

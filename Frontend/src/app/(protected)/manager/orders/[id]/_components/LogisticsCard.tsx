@@ -85,10 +85,10 @@ export function LogisticsCard({ shipment, partner, onAssignPartner, onViewPartne
                                                 <p className="text-[10px] text-slate-500 font-bold">{partner.phone || 'No phone'}</p>
                                             </div>
                                             <div className="ml-auto flex items-center gap-1">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="rounded-full h-8 w-8 cursor-pointer text-green-500" 
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="rounded-full h-8 w-8 cursor-pointer text-green-500"
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         partner.phone && window.open(`https://wa.me/${partner.phone}`, '_blank')
@@ -100,7 +100,8 @@ export function LogisticsCard({ shipment, partner, onAssignPartner, onViewPartne
                                         </div>
                                         {/* Partner Acceptance Status */}
                                         <PartnerAcceptanceBadge status={shipment.status} />
-                                        {shipment.status?.toUpperCase() === 'REJECTED' && (
+
+                                        {!["DELIVERED", "CANCELLED", "RETURNED", "OUT_FOR_DELIVERY", "PICKED_UP"].includes(shipment.status) && (
                                             <Button
                                                 onClick={onAssignPartner}
                                                 size="sm"
@@ -109,6 +110,7 @@ export function LogisticsCard({ shipment, partner, onAssignPartner, onViewPartne
                                                 Reassign to Another Partner
                                             </Button>
                                         )}
+
                                     </div>
                                 )}
                             </div>

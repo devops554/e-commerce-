@@ -96,7 +96,7 @@ export default function LoginScreen() {
             <View style={styles.logoCircle}>
               <Text style={styles.logoEmoji}>🛵</Text>
             </View>
-            <Text style={styles.appName}>SwiftDeliver</Text>
+            <Text style={styles.appName}>kiranase</Text>
             <Text style={styles.tagline}>Your delivery, your earnings</Text>
           </Animated.View>
 
@@ -188,7 +188,7 @@ export default function LoginScreen() {
 
             <Text style={styles.helpText}>
               Having trouble? Contact{' '}
-              <Text style={{ color: Colors.primary, fontWeight: '700' }}>support@swiftdeliver.in</Text>
+              <Text style={{ color: Colors.primary, fontWeight: '700' }}>care@kiranase.com</Text>
             </Text>
           </Animated.View>
         </ScrollView>
@@ -260,6 +260,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: FontSize.xxl,
+    textAlign: 'center',
     fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: 4,
@@ -267,6 +268,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: FontSize.sm,
+    textAlign: 'center',
     color: Colors.textSecondary,
     marginBottom: Spacing.xl,
   },

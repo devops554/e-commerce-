@@ -32,7 +32,11 @@ import {
   useActiveOrders,
   useVerifyPickupOtp,
   useFailDelivery,
-  useFailPickup
+  useFailPickup,
+  useSendReturnManagerOtp,
+  useVerifyReturnManagerOtp,
+  useAcceptReturn,
+  useRejectReturnRequest,
 } from '../../hooks/useQueries';
 import { Card, Divider } from '../../components/ui';
 import { Colors, Spacing, BorderRadius, FontSize, Shadow } from '../../utils/theme';
@@ -77,6 +81,10 @@ export default function ActiveDeliveryScreen() {
   const rejectOrder = useRejectOrder();
   const requestDeliveryOtp = useRequestDeliveryOtp();
   const verifyDeliveryOtp = useVerifyDeliveryOtp();
+  const sendReturnManagerOtp = useSendReturnManagerOtp();
+  const verifyReturnManagerOtp = useVerifyReturnManagerOtp();
+  const acceptReturn = useAcceptReturn();
+  const rejectReturnRequest = useRejectReturnRequest();
 
   const [failModalVisible, setFailModalVisible] = useState(false);
   const [failReason, setFailReason] = useState('');
@@ -184,7 +192,11 @@ export default function ActiveDeliveryScreen() {
   const handleStart = async () => {
     if (!shipmentId) return;
     try {
-      await startDelivery.mutateAsync(shipmentId);
+      await startDelivery.mutateAsync({
+        shipmentId,
+        latitude: partnerLocation?.latitude,
+        longitude: partnerLocation?.longitude
+      });
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Failed to start delivery');
     }
@@ -193,7 +205,11 @@ export default function ActiveDeliveryScreen() {
   const handleCancelAssignment = async () => {
     if (!shipmentId) return;
     try {
-      await rejectOrder.mutateAsync({ shipmentId });
+      if (isReverse) {
+        await rejectReturnRequest.mutateAsync({ shipmentId, reason: 'Cancelled by partner' });
+      } else {
+        await rejectOrder.mutateAsync({ shipmentId });
+      }
       setFailModalVisible(false);
       navigation.goBack();
     } catch (err: any) {
@@ -205,7 +221,8 @@ export default function ActiveDeliveryScreen() {
     if (!shipmentId) return;
     try {
       await requestDeliveryOtp.mutateAsync(shipmentId);
-      Alert.alert('Success', 'OTP sent to the customer.');
+      const target = isReverse ? 'Warehouse Manager' : 'customer';
+      Alert.alert('Success', `OTP sent to the ${target}.`);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Failed to request OTP');
     }
@@ -213,25 +230,47 @@ export default function ActiveDeliveryScreen() {
 
   const handleVerifyDelivery = async () => {
     if (!shipmentId) return;
-    // FIX: OTP length validation with proper message
     if (otpValue.trim().length !== 6) {
       Alert.alert('Invalid OTP', 'Please enter a valid 6-digit OTP.');
       return;
     }
     try {
-      await verifyDeliveryOtp.mutateAsync({ shipmentId, otp: otpValue });
-      // FIX: Close modal FIRST, then clear state, then navigate
-      // Avoids state-update-on-unmounted-component crash
+      // For REVERSE shipments (return drop-off at warehouse), use return-specific manager OTP endpoint
+      if (isReverse) {
+        await verifyReturnManagerOtp.mutateAsync({ shipmentId, otp: otpValue });
+      } else {
+        await verifyDeliveryOtp.mutateAsync({
+          shipmentId,
+          otp: otpValue,
+          latitude: partnerLocation?.latitude,
+          longitude: partnerLocation?.longitude
+        });
+      }
       setOtpModalVisible(false);
       setOtpValue('');
-      // Small delay so modal animation completes before navigation
       setTimeout(() => {
-        Alert.alert('Success', 'Order delivered successfully!', [
+        Alert.alert('Success', isReverse ? 'Return delivered to warehouse!' : 'Order delivered successfully!', [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       }, 300);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Invalid OTP. Please try again.');
+    }
+  };
+
+  const handleSendWarehouseOtp = async () => {
+    if (!shipmentId) return;
+    try {
+      if (isReverse) {
+        // For returns: use return-specific endpoint that sends OTP to warehouse manager
+        await sendReturnManagerOtp.mutateAsync(shipmentId);
+        Alert.alert('Success', 'OTP sent to the Warehouse Manager.');
+      } else {
+        await requestDeliveryOtp.mutateAsync(shipmentId);
+        Alert.alert('Success', 'OTP sent to the customer.');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Failed to send OTP');
     }
   };
 
@@ -244,7 +283,12 @@ export default function ActiveDeliveryScreen() {
       return;
     }
     try {
-      await failDelivery.mutateAsync({ orderId: shipmentId, reason: failReason });
+      await failDelivery.mutateAsync({
+        orderId: shipmentId,
+        reason: failReason,
+        latitude: partnerLocation?.latitude,
+        longitude: partnerLocation?.longitude
+      });
       setFailModalVisible(false);
       setFailReason('');
       navigation.goBack();
@@ -453,7 +497,50 @@ export default function ActiveDeliveryScreen() {
           )
         )}
 
-        {canStart && (
+        {/* For REVERSE shipments in PICKED_UP: show warehouse OTP buttons directly (skip startDelivery) */}
+        {canStart && isReverse && (
+          <View style={{ flex: 2, flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={handleSendWarehouseOtp}
+              disabled={sendReturnManagerOtp.isPending}
+              activeOpacity={0.85}
+              style={{ flex: 1 }}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#D97706']}
+                style={styles.actionBtn}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              >
+                {sendReturnManagerOtp.isPending
+                  ? <ActivityIndicator color={Colors.white} size="small" />
+                  : <>
+                    <Ionicons name="mail" size={15} color={Colors.white} />
+                    <Text style={[styles.actionBtnText, { fontSize: FontSize.sm }]}>Send OTP to Manager</Text>
+                  </>
+                }
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setOtpModalVisible(true)}
+              disabled={verifyReturnManagerOtp.isPending}
+              activeOpacity={0.85}
+              style={{ flex: 1 }}
+            >
+              <LinearGradient
+                colors={[Colors.success, '#059669']}
+                style={styles.actionBtn}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              >
+                <Ionicons name="checkmark-circle" size={15} color={Colors.white} />
+                <Text style={[styles.actionBtnText, { fontSize: FontSize.sm }]}>Enter Manager OTP</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* For FORWARD shipments in PICKED_UP: show Start Delivery button */}
+        {canStart && !isReverse && (
           <TouchableOpacity
             onPress={handleStart}
             disabled={startDelivery.isPending}
@@ -476,10 +563,11 @@ export default function ActiveDeliveryScreen() {
           </TouchableOpacity>
         )}
 
-        {canComplete && (
+        {/* Forward shipments in OUT_FOR_DELIVERY: Send OTP + Enter OTP */}
+        {canComplete && !isReverse && (
           <View style={{ flex: 2, flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
-              onPress={handleRequestDeliveryOtp}
+              onPress={handleSendWarehouseOtp}
               disabled={requestDeliveryOtp.isPending}
               activeOpacity={0.85}
               style={{ flex: 1 }}

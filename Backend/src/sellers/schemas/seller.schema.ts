@@ -1,8 +1,9 @@
 import { NextFunction } from 'express';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { encrypt, decrypt } from '../../utils/encryption.util';
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { getters: true }, toObject: { getters: true } })
 export class Seller extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user: Types.ObjectId;
@@ -36,10 +37,10 @@ export class Seller extends Document {
 
   @Prop({
     type: {
-      accountHolderName: String,
-      accountNumber: String,
-      ifscCode: String,
-      bankName: String,
+      accountHolderName: { type: String, get: decrypt, set: encrypt },
+      accountNumber: { type: String, get: decrypt, set: encrypt },
+      ifscCode: { type: String, get: decrypt, set: encrypt },
+      bankName: { type: String, get: decrypt, set: encrypt },
     },
     required: true,
   })

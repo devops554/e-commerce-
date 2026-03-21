@@ -5,6 +5,8 @@ import { BarChart2 } from 'lucide-react'
 interface Props {
     specifications?: Record<string, any>
     attributes?: { name: string; value: string }[]
+    weightKg?: number
+    dimensionsCm?: { length: number; width: number; height: number }
 }
 
 function SpecRow({ label, value }: { label: string; value: any }) {
@@ -17,10 +19,11 @@ function SpecRow({ label, value }: { label: string; value: any }) {
     )
 }
 
-export function ProductSpecifications({ specifications, attributes }: Props) {
+export function ProductSpecifications({ specifications, attributes, weightKg, dimensionsCm }: Props) {
     const hasSpecs = specifications && Object.keys(specifications).length > 0
     const hasAttrs = attributes && attributes.length > 0
-    if (!hasSpecs && !hasAttrs) return null
+    const hasShipping = weightKg || dimensionsCm
+    if (!hasSpecs && !hasAttrs && !hasShipping) return null
 
     return (
         <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-[32px] shadow-sm space-y-6">
@@ -38,6 +41,21 @@ export function ProductSpecifications({ specifications, attributes }: Props) {
                     <SpecRow label="GST Rate" value={`${specifications.gst.gstRate}%`} />
                 )}
             </div>
+
+            {hasShipping && (
+                <div className="pb-2">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Shipping Details</span>
+                    </div>
+                    {weightKg && <SpecRow label="Weight" value={`${weightKg} kg`} />}
+                    {dimensionsCm && (
+                        <SpecRow
+                            label="Dimensions (L x W x H)"
+                            value={`${dimensionsCm.length} x ${dimensionsCm.width} x ${dimensionsCm.height} cm`}
+                        />
+                    )}
+                </div>
+            )}
 
             {hasAttrs && (
                 <div className="pb-2">

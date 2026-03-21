@@ -29,7 +29,7 @@ const DeliveryPartnerDetail = ({ id }: DeliveryPartnerDetailProps) => {
 
     const { data: activeShipments, isLoading: isActiveLoading } = useShipments({
         deliveryPartnerId: id,
-        status: 'ASSIGNED_TO_DELIVERY,PICKED_UP,OUT_FOR_DELIVERY'
+        status: 'ASSIGNED_TO_DELIVERY,ACCEPTED,PICKED_UP,OUT_FOR_DELIVERY'
     })
 
     const { data: historyShipments, isLoading: isHistoryLoading } = useShipments({

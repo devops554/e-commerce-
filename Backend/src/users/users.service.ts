@@ -8,13 +8,14 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { User, UserStatus } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
   // ─── HELPER METHODS ───
 
@@ -78,6 +79,45 @@ export class UsersService {
         error.stack,
       );
       throw new InternalServerErrorException('User update failed');
+    }
+  }
+
+  async updateProfile(id: string, updateData: { name?: string; phone?: string; profilePic?: string }): Promise<User | null> {
+    try {
+      this.validateObjectId(id, 'user');
+      const user = await this.userModel.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true }
+      ).exec();
+      if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+      this.logger.log(`User profile updated: ${id}`);
+      return user;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Failed to update profile ${id}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Profile update failed');
+    }
+  }
+
+  async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      this.validateObjectId(id, 'user');
+      const user = await this.userModel.findById(id).select('+password').exec();
+      if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        throw new BadRequestException('Incorrect current password');
+      }
+
+      user.password = await bcrypt.hash(newPassword, 10);
+      await user.save();
+      this.logger.log(`User password updated: ${id}`);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Failed to change password for ${id}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Password change failed');
     }
   }
 
@@ -149,6 +189,59 @@ export class UsersService {
       throw new InternalServerErrorException('Address removal failed');
     }
   }
+
+  async addBankAccount(userId: string, bankAccountData: any): Promise<User> {
+    try {
+      this.validateObjectId(userId, 'user');
+      const user = await this.userModel.findById(userId);
+      if (!user) throw new NotFoundException('User not found');
+
+      if (bankAccountData.isDefault) {
+        user.bankAccounts?.forEach((a) => (a.isDefault = false));
+      }
+
+      if (bankAccountData._id) {
+        // Update existing
+        const index = (user.bankAccounts || []).findIndex(
+          (a) => a._id.toString() === bankAccountData._id,
+        );
+        if (index !== -1) {
+          user.bankAccounts[index] = { ...user.bankAccounts[index], ...bankAccountData };
+        } else {
+          user.bankAccounts.push(bankAccountData);
+        }
+      } else {
+        // Add new
+        if (!user.bankAccounts) user.bankAccounts = [];
+        user.bankAccounts.push(bankAccountData);
+      }
+
+      return await user.save();
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Failed to add bank account: ${error.message}`);
+      throw new InternalServerErrorException('Bank account update failed');
+    }
+  }
+
+  async removeBankAccount(userId: string, accountId: string): Promise<User> {
+    try {
+      this.validateObjectId(userId, 'user');
+      const user = await this.userModel.findById(userId);
+      if (!user) throw new NotFoundException('User not found');
+
+      user.bankAccounts = (user.bankAccounts || []).filter(
+        (a) => a._id.toString() !== accountId,
+      ) as any;
+
+      return await user.save();
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Failed to remove bank account: ${error.message}`);
+      throw new InternalServerErrorException('Bank account removal failed');
+    }
+  }
+
   async findAll(
     page = '1',
     limit = '10',

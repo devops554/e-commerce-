@@ -43,6 +43,10 @@ export const authAPI = {
     return data;
   },
 
+  changePassword: async (payload: any): Promise<void> => {
+    await apiClient.patch('/delivery/password', payload);
+  },
+
   uploadFile: async (formData: FormData): Promise<{ url: string; publicId: string }> => {
     const token = await SecureStore.getItemAsync('accessToken');
     const response = await fetch(`${BASE_URL}/delivery/upload`, {
@@ -74,8 +78,8 @@ export const ordersAPI = {
   },
 
   // accept/reject now use shipmentId
-  acceptOrder: async (shipmentId: string, orderId?: string): Promise<Order> => {
-    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/accept`);
+  acceptOrder: async (shipmentId: string, orderId?: string, latitude?: number, longitude?: number): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/accept`, { latitude, longitude });
     return data;
   },
 
@@ -89,44 +93,44 @@ export const ordersAPI = {
     return data;
   },
 
-  pickupOrder: async (shipmentId: string): Promise<Order> => {
-    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/pickup`);
+  pickupOrder: async (shipmentId: string, latitude?: number, longitude?: number): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/pickup`, { latitude, longitude });
     return data;
   },
 
-  startDelivery: async (shipmentId: string): Promise<Order> => {
-    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/start-delivery`);
+  startDelivery: async (shipmentId: string, latitude?: number, longitude?: number): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/start-delivery`, { latitude, longitude });
     return data;
   },
 
-  completeDelivery: async (shipmentId: string): Promise<Order> => {
-    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/complete-delivery`);
+  completeDelivery: async (shipmentId: string, latitude?: number, longitude?: number): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/complete-delivery`, { latitude, longitude });
     return data;
   },
 
-  failDelivery: async (shipmentId: string, reason: string): Promise<Order> => {
-    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/status`, { status: 'FAILED_DELIVERY', reason });
+  failDelivery: async (shipmentId: string, reason: string, latitude?: number, longitude?: number): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/shipments/${shipmentId}/status`, { status: 'FAILED_DELIVERY', reason, latitude, longitude });
     return data;
   },
 
   requestPickupOtp: async (shipmentId: string): Promise<void> => {
-    await apiClient.post(`/shipments/${shipmentId}/pickup-otp`);
+    await apiClient.post(`/shipments/${shipmentId}/pickup-otp/partner`);
   },
 
-  verifyPickupOtp: async (shipmentId: string, otp: string, verificationMedia?: { url: string; publicId: string }[], notes?: string): Promise<void> => {
-    await apiClient.patch(`/shipments/${shipmentId}/verify-pickup/partner`, { otp, verificationMedia, notes });
+  verifyPickupOtp: async (shipmentId: string, otp: string, verificationMedia?: { url: string; publicId: string }[], notes?: string, weightKg?: number, dimensionsCm?: { length: number; width: number; height: number }, latitude?: number, longitude?: number): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/verify-pickup/partner`, { otp, verificationMedia, notes, weightKg, dimensionsCm, latitude, longitude });
   },
 
-  failPickup: async (shipmentId: string, verificationMedia: { url: string; publicId: string }[], notes: string): Promise<void> => {
-    await apiClient.patch(`/shipments/${shipmentId}/fail-pickup/partner`, { verificationMedia, notes });
+  failPickup: async (shipmentId: string, verificationMedia: { url: string; publicId: string }[], notes: string, latitude?: number, longitude?: number): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/fail-pickup/partner`, { verificationMedia, notes, latitude, longitude });
   },
 
   requestDeliveryOtp: async (shipmentId: string): Promise<void> => {
     await apiClient.post(`/shipments/${shipmentId}/delivery-otp`);
   },
 
-  verifyDeliveryOtp: async (shipmentId: string, otp: string): Promise<void> => {
-    await apiClient.patch(`/shipments/${shipmentId}/verify-delivery`, { otp });
+  verifyDeliveryOtp: async (shipmentId: string, otp: string, latitude?: number, longitude?: number): Promise<void> => {
+    await apiClient.patch(`/shipments/${shipmentId}/verify-delivery`, { otp, latitude, longitude });
   },
 
   getOrderHistory: async (filter: 'today' | 'week' | 'month'): Promise<Shipment[]> => {
@@ -206,3 +210,85 @@ export const notificationsAPI = {
     await apiClient.patch('/delivery-partners/me/notifications/read-all');
   },
 };
+
+// ─── Returns ──────────────────────────────────────────────────────────────────
+
+export const returnsAPI = {
+  getAssignedReturns: async (): Promise<Shipment[]> => {
+    const { data } = await apiClient.get<Shipment[]>('/delivery/returns/assigned');
+    return data;
+  },
+
+  acceptReturn: async (shipmentId: string): Promise<Order> => {
+    const { data } = await apiClient.patch<Order>(`/delivery/returns/${shipmentId}/accept`);
+    return data;
+  },
+
+  rejectReturn: async (shipmentId: string, reason: string): Promise<void> => {
+    await apiClient.patch(`/delivery/returns/${shipmentId}/reject`, { rejectionReason: reason });
+  },
+
+  verifyItems: async (shipmentId: string, payload: { verificationMedia: { url: string; publicId: string }[]; notes: string; itemsCorrect: boolean }): Promise<void> => {
+    await apiClient.patch(`/delivery/returns/${shipmentId}/verify-items`, payload);
+  },
+
+  verifyCustomerOtp: async (shipmentId: string, otp: string): Promise<void> => {
+    await apiClient.post(`/delivery/returns/${shipmentId}/verify-customer-otp`, { otp });
+  },
+
+  sendManagerOtp: async (shipmentId: string): Promise<{ message: string }> => {
+    const { data } = await apiClient.post<{ message: string }>(`/delivery/returns/${shipmentId}/send-manager-otp`);
+    return data;
+  },
+
+  verifyManagerOtp: async (shipmentId: string, otp: string): Promise<void> => {
+    await apiClient.post(`/delivery/returns/${shipmentId}/verify-manager-otp`, { otp });
+  },
+
+  getReturnHistory: async (params?: any): Promise<Shipment[]> => {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : '';
+    const { data } = await apiClient.get<Shipment[]>(`/delivery/returns/history${qs}`);
+    return data;
+  },
+};
+
+// ─── Earnings / Commission ─────────────────────────────────────────────────────
+
+export const earningsAPI = {
+  getSummary: async () => {
+    const { data } = await apiClient.get('/delivery/earnings');
+    return data;
+  },
+
+  getList: async () => {
+    const { data } = await apiClient.get('/delivery/earnings');
+    return data?.recentEarnings ?? [];
+  },
+
+  getOne: async (earningsId: string) => {
+    const { data } = await apiClient.get(`/delivery/earnings/${earningsId}`);
+    return data;
+  },
+
+  getPayoutHistory: async () => {
+    const { data } = await apiClient.get('/delivery/earnings/payout-history');
+    return data;
+  },
+
+  getActiveOffers: async () => {
+    const { data } = await apiClient.get('/delivery/earnings');
+    return data?.activeOffers ?? [];
+  },
+
+  raiseDispute: async (earningsId: string, note: string) => {
+    const { data } = await apiClient.post(`/delivery/earnings/${earningsId}/dispute`, { note });
+    return data;
+  },
+
+  requestPayout: async () => {
+    const { data } = await apiClient.post('/delivery/earnings/request-payout');
+    return data;
+  },
+};
+
+

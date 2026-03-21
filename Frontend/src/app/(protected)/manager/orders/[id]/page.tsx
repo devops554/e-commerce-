@@ -58,7 +58,7 @@ export default function ManagerOrderDetailsPage() {
     const { data: warehouse, isLoading: isWarehouseLoading } = useManagerWarehouse()
     const { data: fetchOrder, isLoading: isOrderLoading, error } = useOrderById(orderId)
     const [order, setOrder] = useState<any>(null)
-    
+
     // ─────────────────────────────────────────────────────────────────
     // REUSABLE HOOK FOR REAL-TIME TRACKING
     // ─────────────────────────────────────────────────────────────────
@@ -72,8 +72,30 @@ export default function ManagerOrderDetailsPage() {
     const dispatchMutation = useDispatchItem()
     const cancelMutation = useCancelOrder()
 
-    const shipment = shipmentData?.data?.[0]
-    const partner = livePartnerLoc || shipment?.deliveryPartnerId
+    const getBestShipment = () => {
+        if (!shipmentData?.data || shipmentData.data.length === 0) return null
+
+        const priorityOrder = [
+            ShipmentStatus.OUT_FOR_DELIVERY,
+            ShipmentStatus.PICKED_UP,
+            ShipmentStatus.PACKED,
+            ShipmentStatus.ACCEPTED,
+            ShipmentStatus.ASSIGNED_TO_DELIVERY,
+            ShipmentStatus.ORDER_PLACED,
+            ShipmentStatus.CONFIRMED
+        ]
+
+        // Try to find the first one that matches our priority list
+        for (const status of priorityOrder) {
+            const found = shipmentData.data.find(s => s.status === status)
+            if (found) return found
+        }
+
+        return shipmentData.data[0]
+    }
+
+    const shipment = getBestShipment()
+    const partner = livePartnerLoc || (shipment as any)?.deliveryPartnerId
 
     useEffect(() => {
         if (fetchOrder) {

@@ -7,6 +7,7 @@ import {
   ValidateNested,
   Min,
   IsBoolean,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductAttributeDto } from './create-product.dto';
@@ -58,4 +59,17 @@ export class CreateVariantDto {
   @ValidateNested({ each: true })
   @Type(() => ImageDto)
   images: ImageDto[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weightKg?: number;
+
+  @IsOptional()
+  @IsObject()
+  dimensionsCm?: {
+    length: number;
+    width: number;
+    height: number;
+  };
 }

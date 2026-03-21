@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { encrypt, decrypt } from '../../utils/encryption.util';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -55,9 +56,31 @@ export class Address {
 
 export const AddressSchema = SchemaFactory.createForClass(Address);
 
+@Schema({ timestamps: true })
+export class BankAccount {
+  _id: Types.ObjectId;
+
+  @Prop({ required: true, get: decrypt, set: encrypt })
+  accountHolderName: string;
+
+  @Prop({ required: true, get: decrypt, set: encrypt })
+  accountNumber: string;
+
+  @Prop({ required: true, get: decrypt, set: encrypt })
+  ifscCode: string;
+
+  @Prop({ required: true, get: decrypt, set: encrypt })
+  bankName: string;
+
+  @Prop({ default: false })
+  isDefault: boolean;
+}
+
+export const BankAccountSchema = SchemaFactory.createForClass(BankAccount);
+
 export type UserDocument = User & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { getters: true }, toObject: { getters: true } })
 export class User extends Document {
   @Prop({ required: true, unique: true })
   email: string;
@@ -79,6 +102,9 @@ export class User extends Document {
 
   @Prop({ type: [AddressSchema], default: [] })
   addresses: Address[];
+
+  @Prop({ type: [BankAccountSchema], default: [] })
+  bankAccounts: BankAccount[];
 
   @Prop({ enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;

@@ -16,7 +16,8 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'RETURNED'
   | 'FAILED_DELIVERY'
-  | 'FAILED_PICKUP';
+  | 'FAILED_PICKUP'
+  | 'ASSIGNED_TO_DELIVERY';
 
 // Backend uses lowercase 'cod' | 'razorpay' — match exactly
 export type PaymentMethod = 'cod' | 'razorpay';
@@ -61,6 +62,13 @@ export interface Address {
   pincode?: string;
 }
 
+export interface PayoutMethod {
+  method: 'BANK' | 'UPI';
+  upiId?: string;
+  accountNumber?: string;
+  ifsc?: string;
+}
+
 export interface DeliveryPartner {
   _id: string;
   name: string;
@@ -79,6 +87,11 @@ export interface DeliveryPartner {
   currentLocation: CurrentLocation;
   stats: DeliveryPartnerStats;
   documents: DeliveryPartnerDocuments;
+  payoutMethod?: PayoutMethod;
+  notificationSettings?: {
+    push: boolean;
+    sms: boolean;
+  };
   token?: string;
 }
 
@@ -106,6 +119,8 @@ export interface OrderItem {
     _id: string;
     sku: string;
     images?: { url: string; publicId: string }[];
+    weightKg?: number;
+    dimensionsCm?: { length: number; width: number; height: number };
   };
   warehouse: string;
   quantity: number;
@@ -167,7 +182,10 @@ export interface Shipment {
   };
   status: ShipmentStatus;
   trackingNumber: string;
-  distance?: number;                 // km — may be added by backend
+  distanceKm?: number;               // km — added by backend
+  estimatedEarning?: number;         // estimated earning for this shipment
+  actualEarning?: number;            // actual earning after completion
+  commissionEarned?: number;         // legacy commission field, still used in some places
   estimatedTime?: number;            // minutes
   assignedAt: string;
   pickupOtp?: string;

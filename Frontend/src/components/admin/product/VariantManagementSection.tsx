@@ -104,6 +104,16 @@ function VariantCard({
                         )}
                     </div>
                 )}
+                
+                {/* Weight & Dimensions Badge */}
+                {(v.weightKg || v.dimensionsCm) && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] text-slate-500 font-bold w-fit">
+                        <Box size={10} className="text-slate-400" />
+                        {v.weightKg ? `${v.weightKg}kg` : ''}
+                        {v.weightKg && v.dimensionsCm ? ' · ' : ''}
+                        {v.dimensionsCm ? `${v.dimensionsCm.length}x${v.dimensionsCm.width}x${v.dimensionsCm.height}cm` : ''}
+                    </div>
+                )}
 
                 {/* Stock bar */}
                 <div className="flex items-center gap-2 pt-0.5">

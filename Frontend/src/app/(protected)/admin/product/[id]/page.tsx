@@ -214,8 +214,17 @@ export default function AdminProductDetailPage() {
                                         </span>
                                     </span>
                                     <span className="text-slate-600">•</span>
-                                    <Tag className="h-3.5 w-3.5 text-slate-400" />
                                     <span className="text-xs text-slate-300 font-mono">{selectedVariant?.sku}</span>
+                                    {(selectedVariant?.weightKg || selectedVariant?.dimensionsCm) && (
+                                        <>
+                                            <span className="text-slate-600">•</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {selectedVariant.weightKg ? `${selectedVariant.weightKg}kg` : ''}
+                                                {selectedVariant.weightKg && selectedVariant.dimensionsCm ? ' · ' : ''}
+                                                {selectedVariant.dimensionsCm ? `${selectedVariant.dimensionsCm.length}x${selectedVariant.dimensionsCm.width}x${selectedVariant.dimensionsCm.height}cm` : ''}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -311,7 +320,7 @@ export default function AdminProductDetailPage() {
 
                 {/* GST */}
                 {product.gst && (
-                    <div className="rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3 bg-emerald-50/20 border-emerald-100">
+                    <div className="rounded-2xl border shadow-sm p-6 space-y-3 bg-emerald-50/20 border-emerald-100">
                         <h3 className="font-bold text-emerald-800 flex items-center gap-2">
                             <Receipt className="h-4 w-4 text-emerald-600" /> Tax &amp; GST Details
                         </h3>

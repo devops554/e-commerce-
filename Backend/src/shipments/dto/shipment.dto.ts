@@ -24,6 +24,10 @@ export class CreateShipmentDto {
   @IsEnum(ShipmentType)
   @IsOptional()
   type?: ShipmentType;
+
+  @IsMongoId()
+  @IsOptional()
+  returnRequestId?: string;
 }
 
 export class AssignShipmentDto {
@@ -36,6 +40,21 @@ export class UpdateShipmentStatusDto {
   @IsEnum(ShipmentStatus)
   @IsNotEmpty()
   status: ShipmentStatus;
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @IsNumber()
+  @IsOptional()
+  latitude?: number;
+
+  @IsNumber()
+  @IsOptional()
+  longitude?: number;
+
+  @IsOptional()
+  verificationMedia?: { url: string; publicId: string }[];
 }
 
 export class UpdateTrackingLocationDto {

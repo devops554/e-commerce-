@@ -340,14 +340,41 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate('EditProfile')}
           />
           <ActionRow
+            icon="card-outline"
+            label="Payout Settings"
+            color={Colors.primary}
+            onPress={() => navigation.navigate('PayoutSettings')}
+          />
+          <ActionRow
+            icon="cash-outline"
+            label="Earnings"
+            color="#0EA5E9"
+            onPress={() => navigation.navigate('Earnings')}
+          />
+
+          {/* <ActionRow
+            icon="wallet-outline"
+            label="Wallet"
+            color="#8B5CF6"
+            onPress={() => navigation.navigate('Wallet')}
+          /> */}
+          <ActionRow
             icon="notifications-outline"
             label="Notification Settings"
-            color="#8B5CF6"
+            color="#10B981"
+            onPress={() => navigation.navigate('NotificationSettings')}
+          />
+          <ActionRow
+            icon="lock-closed-outline"
+            label="Change Password"
+            color="#F59E0B"
+            onPress={() => navigation.navigate('ChangePassword')}
           />
           <ActionRow
             icon="headset-outline"
             label="Support"
             color="#0EA5E9"
+            onPress={() => navigation.navigate('Support')}
           />
           <ActionRow
             icon="log-out-outline"
@@ -358,7 +385,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={styles.versionText}>SwiftDeliver Partner v54</Text>
+        <Text style={styles.versionText}>kiranase Partner v54</Text>
       </ScrollView>
     </SafeAreaView>
   );

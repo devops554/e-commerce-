@@ -13,8 +13,8 @@ export class TrackingHistory {
 
   @Prop({
     type: {
-      latitude: Number,
-      longitude: Number,
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true },
     },
     required: true,
   })
@@ -25,6 +25,9 @@ export class TrackingHistory {
 
   @Prop({ default: Date.now })
   timestamp: Date;
+
+  @Prop({ type: Number, default: 0 })
+  earningsChange: number;
 
   @Prop([{ url: String, publicId: String }])
   verificationMedia?: { url: string; publicId: string }[];

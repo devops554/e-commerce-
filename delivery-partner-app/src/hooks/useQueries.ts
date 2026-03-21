@@ -1,9 +1,9 @@
 // src/hooks/useQueries.ts
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authAPI, ordersAPI, locationAPI, walletAPI, dashboardAPI } from '../api/services';
+import { authAPI, ordersAPI, locationAPI, walletAPI, dashboardAPI, returnsAPI } from '../api/services';
 import { useAuthStore } from '../store/authStore';
-import { LoginCredentials, Order, Shipment } from '../types';
+import { DeliveryPartner, LoginCredentials, Order, Shipment } from '../types';
 import { socketService } from '../services/socketService';
 
 export const QUERY_KEYS = {
@@ -15,6 +15,10 @@ export const QUERY_KEYS = {
   walletSummary: ['wallet', 'summary'],
   transactions: ['wallet', 'transactions'],
   dashboardStats: ['dashboard', 'stats'],
+  returns: {
+    assigned: ['returns', 'assigned'],
+    history: (filter: string) => ['returns', 'history', filter]
+  }
 };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -39,6 +43,18 @@ export const useProfile = () => {
     queryFn: authAPI.getProfile,
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  const updatePartner = useAuthStore((s) => s.updatePartner);
+  return useMutation({
+    mutationFn: (payload: Partial<DeliveryPartner>) => authAPI.updateProfile(payload),
+    onSuccess: (data) => {
+      updatePartner(data);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+    },
   });
 };
 
@@ -68,8 +84,8 @@ export const useActiveOrder = (params?: { page?: number; limit?: number; search?
 export const useAcceptOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ shipmentId, orderId }: { shipmentId: string; orderId?: string }) =>
-      ordersAPI.acceptOrder(shipmentId, orderId),
+    mutationFn: ({ shipmentId, orderId, latitude, longitude }: { shipmentId: string; orderId?: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.acceptOrder(shipmentId, orderId, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.availableOrders });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
@@ -91,7 +107,8 @@ export const useRejectOrder = () => {
 export const usePickupOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (shipmentId: string) => ordersAPI.pickupOrder(shipmentId),
+    mutationFn: ({ shipmentId, latitude, longitude }: { shipmentId: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.pickupOrder(shipmentId, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -101,7 +118,8 @@ export const usePickupOrder = () => {
 export const useStartDelivery = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (shipmentId: string) => ordersAPI.startDelivery(shipmentId),
+    mutationFn: ({ shipmentId, latitude, longitude }: { shipmentId: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.startDelivery(shipmentId, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -111,7 +129,8 @@ export const useStartDelivery = () => {
 export const useCompleteDelivery = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (shipmentId: string) => ordersAPI.completeDelivery(shipmentId),
+    mutationFn: ({ shipmentId, latitude, longitude }: { shipmentId: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.completeDelivery(shipmentId, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dashboardStats });
@@ -123,8 +142,8 @@ export const useCompleteDelivery = () => {
 export const useFailDelivery = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ orderId, reason }: { orderId: string; reason: string }) =>
-      ordersAPI.failDelivery(orderId, reason),
+    mutationFn: ({ orderId, reason, latitude, longitude }: { orderId: string; reason: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.failDelivery(orderId, reason, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -140,8 +159,8 @@ export const useRequestPickupOtp = () => {
 export const useVerifyPickupOtp = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ shipmentId, otp, verificationMedia, notes }: { shipmentId: string; otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string }) =>
-      ordersAPI.verifyPickupOtp(shipmentId, otp, verificationMedia, notes),
+    mutationFn: ({ shipmentId, otp, verificationMedia, notes, weightKg, dimensionsCm, latitude, longitude }: { shipmentId: string; otp: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string; weightKg?: number; dimensionsCm?: { length: number; width: number; height: number }; latitude?: number; longitude?: number }) =>
+      ordersAPI.verifyPickupOtp(shipmentId, otp, verificationMedia, notes, weightKg, dimensionsCm, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -157,8 +176,8 @@ export const useRequestDeliveryOtp = () => {
 export const useVerifyDeliveryOtp = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
-      ordersAPI.verifyDeliveryOtp(shipmentId, otp),
+    mutationFn: ({ shipmentId, otp, latitude, longitude }: { shipmentId: string; otp: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.verifyDeliveryOtp(shipmentId, otp, latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -191,8 +210,8 @@ export const useShipmentById = (shipmentId: string) => {
 export const useFailPickup = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ shipmentId, verificationMedia, notes }: { shipmentId: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string }) =>
-      ordersAPI.failPickup(shipmentId, verificationMedia || [], notes || ''),
+    mutationFn: ({ shipmentId, verificationMedia, notes, latitude, longitude }: { shipmentId: string; verificationMedia?: { url: string; publicId: string }[]; notes?: string; latitude?: number; longitude?: number }) =>
+      ordersAPI.failPickup(shipmentId, verificationMedia || [], notes || '', latitude, longitude),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
     },
@@ -256,4 +275,84 @@ export const useDashboardStats = () =>
     refetchInterval: 30_000,
   });
 
+// ─── Returns ──────────────────────────────────────────────────────────────────
+
+export const useAssignedReturns = () => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return useQuery({
+    queryKey: QUERY_KEYS.returns.assigned,
+    queryFn: returnsAPI.getAssignedReturns,
+    enabled: isAuthenticated,
+    refetchInterval: isAuthenticated ? 15_000 : false,
+  });
+};
+
+export const useAcceptReturn = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipmentId: string) => returnsAPI.acceptReturn(shipmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.returns.assigned });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
+
+export const useRejectReturnRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, reason }: { shipmentId: string; reason: string }) =>
+      returnsAPI.rejectReturn(shipmentId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.returns.assigned });
+    },
+  });
+};
+
+export const useVerifyReturnItems = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, verificationMedia, notes, itemsCorrect }: { shipmentId: string; verificationMedia: any[]; notes: string; itemsCorrect: boolean }) =>
+      returnsAPI.verifyItems(shipmentId, { verificationMedia, notes, itemsCorrect }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
+
+export const useVerifyReturnCustomerOtp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
+      returnsAPI.verifyCustomerOtp(shipmentId, otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+    },
+  });
+};
+
+export const useSendReturnManagerOtp = () => {
+  return useMutation({
+    mutationFn: (shipmentId: string) => returnsAPI.sendManagerOtp(shipmentId),
+  });
+};
+
+export const useVerifyReturnManagerOtp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipmentId, otp }: { shipmentId: string; otp: string }) =>
+      returnsAPI.verifyManagerOtp(shipmentId, otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeOrder });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.returns.assigned });
+    },
+  });
+};
+
+export const useReturnHistory = (filter: string) =>
+  useQuery({
+    queryKey: QUERY_KEYS.returns.history(filter),
+    queryFn: () => returnsAPI.getReturnHistory({ filter }),
+    staleTime: 2 * 60 * 1000,
+  });
 

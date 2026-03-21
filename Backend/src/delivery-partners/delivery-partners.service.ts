@@ -21,10 +21,13 @@ import {
   RegisterDeliveryPartnerDto,
   UpdateDeliveryPartnerDto,
   UpdateLocationDto,
+  ChangePasswordDto,
 } from './dto/delivery-partner.dto';
 import { encrypt, decrypt } from '../common/utils/crypto.util';
 import { EventsGateway } from '../events/events.gateway';
 import { Shipment, ShipmentDocument, ShipmentStatus } from '../shipments/schemas/shipment.schema';
+import { RazorpayPayoutService } from '../payments/razorpay-payout.service';
+import { PartnerEarnings, PartnerEarningsDocument } from '../delivery-commission/schemas/partner-earnings.schema';
 
 @Injectable()
 export class DeliveryPartnersService {
@@ -35,9 +38,12 @@ export class DeliveryPartnersService {
     private partnerModel: Model<DeliveryPartnerDocument>,
     @InjectModel(Shipment.name)
     private shipmentModel: Model<ShipmentDocument>,
+    @InjectModel(PartnerEarnings.name)
+    private earningsModel: Model<PartnerEarningsDocument>,
     private jwtService: JwtService,
     @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
+    private razorpayService: RazorpayPayoutService,
   ) { }
 
   async register(
@@ -131,14 +137,14 @@ export class DeliveryPartnersService {
 
     // Auto-set the partner to ONLINE upon successful login
     if (partner.availabilityStatus !== 'ONLINE') {
-        partner.availabilityStatus = 'ONLINE';
-        await partner.save();
+      partner.availabilityStatus = 'ONLINE';
+      await partner.save();
 
-        // Broadcast real-time websocket update
-        this.eventsGateway.emitEvent('delivery-partner-status-updated', {
-          partnerId: partner._id,
-          status: 'ONLINE',
-        });
+      // Broadcast real-time websocket update
+      this.eventsGateway.emitEvent('delivery-partner-status-updated', {
+        partnerId: partner._id,
+        status: 'ONLINE',
+      });
     }
 
     return this.generateToken(partner);
@@ -201,13 +207,13 @@ export class DeliveryPartnersService {
 
     // Fetch stats for all partners on this page in one batch
     const partnerIds = partners.map((p) => p._id);
-    const warehouseIds = [...new Set(partners.flatMap((p) => 
+    const warehouseIds = [...new Set(partners.flatMap((p) =>
       (p.warehouseIds || [])
         .map((w: any) => typeof w === 'object' ? w._id?.toString() : w?.toString())
         .filter((id): id is string => !!id && Types.ObjectId.isValid(id))
     ))];
 
-    const [activeShipments, completedShipments, availableShipments] = await Promise.all([
+    const [activeShipments, completedShipments, availableShipments, earningsData] = await Promise.all([
       // Active shipments grouped by partner
       this.shipmentModel.aggregate([
         { $match: { deliveryPartnerId: { $in: partnerIds }, status: { $in: ACTIVE_STATUSES } } },
@@ -221,10 +227,15 @@ export class DeliveryPartnersService {
       // Available (unassigned) shipments by warehouse
       warehouseIds.length > 0
         ? this.shipmentModel.aggregate([
-            { $match: { warehouseId: { $in: warehouseIds.map((id) => new Types.ObjectId(id)) }, status: ShipmentStatus.ORDER_PLACED, deliveryPartnerId: null } },
-            { $group: { _id: '$warehouseId', count: { $sum: 1 } } },
-          ])
+          { $match: { warehouseId: { $in: warehouseIds.map((id) => new Types.ObjectId(id)) }, status: ShipmentStatus.ORDER_PLACED, deliveryPartnerId: null } },
+          { $group: { _id: '$warehouseId', count: { $sum: 1 } } },
+        ])
         : Promise.resolve([]),
+      // Earnings grouped by partner
+      this.earningsModel.aggregate([
+        { $match: { partnerId: { $in: partnerIds } } },
+        { $group: { _id: '$partnerId', totalEarned: { $sum: '$totalEarned' } } },
+      ]),
     ]);
 
     const activeMap: Record<string, number> = {};
@@ -233,6 +244,10 @@ export class DeliveryPartnersService {
     completedShipments.forEach((s: any) => { completedMap[s._id.toString()] = s.count; });
     const availableByWarehouse: Record<string, number> = {};
     availableShipments.forEach((s: any) => { availableByWarehouse[s._id.toString()] = s.count; });
+    const earningsMap: Record<string, number> = {};
+    if (earningsData && Array.isArray(earningsData)) {
+      earningsData.forEach((e: any) => { earningsMap[e._id.toString()] = e.totalEarned; });
+    }
 
     const enrichedPartners = partners.map((p) => {
       const partnerObj = this.decryptPartner(p);
@@ -248,6 +263,7 @@ export class DeliveryPartnersService {
         activeOrders: activeMap[p._id.toString()] || 0,
         completedOrders: completedMap[p._id.toString()] || (partnerObj.totalDeliveries || 0),
         availableOrders: availableCount,
+        totalEarned: earningsMap[p._id.toString()] || 0,
       };
     });
 
@@ -347,6 +363,40 @@ export class DeliveryPartnersService {
       updateData.documents = documents;
     }
 
+    // Handle payoutMethod update & Razorpay Contact/Fund Account creation
+    if (dto.payoutMethod) {
+      let contactId = partner.payoutMethod?.razorpayContactId;
+      let fundAccountId = partner.payoutMethod?.razorpayFundAccountId;
+
+      // 1. Create/Update Contact
+      if (!contactId) {
+        const contact = await this.razorpayService.createContact(
+          partner.name || '',
+          partner.phone || '',
+          partner.email,
+        );
+        contactId = contact.id;
+      }
+
+      if (!contactId) {
+        throw new BadRequestException('Failed to create or retrieve Razorpay contact');
+      }
+
+      // 2. Create Fund Account (always create a new one if details change, or just create if missing)
+      // For simplicity, we create if missing or if the method/account details change
+      const fundAccount = await this.razorpayService.createFundAccount(
+        contactId,
+        dto.payoutMethod,
+      );
+      fundAccountId = fundAccount.id;
+
+      updateData.payoutMethod = {
+        ...dto.payoutMethod,
+        razorpayContactId: contactId,
+        razorpayFundAccountId: fundAccountId,
+      };
+    }
+
     this.logger.log(
       `Updating partner ${id} with: ${JSON.stringify(updateData)}`,
     );
@@ -406,5 +456,25 @@ export class DeliveryPartnersService {
     if (!result) {
       throw new NotFoundException('Delivery partner not found');
     }
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto) {
+    const { currentPassword, newPassword } = dto;
+    const partner = await this.partnerModel.findById(id);
+
+    if (!partner) {
+      throw new NotFoundException('Delivery partner not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, partner.password);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid current password');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    partner.password = hashedPassword;
+    await partner.save();
+
+    return { message: 'Password changed successfully' };
   }
 }

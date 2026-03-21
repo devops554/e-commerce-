@@ -2,19 +2,22 @@
 
 import React, { useState, useEffect } from 'react'
 import { useGlobalOrderAnalytics } from '@/hooks/useOrders'
+import { useGlobalReturnAnalytics } from '@/hooks/useReturns'
 import { useBreadcrumb } from '@/providers/BreadcrumbContext'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OrderChart } from '@/components/manager/OrderChart'
-import { 
-    ShoppingCart, 
-    CheckCircle, 
-    Package, 
+import {
+    ShoppingCart,
+    CheckCircle,
+    Package,
     Truck,
     IndianRupee,
     ArrowUpRight,
     Calendar,
     AlertCircle,
-    XCircle
+    XCircle,
+    RotateCcw,
+    Clock
 } from 'lucide-react'
 import {
     Select,
@@ -53,6 +56,7 @@ export default function AdminOrderAnalysisPage() {
     const { setBreadcrumbs } = useBreadcrumb()
     const [range, setRange] = useState('7d')
     const { data: stats, isLoading } = useGlobalOrderAnalytics(range)
+    const { data: returnStats, isLoading: isReturnsLoading } = useGlobalReturnAnalytics(range)
 
     useEffect(() => {
         setBreadcrumbs([
@@ -61,7 +65,7 @@ export default function AdminOrderAnalysisPage() {
         ])
     }, [setBreadcrumbs])
 
-    if (isLoading && !stats) {
+    if ((isLoading && !stats) || (isReturnsLoading && !returnStats)) {
         return (
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -152,8 +156,8 @@ export default function AdminOrderAnalysisPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <OrderChart 
-                        title="Revenue Trajectory" 
+                    <OrderChart
+                        title="Revenue Trajectory"
                         description="Global earnings from completed transactions"
                         type="area"
                         data={stats?.chartData || []}
@@ -164,8 +168,8 @@ export default function AdminOrderAnalysisPage() {
                     />
                 </div>
                 <div className="lg:col-span-1">
-                    <OrderChart 
-                        title="Pipeline Distribution" 
+                    <OrderChart
+                        title="Pipeline Distribution"
                         description="Global order status breakdown"
                         type="pie"
                         data={statusDistribution}
@@ -177,8 +181,8 @@ export default function AdminOrderAnalysisPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OrderChart 
-                    title="Volume Trends" 
+                <OrderChart
+                    title="Volume Trends"
                     description="Daily system-wide order intake"
                     type="bar"
                     data={stats?.chartData || []}
@@ -186,7 +190,7 @@ export default function AdminOrderAnalysisPage() {
                     dataKey="orders"
                     color="#3B82F6"
                 />
-                
+
                 <Card className="border-none shadow-sm bg-white rounded-3xl overflow-hidden">
                     <CardContent className="p-8">
                         <h3 className="text-lg font-black text-slate-900 mb-6">Operational Snapshots</h3>
@@ -221,6 +225,65 @@ export default function AdminOrderAnalysisPage() {
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* Return Analytics Section */}
+            <div className="pt-10 mt-10 border-t border-slate-100">
+                <div className="mb-6">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <RotateCcw className="h-6 w-6 text-rose-500" />
+                        Reverse Logistics Insights
+                    </h2>
+                    <p className="text-slate-500 font-bold mt-1">System-wide product returns and refund metrics</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <StatCard
+                        title="Total Returns"
+                        value={returnStats?.totalReturns || 0}
+                        icon={RotateCcw}
+                        color="bg-rose-50 text-rose-600"
+                    />
+                    <StatCard
+                        title="Pending Returns"
+                        value={returnStats?.pendingReturns || 0}
+                        icon={Clock}
+                        color="bg-amber-50 text-amber-600"
+                    />
+                    <StatCard
+                        title="Completed Returns"
+                        value={returnStats?.completedReturns || 0}
+                        icon={CheckCircle}
+                        color="bg-emerald-50 text-emerald-600"
+                    />
+                    <StatCard
+                        title="Total Refunded"
+                        value={`₹${(returnStats?.totalRefundedAmount || 0).toLocaleString()}`}
+                        icon={IndianRupee}
+                        color="bg-violet-50 text-violet-600"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <OrderChart
+                        title="Return Volume"
+                        description="Daily system-wide return requests"
+                        type="bar"
+                        data={returnStats?.chartData || []}
+                        categoryKey="date"
+                        dataKey="returns"
+                        color="#F43F5E"
+                    />
+                    <OrderChart
+                        title="Refunded Amount Trajectory"
+                        description="Daily value of processed refunds"
+                        type="area"
+                        data={returnStats?.chartData || []}
+                        categoryKey="date"
+                        dataKey="refunded"
+                        color="#8B5CF6"
+                    />
+                </div>
             </div>
         </div>
     )

@@ -27,6 +27,7 @@ import { useOrderById } from '@/hooks/useOrders'
 import { useCreateReturn } from '@/hooks/useReturns'
 import { Input } from '@/components/ui/input'
 import { RefundMethod } from '@/services/return.service'
+import { useUserProfile, useAddBankAccount } from '@/hooks/useUser'
 
 // ─────────────────────────────────────────────
 // INNER COMPONENT — uses useSearchParams()
@@ -40,9 +41,13 @@ function NewReturnWizardInner() {
     const orderItemId = searchParams.get('orderItemId')
 
     const { data: order, isLoading: isLoadingOrder } = useOrderById(orderId || '')
-    const { mutate: createReturn, isPending: isSubmitting } = useCreateReturn()
+    const { mutate: createReturn, isPending: isSubmittingReturn } = useCreateReturn()
+    const { data: userProfile } = useUserProfile()
+    const { mutateAsync: addBankAccount } = useAddBankAccount()
 
     const [step, setStep] = React.useState(1)
+    const [selectedBankOption, setSelectedBankOption] = React.useState<string>('new')
+    const [saveToProfile, setSaveToProfile] = React.useState(true)
     const [formData, setFormData] = React.useState({
         reason: '',
         reasonDescription: '',
@@ -58,6 +63,13 @@ function NewReturnWizardInner() {
     })
 
     const isCOD = order?.paymentMethod === 'cod'
+    const bankAccounts = userProfile?.bankAccounts || []
+
+    React.useEffect(() => {
+        if (bankAccounts.length > 0 && selectedBankOption === 'new') {
+            setSelectedBankOption(bankAccounts[0]._id)
+        }
+    }, [bankAccounts, selectedBankOption])
 
     // Adjust default refund method if COD
     React.useEffect(() => {
@@ -65,6 +77,30 @@ function NewReturnWizardInner() {
             setFormData(prev => ({ ...prev, refundMethod: 'BANK_TRANSFER' as RefundMethod }))
         }
     }, [order])
+
+    // Update formData based on selected bank option
+    React.useEffect(() => {
+        if (selectedBankOption !== 'new') {
+            const acc = bankAccounts.find(a => a._id === selectedBankOption)
+            if (acc) {
+                setFormData(prev => ({
+                    ...prev,
+                    bankDetails: {
+                        accountHolderName: acc.accountHolderName,
+                        accountNumber: acc.accountNumber,
+                        ifscCode: acc.ifscCode,
+                        bankName: acc.bankName,
+                    }
+                }))
+            }
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                bankDetails: { accountHolderName: '', accountNumber: '', ifscCode: '', bankName: '' }
+            }))
+        }
+    }, [selectedBankOption, userProfile])
+
 
     const handleSubmit = async () => {
         if (!orderId || !orderItemId) return
@@ -75,6 +111,14 @@ function NewReturnWizardInner() {
             return
         }
 
+        if (formData.refundMethod === 'BANK_TRANSFER' && selectedBankOption === 'new' && saveToProfile) {
+            try {
+                await addBankAccount(formData.bankDetails)
+            } catch (err) {
+                toast.error('Failed to save new bank account')
+            }
+        }
+
         const submissionData = {
             orderId,
             orderItemId,
@@ -83,7 +127,7 @@ function NewReturnWizardInner() {
             quantity: formData.quantity,
             reason: formData.reason,
             reasonDescription: formData.reasonDescription,
-            evidenceMedia: formData.evidenceMedia,
+            evidenceMedia: formData.evidenceMedia.map(url => ({ url })),
             refundMethod: formData.refundMethod,
             bankDetails: formData.refundMethod === 'BANK_TRANSFER' ? formData.bankDetails : undefined
         }
@@ -334,12 +378,53 @@ function NewReturnWizardInner() {
                                     </button> */}
                                 </div>
 
+                                {/* Saved Bank Accounts Selection */}
+                                {formData.refundMethod === 'BANK_TRANSFER' && bankAccounts.length > 0 && (
+                                    <div className="space-y-3 mt-4">
+                                        <h4 className="text-sm font-bold text-slate-700">Select Bank Account</h4>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {bankAccounts.map((acc: any) => (
+                                                <button
+                                                    key={acc._id}
+                                                    onClick={() => setSelectedBankOption(acc._id)}
+                                                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left
+                                                        ${selectedBankOption === acc._id
+                                                            ? 'border-indigo-600 bg-indigo-50/50'
+                                                            : 'border-slate-100 hover:border-slate-200'
+                                                        }`}
+                                                >
+                                                    <Building2 className={`h-5 w-5 ${selectedBankOption === acc._id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                                    <div className="flex-1">
+                                                        <p className="font-bold text-slate-800 text-sm">{acc.bankName} - {acc.accountHolderName}</p>
+                                                        <p className="text-xs text-slate-500 font-medium">Ac/No: {acc.accountNumber?.slice(-4).padStart(acc.accountNumber?.length || 4, '•')} | IFSC: {acc.ifscCode}</p>
+                                                    </div>
+                                                    {selectedBankOption === acc._id && <CheckCircle2 className="h-4 w-4 text-indigo-600" />}
+                                                </button>
+                                            ))}
+                                            
+                                            <button
+                                                onClick={() => setSelectedBankOption('new')}
+                                                className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left bg-slate-50
+                                                    ${selectedBankOption === 'new'
+                                                        ? 'border-indigo-600 bg-indigo-50/50'
+                                                        : 'border-slate-100 hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-slate-800 text-sm">+ Add New Bank Account</p>
+                                                </div>
+                                                {selectedBankOption === 'new' && <CheckCircle2 className="h-4 w-4 text-indigo-600" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Bank Details Form */}
-                                {formData.refundMethod === 'BANK_TRANSFER' && (
-                                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                                {formData.refundMethod === 'BANK_TRANSFER' && selectedBankOption === 'new' && (
+                                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300 mt-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Building2 className="h-4 w-4 text-indigo-600" />
-                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Bank Account Details</h4>
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">New Bank Account Details</h4>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -392,6 +477,19 @@ function NewReturnWizardInner() {
                                                 </div>
                                             </div>
                                         </div>
+                                        
+                                        <div className="pt-2 flex items-center space-x-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id="saveProfile"
+                                                checked={saveToProfile}
+                                                onChange={(e) => setSaveToProfile(e.target.checked)}
+                                                className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4 ml-1"
+                                            />
+                                            <label htmlFor="saveProfile" className="text-sm font-medium text-slate-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                Save these bank details to my profile for future returns
+                                            </label>
+                                        </div>
                                     </div>
                                 )}
 
@@ -409,16 +507,16 @@ function NewReturnWizardInner() {
                                     variant="ghost"
                                     className="h-14 rounded-2xl font-bold border-2 border-transparent hover:border-slate-200"
                                     onClick={prevStep}
-                                    disabled={isSubmitting}
+                                    disabled={isSubmittingReturn}
                                 >
                                     Back
                                 </Button>
                                 <Button
                                     className="flex-1 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-xl shadow-blue-100"
                                     onClick={handleSubmit}
-                                    disabled={isSubmitting || (formData.refundMethod === 'BANK_TRANSFER' && (!formData.bankDetails.accountNumber || !formData.bankDetails.ifscCode))}
+                                    disabled={isSubmittingReturn || (formData.refundMethod === 'BANK_TRANSFER' && (!formData.bankDetails.accountNumber || !formData.bankDetails.ifscCode))}
                                 >
-                                    {isSubmitting ? (
+                                    {isSubmittingReturn ? (
                                         <>
                                             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                             Submitting...

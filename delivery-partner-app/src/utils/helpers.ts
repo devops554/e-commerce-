@@ -56,6 +56,7 @@ export const getOrderStatusLabel = (status: OrderStatus): string => {
     RETURNED: 'Returned',
     FAILED_DELIVERY: 'Delivery Failed',
     FAILED_PICKUP: 'Pickup Failed',
+    ASSIGNED_TO_DELIVERY: 'Assigned',
   };
   return labels[status] || status;
 };
@@ -75,6 +76,8 @@ export const getOrderStatusColor = (status: OrderStatus): string => {
     case 'FAILED_DELIVERY':
     case 'FAILED_PICKUP':
       return Colors.danger;
+    case 'ASSIGNED_TO_DELIVERY':
+      return Colors.warning;
     default:
       return Colors.textSecondary;
   }

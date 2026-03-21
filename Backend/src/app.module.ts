@@ -20,8 +20,9 @@ import { BannerModule } from './banner/banner.module';
 import { RedisModule } from './redis/redis.module';
 import { SettingsModule } from './settings/settings.module';
 
-import { ReturnsModule } from './returns/returns.module';
+import { ReturnModule } from './return/return.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { DeliveryCommissionModule } from './delivery-commission/delivery-commission.module';
 
 @Module({
   imports: [
@@ -54,8 +55,9 @@ import { ReviewsModule } from './reviews/reviews.module';
     ShipmentsModule,
     DeliveryModule,
     SettingsModule,
-    ReturnsModule,
+    ReturnModule,
     ReviewsModule,
+    DeliveryCommissionModule,
   ],
 })
 export class AppModule {}

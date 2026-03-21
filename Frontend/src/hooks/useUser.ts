@@ -42,6 +42,28 @@ export const useDeleteAddress = () => {
     });
 };
 
+export const useAddBankAccount = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (bankAccountData: any) => userService.addBankAccount(bankAccountData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+    });
+};
+
+export const useRemoveBankAccount = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (accountId: string) => userService.removeBankAccount(accountId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+    });
+};
+
 export const useAllUsers = (page?: string, limit?: string, role?: string, status?: string, search?: string) => {
     return useQuery({
         queryKey: ['all-users', page, limit, role, status, search],

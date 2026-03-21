@@ -8,9 +8,10 @@ import { format } from 'date-fns'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 
-import { useReturnById, useReviewReturn, useUpdateReturnQc, useInitiateRefund } from '@/hooks/useReturns'
+import { useReturnById, useManagerApprove, useManagerReject, useUpdateReturnQc, useInitiateRefund, useManagerResolveFailedPickup } from '@/hooks/useReturns'
 import { useShipmentById } from '@/hooks/useShipments'
 import { ReturnRequestStatus } from '@/services/return.service'
+import { useAuth } from '@/providers/AuthContext'
 
 // Modular Components
 import { ReturnItemCard } from './components/ReturnItemCard'
@@ -37,23 +38,26 @@ export default function ReturnDetailView() {
     const { id } = useParams()
     const router = useRouter()
     const returnId = id as string
+    const { user } = useAuth()
 
     const { data: request, isLoading, refetch } = useReturnById(returnId)
     const { data: shipment } = useShipmentById(request?.returnShipmentId as string)
 
-    const { mutateAsync: reviewReturn, isPending: isReviewing } = useReviewReturn()
+    const { mutateAsync: managerApprove, isPending: isApproving } = useManagerApprove()
+    const { mutateAsync: managerReject, isPending: isRejecting } = useManagerReject()
     const { mutateAsync: updateQc, isPending: isUpdatingQc } = useUpdateReturnQc()
     const { mutateAsync: initiateRefund, isPending: isRefunding } = useInitiateRefund()
+    const { mutateAsync: managerResolveFailedPickup, isPending: isResolvingFailed } = useManagerResolveFailedPickup()
 
     const handleReview = async (status: ReturnRequestStatus, reason?: string, adminNote?: string) => {
         try {
-            await reviewReturn({
-                id: returnId,
-                data: { approved: status === ReturnRequestStatus.APPROVED, rejectionReason: reason, adminNote }
-            })
-            toast.success(`Return ${status.toLowerCase()} successfully`)
+            if (status === ReturnRequestStatus.APPROVED) {
+                await managerApprove({ id: returnId, data: { adminNote } })
+            } else {
+                await managerReject({ id: returnId, data: { rejectionReason: reason || 'Rejected by manager', adminNote } })
+            }
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Failed to review return")
+            console.error('Failed to review return', err)
         }
     }
 
@@ -107,25 +111,37 @@ export default function ReturnDetailView() {
                         </CardContent>
                     </Card>
 
-                    <ActionCards
-                        request={request}
-                        onReview={handleReview}
-                        onQC={handleQcUpdate}
-                        onRefund={handleRefund}
-                        isPending={isReviewing || isUpdatingQc || isRefunding}
-                    />
 
-                    <DeliveryAssignmentCard request={request} onAssigned={() => refetch()} />
+
+                    <DeliveryAssignmentCard request={request} shipment={shipment as any} onAssigned={() => refetch()} />
 
                     {/* Show failure details if either the request or the associated shipment shows a failed pickup */}
                     {(request.status === ReturnRequestStatus.FAILED_PICKUP || (shipment as any)?.status === 'FAILED_PICKUP') && (
-                        <ReturnFailureDetails 
-                            pickupNotes={(shipment as any)?.pickupNotes || request.pickupNotes} 
-                            verificationMedia={(shipment as any)?.verificationMedia || request.verificationMedia} 
+                        <ReturnFailureDetails
+                            pickupNotes={(shipment as any)?.pickupNotes || request.pickupNotes}
+                            verificationMedia={(shipment as any)?.verificationMedia || request.verificationMedia}
                         />
                     )}
 
                     <ShipmentTrackingCard request={request} />
+                    <ActionCards
+                        request={request}
+                        role={user?.role}
+                        onReview={handleReview}
+                        onResolveFailedPickup={async (status, reason, note) => {
+                            try {
+                                await managerResolveFailedPickup({
+                                    id: returnId,
+                                    data: { approved: status === ReturnRequestStatus.APPROVED, rejectionReason: reason, adminNote: note }
+                                })
+                            } catch (err: any) {
+                                console.error("Failed to resolve failed pickup", err)
+                            }
+                        }}
+                        onQC={handleQcUpdate}
+                        onRefund={handleRefund}
+                        isPending={isApproving || isRejecting || isUpdatingQc || isRefunding || isResolvingFailed}
+                    />
                 </div>
 
                 {/* Right Column: Customer & Timeline */}

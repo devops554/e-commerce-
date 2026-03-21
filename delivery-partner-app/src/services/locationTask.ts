@@ -39,7 +39,7 @@ export const startBackgroundLocation = async () => {
     timeInterval: 10000,
     distanceInterval: 10,
     foregroundService: {
-      notificationTitle: 'SwiftDeliver is tracking your location',
+      notificationTitle: 'kiranase is tracking your location',
       notificationBody: 'Providing real-time updates for your active delivery',
       notificationColor: '#4F46E5',
     },

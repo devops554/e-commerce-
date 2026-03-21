@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ReturnRequest, ReturnRequestDocument, ReturnRequestStatus, QcGrade, ReturnCondition, ReturnWindowUnit, Product, ProductVariant, RefundMethod } from '../products/schemas/product.schema';
+import { ReturnCondition, ReturnWindowUnit, Product, ProductVariant, RefundMethod } from '../products/schemas/product.schema';
+import { ReturnRequest, ReturnRequestDocument } from '../orders/schemas/return-request.schema';
+import { ReturnRequestStatus, QcGrade } from '../orders/schemas/return-enums';
 import { OrdersService } from '../orders/orders.service';
 import { ShipmentsService } from '../shipments/shipments.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -9,6 +11,7 @@ import { NotificationType } from '../notifications/schemas/notification.schema';
 import { WarehousesService } from '../warehouses/warehouses.service';
 import { InventoryService } from '../warehouses/inventory.service';
 import { PaymentsService } from '../payments/payments.service';
+import { RazorpayPayoutService } from '../payments/razorpay-payout.service';
 import { UserRole } from 'src/users/schemas/user.schema';
 
 @Injectable()
@@ -24,6 +27,7 @@ export class ReturnRequestsService {
     private warehousesService: WarehousesService,
     private inventoryService: InventoryService,
     private paymentsService: PaymentsService,
+    private razorpayPayoutService: RazorpayPayoutService,
   ) { }
 
   async create(customerId: string, dto: any): Promise<ReturnRequestDocument> {
@@ -108,7 +112,7 @@ export class ReturnRequestsService {
 
     // 4. Check for existing request
     const existing = await this.returnRequestModel.findOne({
-      orderItemId: new Types.ObjectId(orderItemId),
+      orderItemId: orderItemId,
       status: { $ne: ReturnRequestStatus.REJECTED }
     });
     if (existing) {
@@ -128,10 +132,10 @@ export class ReturnRequestsService {
       ...dto,
       evidenceMedia: normalisedEvidence,
       orderId: order._id,
-      orderItemId: new Types.ObjectId(orderItemId),
-      productId: new Types.ObjectId(productId),
-      variantId: new Types.ObjectId(variantId),
-      customerId: new Types.ObjectId(customerId),
+      orderItemId: orderItemId,
+      productId: productId,
+      variantId: variantId,
+      customerId: customerId,
       warehouseId: orderItem.warehouse,
       sellerId: orderItem.seller,
       status: ReturnRequestStatus.PENDING,
@@ -235,8 +239,9 @@ export class ReturnRequestsService {
           orderId: (request.orderId as any)?._id?.toString() || request.orderId.toString(),
           warehouseId: (request.warehouseId as any)?._id?.toString() || request.warehouseId.toString(),
           type: 'REVERSE' as any,
+          returnRequestId: request._id.toString(),
         });
-        request.returnShipmentId = shipment._id;
+        request.returnShipmentId = shipment._id as any;
       } catch (error) {
         // Log but don't fail approval if shipment fails?
         // Actually, it should probably fail or be retried.
@@ -266,23 +271,58 @@ export class ReturnRequestsService {
     return updated;
   }
 
+  async resolveFailedPickup(id: string, reviewerId: string, dto: { approved: boolean; rejectionReason?: string; adminNote?: string }) {
+    const request = await this.findById(id);
+    if (request.status !== ReturnRequestStatus.FAILED_PICKUP) {
+      throw new BadRequestException('Request is not in FAILED_PICKUP state');
+    }
+
+    if (dto.approved) {
+      // Re-trigger Logistics Phase - Status will be updated by ShipmentsService sync
+      request.status = ReturnRequestStatus.APPROVED;
+      request.approvedAt = new Date();
+
+      // Shipment already exists, but it's FAILED_PICKUP. 
+      // Re-assigning a partner in the manager panel will move it back to ORDER_PLACED/ASSIGNED.
+      // Here we just set the request status back to APPROVED to allow re-assignment if needed,
+      // though typically the Shipment status determines the ReturnRequest status via sync.
+    } else {
+      request.status = ReturnRequestStatus.REJECTED;
+      request.rejectedAt = new Date();
+      request.rejectionReason = dto.rejectionReason;
+    }
+
+    request.reviewedBy = new Types.ObjectId(reviewerId);
+    request.adminNote = dto.adminNote;
+
+    return request.save();
+  }
+
   async updateWarehouseQc(id: string, dto: { warehouseQcGrade: QcGrade; warehouseQcNotes?: string }) {
     const request = await this.findById(id);
-    // Logic for updating QC results and moving to received state
+
+    if (request.status !== ReturnRequestStatus.RECEIVED_AT_WAREHOUSE) {
+      throw new BadRequestException('Item must be received at warehouse before QC');
+    }
+
     request.warehouseQcGrade = dto.warehouseQcGrade;
     request.warehouseQcNotes = dto.warehouseQcNotes;
-    request.status = ReturnRequestStatus.RECEIVED_AT_WAREHOUSE;
-    request.warehouseReceivedAt = new Date();
 
     // Determine next state based on QC grade
-    if (dto.warehouseQcGrade === QcGrade.RESELLABLE) {
-      // Trigger Inventory Restoration
-      await this.inventoryService.adjustStock({
-        variantId: (request.variantId as any)?._id?.toString() || request.variantId.toString(),
-        warehouseId: (request.warehouseId as any)?._id?.toString() || request.warehouseId.toString(),
-        amount: request.quantity,
-        source: `Return Request ${request._id}`,
-      });
+    if (dto.warehouseQcGrade === QcGrade.RESELLABLE || dto.warehouseQcGrade === QcGrade.REFURBISH) {
+      request.status = ReturnRequestStatus.QC_PASSED;
+
+      if (dto.warehouseQcGrade === QcGrade.RESELLABLE) {
+        // Trigger Inventory Restoration ONLY for RESELLABLE items
+        await this.inventoryService.adjustStock({
+          variantId: (request.variantId as any)?._id?.toString() || request.variantId.toString(),
+          warehouseId: (request.warehouseId as any)?._id?.toString() || request.warehouseId.toString(),
+          amount: request.quantity,
+          source: `Return Request ${request._id}`,
+        });
+      }
+    } else {
+      request.status = ReturnRequestStatus.QC_FAILED;
     }
 
     return request.save();
@@ -294,26 +334,72 @@ export class ReturnRequestsService {
       throw new BadRequestException('Refund already completed');
     }
 
-    // Ensure item has been received and QC'd before refunding (unless exception is made)
-    if (request.status !== ReturnRequestStatus.RECEIVED_AT_WAREHOUSE && request.status !== ReturnRequestStatus.REFUND_INITIATED) {
-      throw new BadRequestException('Cannot initiate refund. Item must be received at warehouse first.');
+    // Allow refund after QC_PASSED or QC_FAILED (admin override), or if refund already initiated
+    const refundableStatuses = [
+      ReturnRequestStatus.QC_PASSED,
+      ReturnRequestStatus.QC_FAILED,
+      ReturnRequestStatus.REFUND_INITIATED,
+    ];
+    if (!refundableStatuses.includes(request.status as ReturnRequestStatus)) {
+      throw new BadRequestException('Cannot initiate refund. Item must pass QC or admin must override QC failure.');
     }
 
-    // Logic for processing refund
     const order = request.orderId as any;
-    if (dto.refundMethod === RefundMethod.ORIGINAL_SOURCE && order.razorpayPaymentId) {
-      const refund = await this.paymentsService.createRefund(
-        order.razorpayPaymentId,
-        dto.refundAmount,
-        { returnRequestId: request._id.toString() }
-      );
-      request.refundTransactionId = refund.id;
-      request.status = ReturnRequestStatus.REFUND_COMPLETED;
-      request.refundCompletedAt = new Date();
-    } else {
-      // For other methods, we just mark as initiated (manual bank transfer etc.)
-      request.status = ReturnRequestStatus.REFUND_INITIATED;
-      request.refundInitiatedAt = new Date();
+    const bankDetails = request.bankDetails as any;
+
+    try {
+      if (dto.refundMethod === RefundMethod.ORIGINAL_SOURCE && order?.razorpayPaymentId) {
+        // ── Path 1: Razorpay Refund (to original payment source) ──
+        const refund = await this.paymentsService.createRefund(
+          order.razorpayPaymentId,
+          dto.refundAmount,
+          { returnRequestId: request._id.toString() }
+        );
+        request.refundTransactionId = refund.id;
+        request.status = ReturnRequestStatus.REFUND_COMPLETED;
+        request.refundCompletedAt = new Date();
+
+      } else if (dto.refundMethod === RefundMethod.BANK_TRANSFER && bankDetails?.accountNumber) {
+        // ── Path 2: Razorpay Payout to Customer Bank Account ──
+        const customer = request.customerId as any;
+        const customerName = customer?.name || customer?.fullName || bankDetails.accountHolderName || 'Customer';
+        const customerPhone = customer?.phone || '0000000000';
+        const customerEmail = customer?.email;
+
+        // Step 1: Create Contact in Razorpay
+        const contact = await this.razorpayPayoutService.createContact(
+          customerName,
+          customerPhone,
+          customerEmail,
+        );
+
+        // Step 2: Create Fund Account (Bank)
+        const fundAccount = await this.razorpayPayoutService.createFundAccount(contact.id, {
+          method: 'BANK',
+          name: bankDetails.accountHolderName || customerName,
+          ifsc: bankDetails.ifscCode,
+          accountNumber: bankDetails.accountNumber,
+        });
+
+        // Step 3: Create Payout
+        const payout = await this.razorpayPayoutService.createPayout(
+          fundAccount.id,
+          dto.refundAmount,
+          `refund-${request._id.toString()}`,
+          `Return refund for order ${order?.orderId || ''}`
+        );
+
+        request.refundTransactionId = payout.id;
+        request.status = ReturnRequestStatus.REFUND_INITIATED; // Async - will complete via webhook
+        request.refundInitiatedAt = new Date();
+
+      } else {
+        // ── Path 3: Manual / Wallet (mark initiated, admin handles externally) ──
+        request.status = ReturnRequestStatus.REFUND_INITIATED;
+        request.refundInitiatedAt = new Date();
+      }
+    } catch (error) {
+      throw new BadRequestException(`Refund failed: ${error.message}`);
     }
 
     request.refundMethod = dto.refundMethod;
@@ -322,9 +408,10 @@ export class ReturnRequestsService {
     const saved = await request.save();
 
     // Notify Customer
+    const isCompleted = request.status === ReturnRequestStatus.REFUND_COMPLETED;
     await this.notificationsService.create({
-      title: 'Refund Processed',
-      message: `A refund of ₹${dto.refundAmount} has been ${request.status === ReturnRequestStatus.REFUND_COMPLETED ? 'completed' : 'initiated'} for your return.`,
+      title: isCompleted ? 'Refund Processed' : 'Refund Initiated',
+      message: `A refund of ₹${dto.refundAmount} has been ${isCompleted ? 'credited to your original payment source' : 'initiated and will be transferred to your bank account within 2-3 business days'}.`,
       type: NotificationType.ORDER,
       recipientRole: 'customer',
       recipientId: (request.customerId as any)?._id?.toString() || request.customerId.toString(),

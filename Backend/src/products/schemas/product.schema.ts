@@ -103,8 +103,10 @@ export const FaqSchema = SchemaFactory.createForClass(Faq);
 
 
 
+export type ProductDocument = Product & Document;
+
 @Schema({ timestamps: true })
-export class Product extends Document {
+export class Product {
   // ===== BASIC INFO =====
   @Prop({ required: true, trim: true })
   title: string;
@@ -356,6 +358,16 @@ export class ProductVariant extends Document {
   @Prop({ default: true })
   isActive: boolean;
 
+  // ── Commission / Shipping Metadata ──
+  @Prop({ type: Number, default: 0 })
+  weightKg: number;           // weight of this variant in kg
+
+  @Prop({
+    type: { length: Number, width: Number, height: Number },
+    _id: false
+  })
+  dimensionsCm?: { length: number; width: number; height: number };
+
 }
 
 export const ProductVariantSchema =
@@ -365,176 +377,5 @@ ProductVariantSchema.index({ product: 1 });
 ProductVariantSchema.index({ sku: 1 });
 
 // ─────────────────────────────────────────────
-// RETURN REQUEST SCHEMA (NEW — missing from original)
+// END OF FILE
 // ─────────────────────────────────────────────
-
-export enum ReturnRequestStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  PICKUP_SCHEDULED = 'PICKUP_SCHEDULED',
-  PICKED_UP = 'PICKED_UP',
-  RECEIVED_AT_WAREHOUSE = 'RECEIVED_AT_WAREHOUSE',
-  QC_PASSED = 'QC_PASSED',
-  QC_FAILED = 'QC_FAILED',
-  REFUND_INITIATED = 'REFUND_INITIATED',
-  REFUND_COMPLETED = 'REFUND_COMPLETED',
-  FAILED_PICKUP = 'FAILED_PICKUP',
-  CLOSED = 'CLOSED',
-}
-
-export enum ReturnReason {
-  DAMAGED = 'DAMAGED',
-  WRONG_ITEM = 'WRONG_ITEM',
-  NOT_AS_DESCRIBED = 'NOT_AS_DESCRIBED',
-  DEFECTIVE = 'DEFECTIVE',
-  SIZE_ISSUE = 'SIZE_ISSUE',
-  CHANGED_MIND = 'CHANGED_MIND',
-  OTHER = 'OTHER',
-}
-
-export enum QcGrade {
-  RESELLABLE = 'RESELLABLE',      // goes back to inventory
-  REFURBISH = 'REFURBISH',        // needs work before resell
-  DISPOSE = 'DISPOSE',            // cannot be resold
-}
-
-export type ReturnRequestDocument = ReturnRequest & Document;
-
-@Schema({ timestamps: true })
-export class ReturnRequest {
-  // ── References ──
-  @Prop({ type: Types.ObjectId, ref: 'Order', required: true })
-  orderId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, required: true })
-  orderItemId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
-  productId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'ProductVariant', required: true })
-  variantId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  customerId: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Seller' })
-  sellerId?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Warehouse', required: true })
-  warehouseId: Types.ObjectId;
-
-  // ── Return details ──
-  @Prop({
-    type: String,
-    enum: Object.values(ReturnReason),
-    required: true,
-  })
-  reason: ReturnReason;
-
-  @Prop({ type: String })
-  reasonDescription?: string;
-
-  // Customer-uploaded evidence (photos/video URLs from Cloudinary)
-  @Prop([{ url: String, publicId: String }])
-  evidenceMedia: { url: string; publicId: string }[];
-
-  // ── Status lifecycle ──
-  @Prop({
-    type: String,
-    enum: Object.values(ReturnRequestStatus),
-    default: ReturnRequestStatus.PENDING,
-  })
-  status: ReturnRequestStatus;
-
-  @Prop({ type: Date })
-  approvedAt?: Date;
-
-  @Prop({ type: Date })
-  rejectedAt?: Date;
-
-  @Prop({ type: String })
-  rejectionReason?: string;  // populated from Product.returnPolicy.nonReturnableReasons
-
-  // ── Shipment linkage ──
-  // Populated once a reverse shipment is created
-  @Prop({ type: Types.ObjectId, ref: 'Shipment' })
-  returnShipmentId?: Types.ObjectId;
-
-  // ── Warehouse QC ──
-  @Prop({
-    type: String,
-    enum: Object.values(QcGrade),
-  })
-  warehouseQcGrade?: QcGrade;
-
-  @Prop({ type: String })
-  warehouseQcNotes?: string;
-
-  @Prop({ type: Date })
-  warehouseReceivedAt?: Date;
-
-  // ── Refund ──
-  @Prop({
-    type: String,
-    enum: Object.values(RefundMethod),
-  })
-  refundMethod?: RefundMethod;
-
-  @Prop({ type: Number, min: 0 })
-  refundAmount?: number;       // final amount after GST reversal
-
-  @Prop({ type: Number, min: 0 })
-  gstReversalAmount?: number;  // GST component being reversed
-
-  @Prop({ type: String })
-  refundTransactionId?: string;
-
-  @Prop({ type: Date })
-  refundInitiatedAt?: Date;
-
-  @Prop({ type: Date })
-  refundCompletedAt?: Date;
-
-  // ── Quantity ──
-  @Prop({ type: Number, required: true, min: 1, default: 1 })
-  quantity: number;
-
-  @Prop({
-    type: {
-      accountHolderName: String,
-      accountNumber: String,
-      ifscCode: String,
-      bankName: String,
-    },
-    _id: false,
-  })
-  bankDetails?: {
-    accountHolderName: string;
-    accountNumber: string;
-    ifscCode: string;
-    bankName: string;
-  };
-
-  // ── Admin ──
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  reviewedBy?: Types.ObjectId;
-
-  @Prop({ type: String })
-  adminNote?: string;
- 
-  @Prop({ type: String })
-  pickupNotes?: string;
- 
-  @Prop([{ url: String, publicId: String }])
-  verificationMedia?: { url: string; publicId: string }[];
-}
-
-export const ReturnRequestSchema = SchemaFactory.createForClass(ReturnRequest);
-
-ReturnRequestSchema.index({ orderId: 1 });
-ReturnRequestSchema.index({ customerId: 1 });
-ReturnRequestSchema.index({ status: 1 });
-ReturnRequestSchema.index({ returnShipmentId: 1 });
-ReturnRequestSchema.index({ variantId: 1 });

@@ -76,15 +76,15 @@ const OrderCard = ({
         ]).start();
     }, []);
 
-    const order = shipment.orderId as Order;
+    const order = shipment.orderId as any;
     if (!order) return null;
 
     const isReverse = shipment.type === 'REVERSE';
     const phase = getPhaseConfig(shipment.status, isReverse);
-    const isCod = isCOD(order.paymentMethod);
-    const orderId = typeof order.orderId === 'string'
+    const isCod = (typeof order === 'object' && order !== null) ? isCOD(order.paymentMethod) : false;
+    const orderId = (typeof order === 'object' && order !== null && typeof order.orderId === 'string')
         ? order.orderId.slice(-8)
-        : shipment._id?.slice(-8);
+        : (typeof order === 'string' ? order.slice(-8) : String(shipment._id).slice(-8));
 
     return (
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -104,8 +104,27 @@ const OrderCard = ({
                             <View style={styles.customerRow}>
                                 <Ionicons name="person-circle-outline" size={13} color={Colors.textSecondary} />
                                 <Text style={styles.customerName} numberOfLines={1}>
-                                    {order.user?.name || 'Customer'}
+                                    {(typeof order === 'object' && order !== null) ? (order.user?.name || 'Customer') : 'Processing...'}
                                 </Text>
+                            </View>
+                            {/* Assignment Type Badge */}
+                            <View style={styles.assignmentRow}>
+                                <View style={[
+                                    styles.assignmentBadge,
+                                    { backgroundColor: (shipment as any).assignmentType === 'MANUAL' ? '#E0E7FF' : '#F3F4F6' }
+                                ]}>
+                                    <Ionicons
+                                        name={(shipment as any).assignmentType === 'MANUAL' ? "person" : "flash"}
+                                        size={10}
+                                        color={(shipment as any).assignmentType === 'MANUAL' ? "#4338CA" : "#6B7280"}
+                                    />
+                                    <Text style={[
+                                        styles.assignmentText,
+                                        { color: (shipment as any).assignmentType === 'MANUAL' ? "#4338CA" : "#6B7280" }
+                                    ]}>
+                                        {(shipment as any).assignmentType === 'MANUAL' ? 'Managed' : 'Auto Assigned'}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
 
@@ -146,7 +165,7 @@ const OrderCard = ({
                     <View style={styles.addressRow}>
                         <View style={[styles.addressDot, { backgroundColor: isReverse ? '#8B5CF6' : '#EF4444' }]} />
                         <Text style={styles.addressText} numberOfLines={1}>
-                            {isReverse ? 'Return Pickup' : `${order.shippingAddress?.street}, ${order.shippingAddress?.city}`}
+                            {isReverse ? 'Return Pickup' : ((typeof order === 'object' && order !== null) ? `${order.shippingAddress?.street}, ${order.shippingAddress?.city}` : 'Loading...')}
                         </Text>
                     </View>
 
@@ -172,13 +191,13 @@ const OrderCard = ({
 
                         {/* Amount */}
                         <Text style={styles.amountValue}>
-                            {formatCurrency(order.totalAmount)}
+                            {(typeof order === 'object' && order !== null) ? formatCurrency(order.totalAmount) : '...'}
                         </Text>
 
                         {/* Items chip */}
                         <View style={styles.itemsChip}>
                             <Ionicons name="cube-outline" size={12} color={Colors.textSecondary} />
-                            <Text style={styles.itemsText}>{order.items?.length ?? 0} items</Text>
+                            <Text style={styles.itemsText}>{(typeof order === 'object' && order !== null) ? (order.items?.length ?? 0) : '...'} items</Text>
                         </View>
 
                         {/* Arrow */}
@@ -216,7 +235,7 @@ const SummaryChip = ({
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function ActiveOrdersListScreen() {
     const navigation = useNavigation<any>();
-    
+
     // Pagination & Search state
     const [page, setPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
@@ -369,11 +388,11 @@ export default function ActiveOrdersListScreen() {
                                 onPress={() => navigation.navigate('ActiveDelivery', { shipmentId: shipment._id })}
                             />
                         ))}
-                        
+
                         {/* Pagination UI */}
                         {totalPages > 1 && (
                             <View style={styles.paginationContainer}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[styles.pageBtn, page === 1 && styles.pageBtnDisabled]}
                                     disabled={page === 1}
                                     onPress={() => setPage(p => Math.max(1, p - 1))}
@@ -384,7 +403,7 @@ export default function ActiveOrdersListScreen() {
 
                                 <Text style={styles.pageIndicator}>Page {page} of {totalPages}</Text>
 
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[styles.pageBtn, page === totalPages && styles.pageBtnDisabled]}
                                     disabled={page === totalPages}
                                     onPress={() => setPage(p => Math.min(totalPages, p + 1))}
@@ -510,6 +529,19 @@ const styles = StyleSheet.create({
     orderId: { fontSize: FontSize.md, fontWeight: '900', color: Colors.textPrimary, letterSpacing: -0.2 },
     customerRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     customerName: { fontSize: FontSize.sm, color: Colors.textSecondary, flex: 1 },
+    assignmentRow: { flexDirection: 'row', marginTop: 2 },
+    assignmentBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    assignmentText: {
+        fontSize: 9,
+        fontWeight: '700',
+    },
 
     phasePill: {
         flexDirection: 'row',

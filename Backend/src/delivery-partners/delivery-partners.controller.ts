@@ -32,7 +32,7 @@ export class DeliveryPartnersController {
   constructor(
     private readonly deliveryService: DeliveryPartnersService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   // ─── PARTNER AUTHENTICATION ───
 
@@ -139,7 +139,7 @@ export class DeliveryPartnersController {
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUB_ADMIN, UserRole.MANAGER)
+  @Roles(UserRole.ADMIN)
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateDeliveryPartnerDto,
